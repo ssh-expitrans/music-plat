@@ -1,30 +1,26 @@
-"use client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import jwt from "jsonwebtoken";
 
-import { useRouter } from "next/navigation";
+const JWT_SECRET = process.env.JWT_SECRET || "your-very-secret-key";
 
-export default function Dashboard() {
-  const router = useRouter();
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
 
-  async function handleLogout() {
-    try {
-      await fetch("/api/logout", {
-        method: "POST",
-      });
-      router.push("/login"); // Redirect to login after logout
-    } catch (error) {
-      alert("Logout failed. Try again.");
-    }
+  if (!token) {
+    redirect("/login");
   }
 
-  return (
-    <main className="p-8">
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      <button
-        onClick={handleLogout}
-        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-      >
-        Logout
-      </button>
-    </main>
-  );
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { email: string };
+    return (
+      <main className="p-8">
+        <h1 className="text-2xl font-bold">Welcome back, {decoded.email}</h1>
+        <p>This is your dashboard.</p>
+      </main>
+    );
+  } catch (err) {
+    redirect("/login");
+  }
 }

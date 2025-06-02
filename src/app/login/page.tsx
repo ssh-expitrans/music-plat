@@ -26,6 +26,7 @@ export default function Login() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // 👈 This is needed to store the cookie!
         body: JSON.stringify({ email, password }),
       });
 
@@ -37,6 +38,7 @@ export default function Login() {
       } else {
         setError(data.error || "Login failed. Please try again.");
       }
+
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -62,10 +64,7 @@ export default function Login() {
         )}
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <label
-            htmlFor="email"
-            className="text-gray-700 dark:text-gray-300 font-semibold"
-          >
+          <label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-semibold">
             Email
           </label>
           <input
@@ -77,10 +76,7 @@ export default function Login() {
             disabled={loading}
           />
 
-          <label
-            htmlFor="password"
-            className="text-gray-700 dark:text-gray-300 font-semibold"
-          >
+          <label htmlFor="password" className="text-gray-700 dark:text-gray-300 font-semibold">
             Password
           </label>
           <input
@@ -92,10 +88,7 @@ export default function Login() {
             disabled={loading}
           />
 
-          <Link
-            href="/forgot-password"
-            className="text-sm text-indigo-600 hover:underline self-end"
-          >
+          <Link href="/forgot-password" className="text-sm text-indigo-600 hover:underline self-end">
             Forgot password?
           </Link>
 
