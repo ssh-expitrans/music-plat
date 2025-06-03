@@ -4,18 +4,18 @@ import { useState } from "react";
 
 const tabs = ["Home", "Personal", "Book", "Buy", "Reschedule", "Account"];
 
-function getCurrentWeekDays(): Date[] {
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0 = Sunday
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - dayOfWeek);
-
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
-    return d;
-  });
-}
+// Define your time slots (could be customized):
+const timeSlots = [
+  "9:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+  "12:00 PM",
+  "1:00 PM",
+  "2:00 PM",
+  "3:00 PM",
+  "4:00 PM",
+  "5:00 PM",
+];
 
 function getMonthDays(year: number, month: number): Date[] {
   const date = new Date(year, month, 1);
@@ -29,11 +29,47 @@ function getMonthDays(year: number, month: number): Date[] {
 
 export default function DemoDashboard() {
   const [selectedTab, setSelectedTab] = useState("Home");
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+
+  // State for "Book" tab: current week start date
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const start = new Date(today);
+    start.setDate(today.getDate() - dayOfWeek);
+    start.setHours(0, 0, 0, 0);
+    return start;
+  });
+
+  // Handlers for week navigation
+  const prevWeek = () => {
+    setCurrentWeekStart((date) => {
+      const newDate = new Date(date);
+      newDate.setDate(newDate.getDate() - 7);
+      return newDate;
+    });
+  };
+
+  const nextWeek = () => {
+    setCurrentWeekStart((date) => {
+      const newDate = new Date(date);
+      newDate.setDate(newDate.getDate() + 7);
+      return newDate;
+    });
+  };
+
+  // Generate current week days for "Book"
+  const currentWeek = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(currentWeekStart);
+    d.setDate(currentWeekStart.getDate() + i);
+    return d;
+  });
 
   const renderContent = () => {
     switch (selectedTab) {
-      case "Home":
+      case "Home": {
         const today = new Date();
         const monthDays = getMonthDays(today.getFullYear(), today.getMonth());
 
@@ -90,6 +126,7 @@ export default function DemoDashboard() {
             </div>
           </div>
         );
+      }
 
       case "Personal":
         return (
@@ -115,55 +152,131 @@ export default function DemoDashboard() {
           </div>
         );
 
-      case "Book":
-        const weekDays = getCurrentWeekDays();
+case "Book":
+  return (
+    <div className="bg-white p-6 rounded-lg shadow">
+      <h2 className="text-2xl font-bold mb-4 text-blue-700">Book Lessons</h2>
+      <div className="flex justify-between items-center mb-4">
+        <button
+          onClick={prevWeek}
+          className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300"
+        >
+          Previous
+        </button>
+        <div className="font-semibold text-blue-800">
+          Week of{" "}
+          {currentWeekStart.toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          })}
+        </div>
+        <button
+          onClick={nextWeek}
+          className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300"
+        >
+          Next
+        </button>
+      </div>
 
-        return (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-4 text-blue-700">Book Lessons</h2>
-            <div className="flex justify-between gap-2">
-              {weekDays.map((date) => {
-                const dayNum = date.getDate();
-                const isSelected = selectedDay === dayNum;
-                const isToday =
-                  date.toDateString() === new Date().toDateString();
-                return (
-                  <button
-                    key={date.toISOString()}
-                    onClick={() => setSelectedDay(dayNum)}
-                    className={`flex-1 py-3 rounded border transition flex flex-col items-center
-                      ${
-                        isSelected
-                          ? "bg-yellow-400 text-blue-900 font-bold"
-                          : "bg-gray-100 hover:bg-yellow-200"
-                      }
-                      ${isToday ? "ring-2 ring-yellow-400" : ""}
-                    `}
-                    aria-label={`Select day ${dayNum}, ${date.toDateString()}`}
-                  >
-                    <span className="text-xs font-semibold text-gray-600">
-                      {date.toLocaleDateString(undefined, {
-                        weekday: "short",
-                      })}
-                    </span>
-                    <span className="text-lg">{dayNum}</span>
-                  </button>
-                );
+      {/* Calendar days */}
+      <div className="grid grid-cols-7 gap-2 text-center mb-6">
+        {currentWeek.map((date) => {
+          const dayString = date.toDateString();
+          const isSelected = selectedDay === dayString;
+          const isToday = dayString === new Date().toDateString();
+          return (
+            <button
+              key={dayString}
+              onClick={() => {
+                setSelectedDay(dayString);
+                setSelectedTime(null); // reset time when day changes
+              }}
+              className={`py-3 rounded cursor-pointer
+                ${
+                  isSelected
+                    ? "bg-yellow-400 text-blue-900 font-bold"
+                    : "bg-gray-100 hover:bg-yellow-200"
+                }
+                ${isToday ? "ring-2 ring-yellow-400" : ""}
+              `}
+              aria-label={`Select day ${date.toLocaleDateString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}`}
+            >
+              <div className="text-xs font-semibold text-gray-600">
+                {date.toLocaleDateString(undefined, { weekday: "short" })}
+              </div>
+              <div className="text-lg">{date.getDate()}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected day info */}
+      {selectedDay && (
+        <div>
+          <p className="mb-2 text-blue-700 font-semibold">
+            You selected{" "}
+            {new Date(selectedDay).toLocaleDateString(undefined, {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+
+          {/* Time slots */}
+<div className="max-w-md mx-auto">
+  <div className="grid grid-cols-3 gap-3">
+    {timeSlots.map((time) => (
+      <button
+        key={time}
+        onClick={() => setSelectedTime(time)}
+        className={`py-2 rounded cursor-pointer border font-semibold w-full
+          ${
+            selectedTime === time
+              ? "bg-yellow-400 text-blue-900 border-yellow-400"
+              : "bg-gray-100 hover:bg-yellow-200 border-transparent"
+          }
+        `}
+        aria-label={`Select time slot ${time}`}
+      >
+        {time}
+      </button>
+    ))}
+  </div>
+
+  {selectedTime && (
+    <div className="mt-4 text-center">
+      <button
+        onClick={() => alert(`Booked for ${selectedTime} on ${new Date(selectedDay!).toLocaleDateString()}`)}
+        className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 transition"
+      >
+        Book?
+      </button>
+    </div>
+  )}
+</div>
+
+
+
+          {/* Confirm or show selection */}
+          {selectedTime && (
+            <p className="mt-4 text-green-700 font-semibold">
+              You selected: {selectedTime} on{" "}
+              {new Date(selectedDay).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
               })}
-            </div>
-            {selectedDay && (
-              <p className="mt-4 text-blue-700 font-semibold">
-                You selected{" "}
-                {new Date(
-                  new Date().setDate(selectedDay)
-                ).toLocaleDateString(undefined, {
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            )}
-          </div>
-        );
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
 
       case "Buy":
         return (
@@ -221,9 +334,7 @@ export default function DemoDashboard() {
             key={tab}
             onClick={() => setSelectedTab(tab)}
             className={`text-left px-3 py-2 rounded font-semibold ${
-              selectedTab === tab
-                ? "bg-yellow-400 text-blue-800"
-                : "hover:bg-blue-500"
+              selectedTab === tab ? "bg-yellow-400 text-blue-800" : "hover:bg-blue-500"
             }`}
           >
             {tab}
@@ -245,6 +356,7 @@ export default function DemoDashboard() {
             Logout
           </button>
         </header>
+
         {renderContent()}
       </section>
     </main>
