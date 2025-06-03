@@ -2,49 +2,55 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // ✅ Add this
+
 
 export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter(); // ✅ Move it here
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setLoading(true);
+async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  setError("");
+  setLoading(true);
 
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get("email")?.toString().trim() || "";
-    const password = formData.get("password")?.toString() || "";
+  const formData = new FormData(event.currentTarget);
+  const email = formData.get("email")?.toString().trim() || "";
+  const password = formData.get("password")?.toString() || "";
 
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // 👈 This is needed to store the cookie!
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("Login successful!");
-        window.location.href = "/dashboard";
-      } else {
-        setError(data.error || "Login failed. Please try again.");
-      }
-
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  if (!email || !password) {
+    setError("Please enter both email and password.");
+    setLoading(false);
+    return;
   }
+
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      console.log("Login successful, redirecting...");
+      window.location.href = "/dashboard/personal";
+      console.log("router.push executed");
+    } else {
+      setError(data.error || "Login failed. Please try again.");
+    }
+  } catch (e) {
+    setError("Network error. Please try again.");
+    console.error(e);
+  } finally {
+    setLoading(false);
+  }
+}
+
+
 
   return (
     <>
