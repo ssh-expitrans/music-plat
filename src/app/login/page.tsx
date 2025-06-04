@@ -2,55 +2,67 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // ✅ Add this
-
+import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../lib/firebaseConfig";
+import { sendPasswordResetEmail } from "firebase/auth";
+import Cookies from "js-cookie";
 
 export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter(); // ✅ Move it here
+  const router = useRouter();
 
-async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  setError("");
-  setLoading(true);
+  async function handleResetPassword() {
+    const email = prompt("Enter your email to reset password:");
+    if (!email) return;
 
-  const formData = new FormData(event.currentTarget);
-  const email = formData.get("email")?.toString().trim() || "";
-  const password = formData.get("password")?.toString() || "";
-
-  if (!email || !password) {
-    setError("Please enter both email and password.");
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      console.log("Login successful, redirecting...");
-      window.location.href = "/dashboard/personal";
-      console.log("router.push executed");
-    } else {
-      setError(data.error || "Login failed. Please try again.");
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      alert("Password reset email sent! Please check your inbox.");
+    } catch (err: any) {
+      alert(err.message || "Failed to send reset email.");
     }
-  } catch (e) {
-    setError("Network error. Please try again.");
-    console.error(e);
-  } finally {
-    setLoading(false);
   }
-}
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
 
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
+
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        setError("Please verify your email before logging in.");
+        await auth.signOut();
+        setLoading(false);
+        return;
+      }
+
+      // Get Firebase ID Token (JWT)
+      const idToken = await user.getIdToken();
+
+      // Save token as cookie (valid for 1 day)
+      Cookies.set("token", idToken, { expires: 1 });
+
+      router.push("/dashboard/personal");
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please try again.");
+      setLoading(false);
+    }
+  }
 
   return (
     <>
@@ -65,9 +77,7 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
           Login
         </h1>
 
-        {error && (
-          <p className="mb-4 text-red-600 font-semibold text-center">{error}</p>
-        )}
+        {error && <p className="mb-4 text-red-600 font-semibold text-center">{error}</p>}
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-semibold">
@@ -94,9 +104,13 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
             disabled={loading}
           />
 
-          <Link href="/forgot-password" className="text-sm text-indigo-600 hover:underline self-end">
+          <button
+            type="button"
+            onClick={handleResetPassword}
+            className="text-sm text-indigo-600 hover:underline self-end"
+          >
             Forgot password?
-          </Link>
+          </button>
 
           <button
             type="submit"

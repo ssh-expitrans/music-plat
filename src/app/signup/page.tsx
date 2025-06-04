@@ -1,74 +1,58 @@
-"use client"; // mark as client component
+"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { auth } from "../../lib/firebaseConfig";
 
 export default function Signup() {
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const router = useRouter();
 
-async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  if (loading) return;
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
 
-  const form = event.currentTarget;
-  setLoading(true);
-  setError("");
-  setSuccess("");
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
+    const confirmPassword = formData.get("confirmPassword")?.toString() || "";
 
-  const formData = new FormData(event.currentTarget);
-  const name = formData.get("name")?.toString().trim() || "";
-  const email = formData.get("email")?.toString().trim() || "";
-  const password = formData.get("password")?.toString() || "";
-
-  if (!name || !email || !password) {
-    setError("Please fill all required fields.");
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
-
-    let data;
-    try {
-      data = await res.json();
-    } catch (jsonError) {
-      console.error("Failed to parse JSON:", jsonError);
-      setError("Invalid server response.");
+    if (!email || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
       setLoading(false);
       return;
     }
 
-    console.log("Response status:", res.status);
-    console.log("Response data:", data);
-
-    if (res.status === 201) {
-      setSuccess("Signup successful! You can now log in.");
-      setError("");
-      form.reset(); // ✅ This is safe and won’t crash
-    } else if (res.status === 409) {
-      setError("Email already registered");
-      setSuccess("");
-    } else if (!res.ok) {
-      setError(data.error || `Error: ${res.status}`);
-      setSuccess("");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
     }
 
-  } catch (err) {
-    console.error("Network or fetch error:", err);
-    setError("Network error, please try again.");
-    setSuccess("");
-  } finally {
-    setLoading(false);
-  }
-}
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Send email verification
+      if (auth.currentUser) {
+        await sendEmailVerification(auth.currentUser);
+        setMessage("Account created! Please check your email to verify your account.");
+      }
 
+      setLoading(false);
+
+      // Optionally redirect or require email verification before login
+      // router.push("/login");
+    } catch (err: any) {
+      setError(err.message || "Sign-up failed. Please try again.");
+      setLoading(false);
+    }
+  }
 
   return (
     <>
@@ -86,34 +70,13 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         {error && (
           <p className="mb-4 text-red-600 font-semibold text-center">{error}</p>
         )}
-        {success && (
-          <p className="mb-4 text-green-600 font-semibold text-center">{success}</p>
+
+        {message && (
+          <p className="mb-4 text-green-600 font-semibold text-center">{message}</p>
         )}
 
-        <form
-          id="signup-form"
-          className="flex flex-col gap-4"
-          onSubmit={handleSubmit}
-        >
-          <label
-            htmlFor="name"
-            className="text-gray-700 dark:text-gray-300 font-semibold"
-          >
-            Full Name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            disabled={loading}
-          />
-
-          <label
-            htmlFor="email"
-            className="text-gray-700 dark:text-gray-300 font-semibold"
-          >
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-semibold">
             Email
           </label>
           <input
@@ -125,10 +88,7 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
             disabled={loading}
           />
 
-          <label
-            htmlFor="password"
-            className="text-gray-700 dark:text-gray-300 font-semibold"
-          >
+          <label htmlFor="password" className="text-gray-700 dark:text-gray-300 font-semibold">
             Password
           </label>
           <input
@@ -136,6 +96,20 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
             name="password"
             type="password"
             required
+            minLength={6}
+            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            disabled={loading}
+          />
+
+          <label htmlFor="confirmPassword" className="text-gray-700 dark:text-gray-300 font-semibold">
+            Confirm Password
+          </label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            required
+            minLength={6}
             className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
             disabled={loading}
           />
@@ -147,12 +121,12 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? "Signing up..." : "Sign Up"}
+            {loading ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
-          Already signed up?{" "}
+          Already have an account?{" "}
           <Link href="/login" className="text-indigo-600 hover:underline">
             Log in here
           </Link>
