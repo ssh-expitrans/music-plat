@@ -227,40 +227,118 @@ export default function TeacherDemoDashboard() {
             </div>
           )}
 
-          {activeTab === "Settings" && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-800">Studio Settings</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-medium text-gray-700">Available Days:</label>
-                  <input
-                    type="text"
-                    defaultValue="Mon, Wed, Fri"
-                    className="w-full mt-1 p-2 border rounded"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium text-gray-700">Age Range:</label>
-                  <input
-                    type="text"
-                    defaultValue="7-14 years"
-                    className="w-full mt-1 p-2 border rounded"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium text-gray-700">Skill Levels:</label>
-                  <input
-                    type="text"
-                    defaultValue="Beginner to Advanced"
-                    className="w-full mt-1 p-2 border rounded"
-                    disabled
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+{activeTab === "Settings" && (
+  <div className="space-y-6">
+    <h2 className="text-xl font-semibold text-gray-800">Settings</h2>
+
+    {/* Personal Account Settings */}
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-700">Personal Account</h3>
+      
+      <div className="flex items-center space-x-4">
+        <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg border">
+          <img
+            src="/stockwoman.jpg"
+            alt="Profile Picture"
+            className="object-cover w-full h-full"
+          />
+        </div>
+        <label className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+          Change Picture
+          <input type="file" accept="image/*" className="hidden" />
+        </label>
+      </div>
+
+      <div>
+        <label htmlFor="bio" className="block font-medium text-gray-700 mb-1">
+          Bio
+        </label>
+        <textarea
+          id="bio"
+          rows={3}
+          className="w-full p-2 border rounded resize-none"
+          placeholder="Write a short bio..."
+          defaultValue="Music teacher with 10 years of experience..."
+        />
+      </div>
+    </div>
+
+    {/* Update Rate */}
+    <div>
+      <label htmlFor="updateRate" className="block font-medium text-gray-700 mb-1">
+        Update Frequency
+      </label>
+      <select
+        id="updateRate"
+        className="w-full p-2 border rounded"
+        defaultValue="weekly"
+      >
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="never">Never</option>
+      </select>
+    </div>
+
+    {/* Availability Type */}
+    <div>
+      <label htmlFor="availabilityType" className="block font-medium text-gray-700 mb-1">
+        Availability Type
+      </label>
+      <select
+        id="availabilityType"
+        className="w-full p-2 border rounded"
+        defaultValue="fixed"
+      >
+        <option value="fixed">Fixed Schedule</option>
+        <option value="flexible">Flexible</option>
+        <option value="on-demand">On Demand</option>
+      </select>
+    </div>
+
+    {/* Studio Settings (existing) */}
+    <div className="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label className="block font-medium text-gray-700">Available Days:</label>
+        <input
+          type="text"
+          defaultValue="Mon, Wed, Fri"
+          className="w-full mt-1 p-2 border rounded"
+          disabled
+        />
+      </div>
+      <div>
+        <label className="block font-medium text-gray-700">Age Range:</label>
+        <input
+          type="text"
+          defaultValue="7-14 years"
+          className="w-full mt-1 p-2 border rounded"
+          disabled
+        />
+      </div>
+      <div>
+        <label className="block font-medium text-gray-700">Skill Levels:</label>
+        <input
+          type="text"
+          defaultValue="Beginner to Advanced"
+          className="w-full mt-1 p-2 border rounded"
+          disabled
+        />
+      </div>
+    </div>
+
+    {/* Back to Main Site */}
+    <div className="mt-6 text-center">
+      <a
+        href="/"
+        className="inline-block px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+      >
+        Back to Main Site
+      </a>
+    </div>
+  </div>
+)}
+
         </div>
       </div>
     </div>

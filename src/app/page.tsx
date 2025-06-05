@@ -27,7 +27,7 @@ export default function Home() {
             </button>
           </Link>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/demodashboard')}
             className="btn-outline px-6 py-2 rounded"
           >
             My Dash
@@ -40,7 +40,7 @@ export default function Home() {
         {/* Image on left */}
         <div className="flex-shrink-0 w-32 h-32 rounded-full overflow-hidden shadow-lg">
           <img
-            src="/teacher-photo.jpg"
+            src="/stockwoman.jpg"
             alt="Photo of the music teacher"
             className="object-cover w-full h-full"
             loading="lazy"
