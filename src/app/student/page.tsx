@@ -20,7 +20,7 @@ export default async function PersonalDashboard() {
   let userData;
   try {
     userData = jwt.verify(token, JWT_SECRET) as { email: string; userId: string };
-  } catch (err) {
+  } catch {
     return (
       <div className="p-8">
         <h1 className="text-2xl font-bold text-red-600">Session Expired</h1>

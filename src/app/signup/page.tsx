@@ -2,15 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+// import { useRouter } from "next/navigation";
+// import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+// import { auth } from "../../lib/firebase";
 
 export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const router = useRouter();
+  // const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,20 +36,26 @@ export default function Signup() {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
       // Send email verification
-      if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser);
-        setMessage("Account created! Please check your email to verify your account.");
-      }
+      // if (auth.currentUser) {
+      //   await sendEmailVerification(auth.currentUser);
+      //   setMessage("Account created! Please check your email to verify your account.");
+      // }
 
+      // Temporary message for demo purposes
+      setMessage("Sign up functionality is currently disabled for demo.");
       setLoading(false);
 
       // Optionally redirect or require email verification before login
       // router.push("/login");
-    } catch (err: any) {
-      setError(err.message || "Sign-up failed. Please try again.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Sign-up failed. Please try again.");
+      }
       setLoading(false);
     }
   }

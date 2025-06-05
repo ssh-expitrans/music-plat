@@ -1,11 +1,24 @@
 "use client";
 
+export default function StudentDashboard() {
+  return (
+    <main className="p-4">
+      <h1 className="text-xl font-bold">Student Dashboard</h1>
+      <p>Welcome! Your next lesson is Monday at 3:00 PM.</p>
+    </main>
+  );
+}
+
+
+
+/*"use client";
+
 import React, { useState } from "react";
 
 const tabs = ["Home", "Personal", "Book", "Buy", "Upcoming", "Account"];
 
 // Define your time slots (could be customized):
-const timeSlots = [
+/*const timeSlots = [
   "9:00 AM",
   "10:00 AM",
   "11:00 AM",
@@ -36,14 +49,14 @@ const bookedLessons: Record<string, { time: string; students: number }> = {
 
 // Format Date to YYYY-MM-DD string
 const formatDateKey = (date: Date): string => date.toISOString().split("T")[0];
-
+ /*
 export default function DemoDashboard() {
   const [selectedTab, setSelectedTab] = useState("Home");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // State for "Book" tab: current week start date
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+ const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
     const dayOfWeek = today.getDay();
     const start = new Date(today);
@@ -169,7 +182,6 @@ export default function DemoDashboard() {
                   </div>
                 ))}
 
-                {/* Padding for first day of the month */}
                 {Array(monthDays[0].getDay())
                   .fill(null)
                   .map((_, idx) => (
@@ -193,7 +205,6 @@ export default function DemoDashboard() {
                     >
                       {day.getDate()}
 
-                      {/* Red dot indicator for booked lesson */}
                       {hasBooking && (
                         <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
                       )}
@@ -202,7 +213,6 @@ export default function DemoDashboard() {
                 })}
               </div>
 
-              {/* Selected day info below calendar */}
               <div className="mt-6 p-4 border rounded text-center">
             {selectedDay ? (
               bookedLessons[selectedDay] ? (
@@ -297,7 +307,7 @@ export default function DemoDashboard() {
           </div>
         );
 
-      case "Book":
+     /* case "Book":
         return (
           <div className="bg-white p-6 rounded-lg shadow max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-4 text-blue-700">Book Lessons</h2>
@@ -469,7 +479,6 @@ export default function DemoDashboard() {
 
   return (
     <main className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
       <aside className="w-48 bg-blue-600 text-white flex flex-col p-4 space-y-2">
         {tabs.map((tab) => (
           <button
@@ -484,7 +493,6 @@ export default function DemoDashboard() {
         ))}
       </aside>
 
-      {/* Content area */}
       <section className="flex-1 p-8">
         <header className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-blue-800">Demo Dashboard</h1>
@@ -509,4 +517,6 @@ export default function DemoDashboard() {
       </section>
     </main>
   );
-}
+*/
+  
+

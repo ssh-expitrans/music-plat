@@ -13,7 +13,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  
   async function handleResetPassword() {
     const email = prompt("Enter your email to reset password:");
     if (!email) return;
@@ -21,8 +20,12 @@ export default function Login() {
     try {
       await sendPasswordResetEmail(auth, email.trim());
       alert("Password reset email sent! Please check your inbox.");
-    } catch (err: any) {
-      alert(err.message || "Failed to send reset email.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert("Failed to send reset email.");
+      }
     }
   }
 
@@ -59,8 +62,12 @@ export default function Login() {
       Cookies.set("token", idToken, { expires: 1 });
 
       router.push("/dashboard/personal");
-    } catch (err: any) {
-      setError(err.message || "Login failed. Please try again.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
       setLoading(false);
     }
   }
