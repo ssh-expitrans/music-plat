@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { auth } from "../../lib/firebaseConfig";
+import { auth } from "../../lib/firebase";
 
 export default function Signup() {
   const [error, setError] = useState("");
