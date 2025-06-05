@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../lib/firebaseConfig";
+import { auth } from "../../lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import Cookies from "js-cookie";
 
@@ -13,6 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  
   async function handleResetPassword() {
     const email = prompt("Enter your email to reset password:");
     if (!email) return;
