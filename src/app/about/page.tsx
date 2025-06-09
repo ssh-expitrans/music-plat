@@ -26,7 +26,7 @@ export default function About() {
           <section className="flex-1 text-gray-800 dark:text-gray-300 text-lg space-y-6">
             <p>
               Hi! I’m <strong>[Teacher Name]</strong>, a passionate music teacher with over <strong>X years</strong> of experience.
-              I specialize in piano, guitar, and voice lessons tailored to all ages and skill levels.
+              I specialize in piano lessons tailored to all ages and skill levels.
             </p>
             <p>
               My teaching style focuses on building confidence and fostering a lifelong love of music.

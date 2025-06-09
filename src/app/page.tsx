@@ -51,7 +51,7 @@ export default function Home() {
         <div className="flex flex-col gap-4 max-w-xl">
           <h2 className="text-3xl font-semibold">Meet Jane Doe</h2>
           <p className="text-neutral-700 dark:text-neutral-300 text-lg">
-            Jane is a passionate music teacher with over 15 years of experience inspiring students of all ages. She specializes in piano and guitar lessons tailored to each individual’s goals.
+            Jane is a passionate music teacher with over 15 years of experience inspiring students of all ages. She specializes in piano lessons tailored to each individual’s goals.
           </p>
           <Link href="/about">
             <button className="btn-accent w-max mt-2 px-6 py-2 rounded">

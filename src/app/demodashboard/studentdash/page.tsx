@@ -2,279 +2,293 @@
 
 import React, { useState } from "react";
 
-// Helpers for dates
-function getMonthDays(year: number, month: number): Date[] {
-  const date = new Date(year, month, 1);
-  const days = [];
-  while (date.getMonth() === month) {
-    days.push(new Date(date));
-    date.setDate(date.getDate() + 1);
-  }
-  return days;
-}
+const tabs = ["Home", "Personal", "Book", "Buy", "Upcoming", "Account"];
 
-function formatDateKey(date: Date) {
-  return date.toISOString().split("T")[0];
-}
+const timeSlots = [
+  "9:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+  "1:00 PM",
+  "2:00 PM",
+  "3:00 PM",
+  "4:00 PM",
+];
 
-export default function StudentDash() {
-  // Tabs list
-  const tabs = ["Home", "Personal", "Book", "Buy", "Upcoming", "Account"];
-  const [activeTab, setActiveTab] = useState("Home");
+// Demo data for booked slots (key = "DayString-TimeString")
+const demoSlotCounts: Record<string, number> = {
+  // example: "Fri Jun 14 2024-9:00 AM": 3,
+};
 
-  // State for Home tab calendar
+// Demo current week days (Mon-Fri for simplicity)
+function getCurrentWeek() {
   const today = new Date();
-  const monthDays = getMonthDays(today.getFullYear(), today.getMonth());
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const week = [];
+  const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // get Monday
 
-  // Example booked lessons data (keyed by ISO date)
-  const bookedLessons: Record<string, { time: string; students: string }> = {
-    "2025-06-09": { time: "3:00 PM", students: "Emma Johnson" },
-    "2025-06-16": { time: "4:30 PM", students: "Johnny Appleseed" },
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    week.push(d);
+  }
+  return week;
+}
+
+export default function StudentDashboard() {
+  const [activeTab, setActiveTab] = useState("Home");
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+  const currentWeek = getCurrentWeek();
+
+  // Dummy personal info
+  const personalInfo = {
+    dob: "2005-05-20",
+    ageGroup: "Teen",
+    skillLevel: "Intermediate",
+    email: "student@example.com",
+    progress: 65, // %
   };
 
-  // Homework state
-  const [homeworkDone, setHomeworkDone] = useState<Record<string, boolean>>({});
-
-  function toggleHomework(item: string) {
-    setHomeworkDone((prev) => ({
-      ...prev,
-      [item]: !prev[item],
-    }));
-  }
-
-  const homeworkItems = [
-    "Practice C major scale 5 times",
-    "Watch jazz phrasing video (10 min)",
-  ];
-
-  // Render content for each tab
-  function renderTabContent() {
-    switch (activeTab) {
-      case "Home":
-        return (
-          <div className="space-y-4">
-            {/* Welcome and next session */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-2 text-blue-700">
-                Welcome Back, Johnny!
-              </h2>
-              <p className="text-gray-800">
-                Your next session is on <strong>Maytember 16 at 3:00 PM</strong>.
-              </p>
-            </div>
-
-            {/* Monthly calendar */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2 text-blue-700">
-                This Month&apos;s Calendar
-              </h3>
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <div key={day} className="font-bold text-sm text-gray-600">
-                    {day}
-                  </div>
-                ))}
-
-                {/* Padding days */}
-                {Array(monthDays[0].getDay())
-                  .fill(null)
-                  .map((_, idx) => (
-                    <div key={`pad-${idx}`}></div>
-                  ))}
-
-                {/* Days */}
-                {monthDays.map((day) => {
-                  const dayKey = formatDateKey(day);
-                  const isToday = day.toDateString() === today.toDateString();
-                  const hasBooking = bookedLessons[dayKey] !== undefined;
-
-                  return (
-                    <button
-                      key={dayKey}
-                      onClick={() => setSelectedDay(dayKey)}
-                      className={`relative py-2 rounded cursor-pointer w-full
-                        ${
-                          isToday
-                            ? "bg-yellow-400 font-bold text-blue-900"
-                            : "hover:bg-yellow-100"
-                        }
-                      `}
-                      aria-label={`Day ${day.getDate()}${
-                        hasBooking ? ", booked lesson" : ", no lesson"
-                      }`}
-                      type="button"
-                    >
-                      {day.getDate()}
-
-                      {hasBooking && (
-                        <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Booking info */}
-              <div className="mt-6 p-4 border rounded text-center">
-                {selectedDay ? (
-                  bookedLessons[selectedDay] ? (
-                    <>
-                      <h4 className="font-bold text-lg mb-2">
-                        Lesson on {new Date(selectedDay).toLocaleDateString()}
-                      </h4>
-                      <p>
-                        Time: {bookedLessons[selectedDay].time} <br />
-                        Students: {bookedLessons[selectedDay].students}
-                      </p>
-                      <a
-                        href={`/reschedule?date=${selectedDay}`}
-                        className="inline-block mt-3 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition"
-                      >
-                        Reschedule?
-                      </a>
-                    </>
-                  ) : (
-                    <>
-                      <p>
-                        No lesson booked for{" "}
-                        {new Date(selectedDay).toLocaleDateString()}.
-                      </p>
-                      <a
-                        href={`/booking?date=${selectedDay}`}
-                        className="inline-block mt-2 px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 transition"
-                      >
-                        Book?
-                      </a>
-                    </>
-                  )
-                ) : (
-                  <p>Click a day to see lesson info or book.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Homework */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2 text-blue-700">
-                Assigned Homework
-              </h3>
-              <ul className="list-disc list-inside text-gray-800">
-                {homeworkItems.map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={homeworkDone[item] || false}
-                      onChange={() => toggleHomework(item)}
-                      className="form-checkbox h-5 w-5 text-blue-600"
-                      aria-label={`Mark homework "${item}" as done`}
-                    />
-                    <span
-                      className={
-                        homeworkDone[item] ? "line-through text-gray-500" : ""
-                      }
-                    >
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        );
-
-      case "Personal":
-        return (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">
-              Personal Info
-            </h2>
-            <p>DOB: January 1, 2000</p>
-            <p>Age Group: Adult</p>
-            <p>Skill Level: Intermediate</p>
-            <p>Contact Email: johnny@example.com</p>
-            {/* You can add a progress bar and other info here */}
-          </div>
-        );
-
-      case "Book":
-        return (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">
-              Book Lessons
-            </h2>
-            <p>
-              {/* Placeholder for booking calendar */}
-              Booking calendar will go here.
-            </p>
-          </div>
-        );
-
-      case "Buy":
-        return (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">
-              Payment Form
-            </h2>
-            <p>Payment form will go here (skipped for now).</p>
-          </div>
-        );
-
-      case "Upcoming":
-        return (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">
-              Upcoming Lessons
-            </h2>
-            <ul>
-              {Object.entries(bookedLessons).map(([date, lesson]) => (
-                <li key={date} className="mb-2">
-                  <strong>{new Date(date).toLocaleDateString()}</strong> - {lesson.time} with {lesson.students}{" "}
-                  <button className="ml-2 text-red-600 hover:underline">
-                    Cancel
-                  </button>
-                  <button className="ml-2 text-blue-600 hover:underline">
-                    Reschedule
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-
-      case "Account":
-        return (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">Account</h2>
-            <p>This is a demo dashboard. Please log in or sign up.</p>
-            {/* Add login/logout UI here */}
-          </div>
-        );
-
-      default:
-        return <div>Unknown tab</div>;
-    }
-  }
-
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-900">
-      {/* Sidebar for tabs */}
-      <nav className="w-48 bg-white shadow-md flex flex-col p-4 space-y-2 sticky top-0">
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar Tabs */}
+      <nav className="w-48 bg-white border-r border-gray-300 p-4 flex flex-col space-y-2">
         {tabs.map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`text-left px-3 py-2 rounded hover:bg-blue-100 transition ${
-              activeTab === tab ? "bg-blue-500 text-white font-semibold" : ""
-            }`}
+            onClick={() => {
+              setActiveTab(tab);
+              setSelectedDay(null);
+              setSelectedTime(null);
+            }}
+            className={`py-2 px-3 rounded text-left font-semibold hover:bg-blue-100 transition
+              ${
+                activeTab === tab
+                  ? "bg-blue-700 text-white"
+                  : "text-blue-700"
+              }`}
           >
             {tab}
           </button>
         ))}
       </nav>
 
-      {/* Content area */}
-      <main className="flex-1 p-6 overflow-auto">{renderTabContent()}</main>
+      {/* Main Content */}
+      <main className="flex-1 p-8 overflow-auto">
+        {activeTab === "Home" && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-bold mb-2 text-blue-700">
+                Welcome Back, Johnny!
+              </h2>
+              <p className="text-gray-800">
+                Your next session is on <strong>Maytember 16 at 3:00 PM</strong>.
+              </p>
+            </div>
+            {/* You can add more home content here */}
+          </div>
+        )}
+
+        {activeTab === "Personal" && (
+          <div className="bg-white p-6 rounded-lg shadow max-w-md mx-auto space-y-4">
+            <h2 className="text-2xl font-bold text-blue-700">Personal Info</h2>
+            <div>
+              <p>
+                <strong>Date of Birth:</strong> {personalInfo.dob}
+              </p>
+              <p>
+                <strong>Age Group:</strong> {personalInfo.ageGroup}
+              </p>
+              <p>
+                <strong>Skill Level:</strong> {personalInfo.skillLevel}
+              </p>
+              <p>
+                <strong>Email:</strong> {personalInfo.email}
+              </p>
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Progress</label>
+              <div className="w-full bg-gray-200 rounded-full h-6">
+                <div
+                  className="bg-blue-700 h-6 rounded-full transition-all"
+                  style={{ width: `${personalInfo.progress}%` }}
+                />
+              </div>
+              <p className="text-right text-sm text-gray-600">
+                {personalInfo.progress}%
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "Book" && (
+          <div className="bg-white p-6 rounded-lg shadow max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold mb-4 text-blue-700">Book Lessons</h2>
+            <div className="flex flex-col divide-y divide-gray-300">
+              {currentWeek.map((day) => {
+                const dayOfWeek = day.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                  return (
+                    <div
+                      key={day.toDateString()}
+                      className="py-4 flex flex-col items-center text-gray-400"
+                    >
+                      <h3 className="text-lg font-semibold mb-2">
+                        {day.toLocaleDateString(undefined, {
+                          weekday: "long",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </h3>
+                      <p>No slots available</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={day.toDateString()} className="py-4">
+                    <h3 className="text-lg font-semibold mb-3 text-blue-700">
+                      {day.toLocaleDateString(undefined, {
+                        weekday: "long",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      {timeSlots.map((time) => {
+                        const key = `${day.toDateString()}-${time}`;
+                        const booked = demoSlotCounts[key] ?? 0;
+                        const isSelected =
+                          selectedDay === day.toDateString() && selectedTime === time;
+
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => {
+                              setSelectedDay(day.toDateString());
+                              setSelectedTime(time);
+                            }}
+                            className={`rounded px-3 py-2 border w-full text-sm flex flex-col items-center transition
+                              ${
+                                isSelected
+                                  ? "bg-yellow-400 text-blue-900 border-yellow-400 font-bold"
+                                  : "bg-gray-100 text-gray-900 hover:bg-yellow-200 border-transparent"
+                              }`}
+                            aria-label={`Book slot on ${day.toLocaleDateString(undefined, {
+                              weekday: "long",
+                              month: "short",
+                              day: "numeric",
+                            })} at ${time}`}
+                          >
+                            <span>{time}</span>
+                            <span className="text-xs text-gray-600 flex items-center gap-1">
+                              👥 {booked}/8
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedDay && selectedTime && (
+              <div className="mt-6 text-center">
+                <p className="mb-2 text-blue-700 font-semibold">
+                  You selected {selectedTime} on{" "}
+                  {new Date(selectedDay).toLocaleDateString(undefined, {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+                <button
+                  onClick={() =>
+                    alert(
+                      `Booked for ${selectedTime} on ${new Date(
+                        selectedDay
+                      ).toLocaleDateString()}`
+                    )
+                  }
+                  className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 transition"
+                >
+                  Book Now
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "Buy" && (
+          <div className="grid gap-4 md:grid-cols-2 max-w-4xl mx-auto">
+            {[
+              { name: "Single Lesson", price: "$30", desc: "One 30-minute session" },
+              { name: "5-Pack", price: "$140", desc: "Save $10 on 5 lessons" },
+              { name: "10-Pack", price: "$270", desc: "Save $30 on 10 lessons" },
+            ].map((pkg) => (
+              <div key={pkg.name} className="border p-4 rounded shadow bg-white">
+                <h3 className="text-lg font-bold text-blue-700">{pkg.name}</h3>
+                <p className="text-gray-800">{pkg.desc}</p>
+                <p className="text-xl font-semibold text-blue-900 mt-2">{pkg.price}</p>
+                <button className="mt-4 px-4 py-2 bg-yellow-400 rounded hover:bg-yellow-300">
+                  Purchase
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "Upcoming" && (
+          <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
+            <h2 className="text-2xl font-bold mb-4 text-blue-700">Upcoming Lessons</h2>
+            <ul className="divide-y divide-gray-200">
+              {/* Demo upcoming lessons */}
+              <li className="py-3 flex justify-between items-center">
+                <div>
+                  <p className="font-semibold">June 10, 2025 - 3:00 PM</p>
+                  <p className="text-gray-600">Guitar - Emma Johnson</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
+                    Reschedule
+                  </button>
+                  <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    Cancel
+                  </button>
+                </div>
+              </li>
+              <li className="py-3 flex justify-between items-center">
+                <div>
+                  <p className="font-semibold">June 17, 2025 - 1:00 PM</p>
+                  <p className="text-gray-600">Piano - John Doe</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
+                    Reschedule
+                  </button>
+                  <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    Cancel
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {activeTab === "Account" && (
+          <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow text-center">
+            <h2 className="text-2xl font-bold mb-4 text-blue-700">Account</h2>
+            <p>This is a demo dashboard. Please log in or sign up.</p>
+            <button className="mt-6 px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800">
+              Log In
+            </button>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
