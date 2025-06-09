@@ -19,7 +19,7 @@ const demoSlotCounts: Record<string, number> = {
   // example: "Fri Jun 14 2024-9:00 AM": 3,
 };
 
-// Demo current week days (Mon-Fri for simplicity)
+// Demo current week days (Mon-Sun)
 function getCurrentWeek() {
   const today = new Date();
   const week = [];
@@ -87,7 +87,6 @@ export default function StudentDashboard() {
                 Your next session is on <strong>Maytember 16 at 3:00 PM</strong>.
               </p>
             </div>
-            {/* You can add more home content here */}
           </div>
         )}
 
@@ -124,39 +123,46 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === "Book" && (
-          <div className="bg-white p-6 rounded-lg shadow max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-4 text-blue-700">Book Lessons</h2>
-            <div className="flex flex-col divide-y divide-gray-300">
+          <div className="bg-white p-6 rounded-lg shadow max-w-6xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6 text-blue-700">Book Lessons</h2>
+
+            <div className="flex space-x-4 overflow-x-auto">
+              {/* Days horizontally */}
               {currentWeek.map((day) => {
                 const dayOfWeek = day.getDay();
+
+                // Weekends - show disabled
                 if (dayOfWeek === 0 || dayOfWeek === 6) {
                   return (
                     <div
                       key={day.toDateString()}
-                      className="py-4 flex flex-col items-center text-gray-400"
+                      className="flex-shrink-0 w-40 p-4 border rounded text-center text-gray-400"
                     >
-                      <h3 className="text-lg font-semibold mb-2">
+                      <h3 className="text-lg font-semibold mb-3">
                         {day.toLocaleDateString(undefined, {
-                          weekday: "long",
+                          weekday: "short",
                           month: "short",
                           day: "numeric",
                         })}
                       </h3>
-                      <p>No slots available</p>
+                      <p>No slots</p>
                     </div>
                   );
                 }
 
                 return (
-                  <div key={day.toDateString()} className="py-4">
-                    <h3 className="text-lg font-semibold mb-3 text-blue-700">
+                  <div
+                    key={day.toDateString()}
+                    className="flex-shrink-0 w-40 p-4 border rounded"
+                  >
+                    <h3 className="text-lg font-semibold mb-3 text-blue-700 text-center">
                       {day.toLocaleDateString(undefined, {
-                        weekday: "long",
+                        weekday: "short",
                         month: "short",
                         day: "numeric",
                       })}
                     </h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col space-y-2">
                       {timeSlots.map((time) => {
                         const key = `${day.toDateString()}-${time}`;
                         const booked = demoSlotCounts[key] ?? 0;
@@ -170,7 +176,7 @@ export default function StudentDashboard() {
                               setSelectedDay(day.toDateString());
                               setSelectedTime(time);
                             }}
-                            className={`rounded px-3 py-2 border w-full text-sm flex flex-col items-center transition
+                            className={`rounded px-3 py-1 border text-sm flex flex-col items-center transition
                               ${
                                 isSelected
                                   ? "bg-yellow-400 text-blue-900 border-yellow-400 font-bold"
@@ -246,11 +252,11 @@ export default function StudentDashboard() {
           <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
             <h2 className="text-2xl font-bold mb-4 text-blue-700">Upcoming Lessons</h2>
             <ul className="divide-y divide-gray-200">
-              {/* Demo upcoming lessons */}
+              {/* Demo upcoming lessons with only piano */}
               <li className="py-3 flex justify-between items-center">
                 <div>
                   <p className="font-semibold">June 10, 2025 - 3:00 PM</p>
-                  <p className="text-gray-600">Guitar - Emma Johnson</p>
+                  <p className="text-gray-600">Piano - Emma Johnson</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
