@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -62,9 +61,9 @@ export default function StudentDashboard() {
   const currentWeek = getCurrentWeekSundayStart();
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-slate-50">
       {/* Sidebar Tabs */}
-      <nav className="w-48 bg-white border-r border-gray-300 p-4 flex flex-col space-y-2">
+      <nav className="w-48 bg-white border-r border-slate-200 p-4 flex flex-col space-y-2 shadow-sm">
         {tabs.map((tab) => (
           <button
             key={tab}
@@ -73,11 +72,11 @@ export default function StudentDashboard() {
               setSelectedDay(null);
               setSelectedTime(null);
             }}
-            className={`py-2 px-3 rounded text-left font-semibold hover:bg-blue-100 transition
+            className={`py-3 px-4 rounded-lg text-left font-medium hover:bg-indigo-50 transition-colors
               ${
                 activeTab === tab
-                  ? "bg-blue-700 text-white"
-                  : "text-blue-700"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-slate-700 hover:text-indigo-600"
               }`}
           >
             {tab}
@@ -89,47 +88,47 @@ export default function StudentDashboard() {
       <main className="flex-1 p-8 overflow-auto">
         {activeTab === "Home" && (
           <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-2xl font-bold mb-2 text-blue-700">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <h2 className="text-3xl font-bold mb-3 text-slate-800">
                 Welcome Back, {personalInfo.name}!
               </h2>
-              <p className="text-gray-800">
+              <p className="text-slate-600 text-lg">
                 Your next session is on{" "}
-                <strong>June 10 at 10:00 AM</strong>.
+                <span className="font-semibold text-indigo-600">June 10 at 10:00 AM</span>.
               </p>
             </div>
           </div>
         )}
 
         {activeTab === "Personal" && (
-          <div className="bg-white p-6 rounded-lg shadow max-w-md mx-auto space-y-4">
-            <h2 className="text-2xl font-bold text-blue-700">Personal Info</h2>
-            <div>
-              <p>
-                <strong>Name:</strong> {personalInfo.name}
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 max-w-md mx-auto space-y-6">
+            <h2 className="text-3xl font-bold text-slate-800">Personal Info</h2>
+            <div className="space-y-3">
+              <p className="text-slate-700">
+                <span className="font-semibold text-slate-800">Name:</span> {personalInfo.name}
               </p>
-              <p>
-                <strong>Date of Birth:</strong> {personalInfo.dob}
+              <p className="text-slate-700">
+                <span className="font-semibold text-slate-800">Date of Birth:</span> {personalInfo.dob}
               </p>
-              <p>
-                <strong>Age Group:</strong> {personalInfo.ageGroup}
+              <p className="text-slate-700">
+                <span className="font-semibold text-slate-800">Age Group:</span> {personalInfo.ageGroup}
               </p>
-              <p>
-                <strong>Skill Level:</strong> {personalInfo.skillLevel}
+              <p className="text-slate-700">
+                <span className="font-semibold text-slate-800">Skill Level:</span> {personalInfo.skillLevel}
               </p>
-              <p>
-                <strong>Email:</strong> {personalInfo.email}
+              <p className="text-slate-700">
+                <span className="font-semibold text-slate-800">Email:</span> {personalInfo.email}
               </p>
             </div>
             <div>
-              <label className="block font-semibold mb-1">Progress</label>
-              <div className="w-full bg-gray-200 rounded-full h-6">
+              <label className="block font-semibold mb-2 text-slate-800">Progress</label>
+              <div className="w-full bg-slate-200 rounded-full h-8">
                 <div
-                  className="bg-blue-700 h-6 rounded-full transition-all"
+                  className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-8 rounded-full transition-all shadow-sm"
                   style={{ width: `${personalInfo.progress}%` }}
                 />
               </div>
-              <p className="text-right text-sm text-gray-600">
+              <p className="text-right text-sm text-slate-600 mt-1">
                 {personalInfo.progress}%
               </p>
             </div>
@@ -137,8 +136,8 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === "Book" && (
-          <div className="bg-white p-6 rounded-lg shadow max-w-7xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6 text-blue-700">Book Lessons</h2>
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 max-w-7xl mx-auto">
+            <h2 className="text-3xl font-bold mb-8 text-slate-800">Book Lessons</h2>
 
             {/* Days horizontally - all visible */}
             <div className="grid grid-cols-7 gap-4">
@@ -150,7 +149,7 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={day.toDateString()}
-                      className="p-4 border rounded text-center text-gray-400"
+                      className="p-4 border border-slate-200 rounded-lg text-center text-slate-400 bg-slate-50"
                     >
                       <h3 className="text-lg font-semibold mb-3">
                         {day.toLocaleDateString(undefined, {
@@ -167,9 +166,9 @@ export default function StudentDashboard() {
                 return (
                   <div
                     key={day.toDateString()}
-                    className="p-4 border rounded flex flex-col items-center"
+                    className="p-4 border border-slate-200 rounded-lg flex flex-col items-center bg-white"
                   >
-                    <h3 className="text-lg font-semibold mb-3 text-blue-700 text-center">
+                    <h3 className="text-lg font-semibold mb-3 text-slate-800 text-center">
                       {day.toLocaleDateString(undefined, {
                         weekday: "short",
                         month: "short",
@@ -191,11 +190,11 @@ export default function StudentDashboard() {
                               setSelectedDay(day.toDateString());
                               setSelectedTime(time);
                             }}
-                            className={`rounded px-3 py-2 border text-sm flex flex-col items-center transition min-h-[120px] justify-center
+                            className={`rounded-lg px-3 py-2 border text-sm flex flex-col items-center transition-all min-h-[120px] justify-center
                               ${
                                 isSelected
-                                  ? "bg-yellow-400 text-blue-900 border-yellow-400 font-bold"
-                                  : "bg-gray-100 text-gray-900 hover:bg-yellow-200 border-transparent"
+                                  ? "bg-amber-400 text-slate-900 border-amber-400 font-semibold shadow-md"
+                                  : "bg-slate-50 text-slate-700 hover:bg-amber-100 border-slate-200 hover:border-amber-200"
                               }`}
                             aria-label={`Book slot on ${day.toLocaleDateString(undefined, {
                               weekday: "long",
@@ -205,13 +204,13 @@ export default function StudentDashboard() {
                           >
                             <span className="font-semibold text-base mb-2">{time}</span>
                             {slot ? (
-                              <div className="text-xs text-gray-700 flex flex-col items-center space-y-1">
+                              <div className="text-xs text-slate-600 flex flex-col items-center space-y-1">
                                 <span className="font-medium">{slot.booked}/8 students</span>
                                 <span>{slot.skill}</span>
                                 <span>{slot.ageGroup}</span>
                               </div>
                             ) : (
-                              <div className="text-xs text-gray-500 flex flex-col items-center space-y-1">
+                              <div className="text-xs text-slate-500 flex flex-col items-center space-y-1">
                                 <span>0/8 students</span>
                                 <span>Available</span>
                               </div>
@@ -226,8 +225,8 @@ export default function StudentDashboard() {
             </div>
 
             {selectedDay && selectedTime && (
-              <div className="mt-6 text-center">
-                <p className="mb-2 text-blue-700 font-semibold">
+              <div className="mt-8 text-center">
+                <p className="mb-4 text-slate-700 font-medium text-lg">
                   You selected {selectedTime} on{" "}
                   {new Date(selectedDay).toLocaleDateString(undefined, {
                     weekday: "long",
@@ -244,7 +243,7 @@ export default function StudentDashboard() {
                       ).toLocaleDateString()}`
                     )
                   }
-                  className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 transition"
+                  className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
                 >
                   Book Now
                 </button>
@@ -254,23 +253,167 @@ export default function StudentDashboard() {
  )}
 
         {activeTab === "Buy" && (
-          <div className="grid gap-4 md:grid-cols-2 max-w-4xl mx-auto">
-            {[
-              { name: "Single Lesson", price: "$30", desc: "One 30-minute session" },
-              { name: "5-Pack", price: "$140", desc: "Save $10 on 5 lessons" },
-              { name: "10-Pack", price: "$270", desc: "Save $30 on 10 lessons" },
-            ].map((pkg) => (
-              <div key={pkg.name} className="border p-4 rounded shadow bg-white">
-                <h3 className="text-lg font-bold text-blue-700">{pkg.name}</h3>
-                <p className="text-gray-800">{pkg.desc}</p>
-                <p className="text-xl font-semibold text-blue-900 mt-2">{pkg.price}</p>
-                <button className="mt-4 px-4 py-2 bg-yellow-400 rounded hover:bg-yellow-300">
-                  Purchase
-                </button>
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold mb-8 text-slate-800 text-center">Piano Lesson Packages</h2>
+            
+            {/* Individual Lesson Packages */}
+            <div className="mb-12">
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Individual Lessons</h3>
+              <div className="grid gap-6 md:grid-cols-4">
+                {[
+                  { 
+                    name: "Single Lesson", 
+                    price: "$30", 
+                    desc: "One 30-minute session",
+                    popular: false,
+                    features: ["Individual attention", "Flexible scheduling", "Perfect for trying out"]
+                  },
+                  { 
+                    name: "4-Pack", 
+                    price: "$115", 
+                    desc: "Save $5 on 4 lessons",
+                    popular: false,
+                    features: ["$28.75 per lesson", "1-month validity", "Great for beginners"]
+                  },
+                  { 
+                    name: "8-Pack", 
+                    price: "$220", 
+                    desc: "Save $20 on 8 lessons",
+                    popular: true,
+                    features: ["$27.50 per lesson", "2-month validity", "Most popular choice"]
+                  },
+                  { 
+                    name: "12-Pack", 
+                    price: "$315", 
+                    desc: "Save $45 on 12 lessons",
+                    popular: false,
+                    features: ["$26.25 per lesson", "3-month validity", "Best value"]
+                  },
+                ].map((pkg) => (
+                  <div key={pkg.name} className={`border rounded-xl p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
+                    {pkg.popular && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                      </div>
+                    )}
+                    <h4 className="text-xl font-bold text-slate-800 mb-2">{pkg.name}</h4>
+                    <p className="text-slate-600 mb-3">{pkg.desc}</p>
+                    <p className="text-3xl font-bold text-indigo-600 mb-4">{pkg.price}</p>
+                    <ul className="text-sm text-slate-600 mb-6 space-y-2">
+                      {pkg.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center">
+                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-3"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <button className={`w-full py-3 rounded-lg font-medium transition-colors ${pkg.popular ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                      Purchase
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Extended Lesson Options */}
+            <div className="mb-12">
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Extended Lessons</h3>
+              <div className="grid gap-6 md:grid-cols-3">
+                {[
+                  { name: "45-Minute Single", price: "$40", desc: "Extended individual session", duration: "45 minutes" },
+                  { name: "45-Minute 6-Pack", price: "$225", desc: "Save $15 on extended lessons", duration: "6 x 45-minute sessions" },
+                  { name: "60-Minute Single", price: "$50", desc: "Full hour private lesson", duration: "60 minutes" },
+                ].map((item) => (
+                  <div key={item.name} className="border border-slate-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-lg font-semibold text-slate-800 mb-2">{item.name}</h4>
+                    <p className="text-slate-600 text-sm mb-2">{item.desc}</p>
+                    <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
+                    <p className="text-xl font-bold text-indigo-600 mb-4">{item.price}</p>
+                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                      Purchase
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Monthly Unlimited */}
+            <div className="mb-12">
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Monthly Unlimited</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                {[
+                  { 
+                    name: "Unlimited Standard", 
+                    price: "$199/month", 
+                    desc: "Unlimited 30-minute lessons",
+                    features: ["Book up to 2 lessons per day", "30-minute sessions", "Cancel anytime", "Practice room access"]
+                  },
+                  { 
+                    name: "Unlimited Premium", 
+                    price: "$299/month", 
+                    desc: "Unlimited lessons + perks",
+                    features: ["Mix of 30, 45, 60-minute sessions", "Priority booking", "Sheet music library access", "Recital preparation included"]
+                  },
+                ].map((membership) => (
+                  <div key={membership.name} className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-xl font-bold text-slate-800 mb-2">{membership.name}</h4>
+                    <p className="text-slate-600 mb-3">{membership.desc}</p>
+                    <p className="text-2xl font-bold text-indigo-600 mb-4">{membership.price}</p>
+                    <ul className="text-sm text-slate-600 mb-6 space-y-2">
+                      {membership.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center">
+                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-3"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <button className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                      Start Plan
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Special Piano Programs */}
+            <div>
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Special Programs</h3>
+              <div className="grid gap-6 md:grid-cols-3">
+                {[
+                  { 
+                    name: "Recital Prep Package", 
+                    price: "$150", 
+                    desc: "5 focused sessions for performance",
+                    duration: "5 x 45-minute sessions"
+                  },
+                  { 
+                    name: "Theory Intensive", 
+                    price: "$120", 
+                    desc: "4 sessions focused on music theory",
+                    duration: "4 x 30-minute sessions"
+                  },
+                  { 
+                    name: "Sight-Reading Bootcamp", 
+                    price: "$100", 
+                    desc: "6 sessions to improve reading skills",
+                    duration: "6 x 30-minute sessions"
+                  },
+                ].map((program) => (
+                  <div key={program.name} className="border border-slate-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-lg font-semibold text-slate-800 mb-2">{program.name}</h4>
+                    <p className="text-slate-600 text-sm mb-2">{program.desc}</p>
+                    <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
+                    <p className="text-xl font-bold text-indigo-600 mb-4">{program.price}</p>
+                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                      Enroll Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
+  
 
         {activeTab === "Upcoming" && (
           <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
