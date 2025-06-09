@@ -14,22 +14,30 @@ const timeSlots = [
   "4:00 PM",
 ];
 
-// Demo data for booked slots (key = "DayString-TimeString")
-const demoSlotCounts: Record<string, number> = {
-  // example: "Fri Jun 14 2024-9:00 AM": 3,
+// Hardcoded demo bookings: key = "DayString-TimeString"
+const demoSlotData: Record<
+  string,
+  { booked: number; skill: string; ageGroup: string }
+> = {
+  "Sun Jun 9 2024-9:00 AM": { booked: 2, skill: "Beginner", ageGroup: "Kids" },
+  "Mon Jun 10 2024-10:00 AM": { booked: 5, skill: "Intermediate", ageGroup: "Teens" },
+  "Tue Jun 11 2024-11:00 AM": { booked: 1, skill: "Advanced", ageGroup: "Teens" },
+  "Wed Jun 12 2024-1:00 PM": { booked: 3, skill: "Beginner", ageGroup: "Kids" },
+  "Thu Jun 13 2024-2:00 PM": { booked: 4, skill: "Intermediate", ageGroup: "Teens" },
+  "Fri Jun 14 2024-3:00 PM": { booked: 6, skill: "Advanced", ageGroup: "Teens" },
+  // Saturday has no slots booked (weekend no slots)
 };
 
-// Demo current week days (Mon-Sun)
-function getCurrentWeek() {
+// Utility: get current week's Sunday-Saturday dates
+function getCurrentWeekSundayStart() {
   const today = new Date();
+  const dayOfWeek = today.getDay(); // Sunday = 0
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - dayOfWeek);
   const week = [];
-  const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // get Monday
-
   for (let i = 0; i < 7; i++) {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
     week.push(d);
   }
   return week;
@@ -40,16 +48,17 @@ export default function StudentDashboard() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  const currentWeek = getCurrentWeek();
-
-  // Dummy personal info
+  // Example kid user info
   const personalInfo = {
-    dob: "2005-05-20",
-    ageGroup: "Teen",
-    skillLevel: "Intermediate",
-    email: "student@example.com",
-    progress: 65, // %
+    name: "Timmy Turner",
+    dob: "2011-09-15",
+    ageGroup: "Kids",
+    skillLevel: "Beginner",
+    email: "timmy.turner@example.com",
+    progress: 40,
   };
+
+  const currentWeek = getCurrentWeekSundayStart();
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -81,10 +90,11 @@ export default function StudentDashboard() {
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-2xl font-bold mb-2 text-blue-700">
-                Welcome Back, Johnny!
+                Welcome Back, {personalInfo.name}!
               </h2>
               <p className="text-gray-800">
-                Your next session is on <strong>Maytember 16 at 3:00 PM</strong>.
+                Your next session is on{" "}
+                <strong>June 10 at 10:00 AM</strong>.
               </p>
             </div>
           </div>
@@ -94,6 +104,9 @@ export default function StudentDashboard() {
           <div className="bg-white p-6 rounded-lg shadow max-w-md mx-auto space-y-4">
             <h2 className="text-2xl font-bold text-blue-700">Personal Info</h2>
             <div>
+              <p>
+                <strong>Name:</strong> {personalInfo.name}
+              </p>
               <p>
                 <strong>Date of Birth:</strong> {personalInfo.dob}
               </p>
@@ -123,20 +136,20 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === "Book" && (
-          <div className="bg-white p-6 rounded-lg shadow max-w-6xl mx-auto">
+          <div className="bg-white p-6 rounded-lg shadow max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-blue-700">Book Lessons</h2>
 
-            <div className="flex space-x-4 overflow-x-auto">
-              {/* Days horizontally */}
+            {/* Days horizontally - all visible */}
+            <div className="grid grid-cols-7 gap-4">
               {currentWeek.map((day) => {
                 const dayOfWeek = day.getDay();
 
-                // Weekends - show disabled
+                // Weekends (Sunday or Saturday) show disabled slots
                 if (dayOfWeek === 0 || dayOfWeek === 6) {
                   return (
                     <div
                       key={day.toDateString()}
-                      className="flex-shrink-0 w-40 p-4 border rounded text-center text-gray-400"
+                      className="p-4 border rounded text-center text-gray-400"
                     >
                       <h3 className="text-lg font-semibold mb-3">
                         {day.toLocaleDateString(undefined, {
@@ -153,7 +166,7 @@ export default function StudentDashboard() {
                 return (
                   <div
                     key={day.toDateString()}
-                    className="flex-shrink-0 w-40 p-4 border rounded"
+                    className="p-4 border rounded flex flex-col items-center"
                   >
                     <h3 className="text-lg font-semibold mb-3 text-blue-700 text-center">
                       {day.toLocaleDateString(undefined, {
@@ -162,10 +175,11 @@ export default function StudentDashboard() {
                         day: "numeric",
                       })}
                     </h3>
-                    <div className="flex flex-col space-y-2">
+
+                    <div className="flex flex-col space-y-2 w-full">
                       {timeSlots.map((time) => {
                         const key = `${day.toDateString()}-${time}`;
-                        const booked = demoSlotCounts[key] ?? 0;
+                        const slot = demoSlotData[key];
                         const isSelected =
                           selectedDay === day.toDateString() && selectedTime === time;
 
@@ -189,9 +203,14 @@ export default function StudentDashboard() {
                             })} at ${time}`}
                           >
                             <span>{time}</span>
-                            <span className="text-xs text-gray-600 flex items-center gap-1">
-                              👥 {booked}/8
-                            </span>
+                            {slot && (
+                              <span className="text-xs text-gray-600 flex flex-col items-center mt-1">
+                                <span>👥 {slot.booked}/8</span>
+                                <span>
+                                  {slot.skill} - {slot.ageGroup}
+                                </span>
+                              </span>
+                            )}
                           </button>
                         );
                       })}
@@ -252,11 +271,11 @@ export default function StudentDashboard() {
           <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
             <h2 className="text-2xl font-bold mb-4 text-blue-700">Upcoming Lessons</h2>
             <ul className="divide-y divide-gray-200">
-              {/* Demo upcoming lessons with only piano */}
+              {/* Updated with piano-only and kid/student example */}
               <li className="py-3 flex justify-between items-center">
                 <div>
-                  <p className="font-semibold">June 10, 2025 - 3:00 PM</p>
-                  <p className="text-gray-600">Piano - Emma Johnson</p>
+                  <p className="font-semibold">June 10, 2024 - 10:00 AM</p>
+                  <p className="text-gray-600">Piano - Timmy Turner (Beginner, Kids)</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
@@ -269,8 +288,8 @@ export default function StudentDashboard() {
               </li>
               <li className="py-3 flex justify-between items-center">
                 <div>
-                  <p className="font-semibold">June 17, 2025 - 1:00 PM</p>
-                  <p className="text-gray-600">Piano - John Doe</p>
+                  <p className="font-semibold">June 12, 2024 - 1:00 PM</p>
+                  <p className="text-gray-600">Piano - Timmy Turner (Beginner, Kids)</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
@@ -298,7 +317,6 @@ export default function StudentDashboard() {
     </div>
   );
 }
-
 
 
 /*"use client";
