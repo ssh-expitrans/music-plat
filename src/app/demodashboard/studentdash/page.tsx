@@ -1,14 +1,78 @@
+
 "use client";
 
-export default function StudentDashboard() {
+import React, { useState } from "react";
+
+const tabs = ["Students", "Upcoming", "Homework", "Notes", "Calendar", "Settings"];
+
+type Lesson = {
+  date: string; // "2025-06-10"
+  time: string; // "3:00 PM"
+  student: string;
+  type: "Solo" | "Group";
+};
+
+const demoLessons: Lesson[] = [
+  { date: "2025-06-10", time: "3:00 PM", student: "Emma Johnson", type: "Solo" },
+  { date: "2025-06-11", time: "4:00 PM", student: "Group A (Alex, Bri, Chris)", type: "Group" },
+  { date: "2025-06-13", time: "2:00 PM", student: "Liam Turner", type: "Solo" },
+];
+
+export default function StudentDashPage() {
+  const [activeTab, setActiveTab] = useState("Upcoming");
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "Upcoming":
+        return (
+          <div className="mt-4">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Upcoming Lessons</h2>
+            <ul className="space-y-3">
+              {demoLessons.map((lesson, index) => (
+                <li key={index} className="border-l-4 pl-3 border-blue-500">
+                  <span className="font-medium">{lesson.date} – {lesson.time}</span>: {lesson.student} ({lesson.type})
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      case "Students":
+        return <div className="mt-4 text-gray-700">Student list will go here.</div>;
+      case "Homework":
+        return <div className="mt-4 text-gray-700">Homework assignments will go here.</div>;
+      case "Notes":
+        return <div className="mt-4 text-gray-700">Teacher notes will go here.</div>;
+      case "Calendar":
+        return <div className="mt-4 text-gray-700">Calendar view coming soon.</div>;
+      case "Settings":
+        return <div className="mt-4 text-gray-700">Settings options will go here.</div>;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <main className="p-4">
-      <h1 className="text-xl font-bold">Student Dashboard</h1>
-      <p>Welcome! Your next lesson is Tuesday at 3:00 PM.</p>
-    </main>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6 text-blue-800">Student Demo Dashboard</h1>
+
+      <div className="flex space-x-4 border-b pb-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-1 text-sm font-medium ${
+              activeTab === tab ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-600 hover:text-blue-600"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div>{renderTabContent()}</div>
+    </div>
   );
 }
-
 
 
 /*"use client";
