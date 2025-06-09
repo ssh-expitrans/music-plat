@@ -1,76 +1,193 @@
-
-"use client";
-
 import React, { useState } from "react";
 
-const tabs = ["Students", "Upcoming", "Homework", "Notes", "Calendar", "Settings"];
-
-type Lesson = {
-  date: string; // "2025-06-10"
-  time: string; // "3:00 PM"
-  student: string;
-  type: "Solo" | "Group";
-};
-
-const demoLessons: Lesson[] = [
-  { date: "2025-06-10", time: "3:00 PM", student: "Emma Johnson", type: "Solo" },
-  { date: "2025-06-11", time: "4:00 PM", student: "Group A (Alex, Bri, Chris)", type: "Group" },
-  { date: "2025-06-13", time: "2:00 PM", student: "Liam Turner", type: "Solo" },
+const tabs = [
+  "Home",
+  "Personal",
+  "Book",
+  "Buy",
+  "Upcoming",
+  "Account",
 ];
 
-export default function StudentDashPage() {
-  const [activeTab, setActiveTab] = useState("Upcoming");
+export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState("Home");
 
-  const renderTabContent = () => {
+  function renderTabContent() {
     switch (activeTab) {
+      case "Home":
+        return <HomeTab />;
+      case "Personal":
+        return <PersonalTab />;
+      case "Book":
+        return <BookTab />;
+      case "Buy":
+        return <BuyTab />;
       case "Upcoming":
-        return (
-          <div className="mt-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Upcoming Lessons</h2>
-            <ul className="space-y-3">
-              {demoLessons.map((lesson, index) => (
-                <li key={index} className="border-l-4 pl-3 border-blue-500">
-                  <span className="font-medium">{lesson.date} – {lesson.time}</span>: {lesson.student} ({lesson.type})
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      case "Students":
-        return <div className="mt-4 text-gray-700">Student list will go here.</div>;
-      case "Homework":
-        return <div className="mt-4 text-gray-700">Homework assignments will go here.</div>;
-      case "Notes":
-        return <div className="mt-4 text-gray-700">Teacher notes will go here.</div>;
-      case "Calendar":
-        return <div className="mt-4 text-gray-700">Calendar view coming soon.</div>;
-      case "Settings":
-        return <div className="mt-4 text-gray-700">Settings options will go here.</div>;
+        return <UpcomingTab />;
+      case "Account":
+        return <AccountTab />;
       default:
         return null;
     }
-  };
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6 text-blue-800">Student Demo Dashboard</h1>
-
-      <div className="flex space-x-4 border-b pb-2">
+    <div className="flex h-screen font-sans">
+      {/* Sidebar */}
+      <nav className="w-56 bg-gray-800 text-white flex flex-col">
+        <div className="text-2xl font-bold p-6 border-b border-gray-700">
+          Dashboard
+        </div>
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-1 text-sm font-medium ${
-              activeTab === tab ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-600 hover:text-blue-600"
+            className={`text-left px-6 py-4 border-l-4 hover:bg-gray-700 transition ${
+              activeTab === tab
+                ? "border-blue-500 bg-gray-700 font-semibold"
+                : "border-transparent"
             }`}
           >
             {tab}
           </button>
         ))}
+      </nav>
+
+      {/* Main Content */}
+      <main className="flex-1 bg-gray-100 p-10 overflow-auto">
+        {renderTabContent()}
+      </main>
+    </div>
+  );
+}
+
+function HomeTab() {
+  return (
+    <section>
+      <h1 className="text-3xl font-bold mb-6">Welcome, [User]!</h1>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Next Booked Lesson</h2>
+        <p>Monday, June 15 - 3:00 PM</p>
+        <p>Guitar Lesson with Instructor Jane Doe</p>
+      </div>
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Basic Info</h2>
+        <ul className="list-disc list-inside">
+          <li>Name: John Smith</li>
+          <li>Email: john@example.com</li>
+          <li>Member since: January 2024</li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function PersonalTab() {
+  // example progress 70%
+  const progressPercent = 70;
+
+  return (
+    <section>
+      <h1 className="text-3xl font-bold mb-6">Personal Details</h1>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Progress</h2>
+        <div className="w-full bg-gray-300 rounded h-6">
+          <div
+            className="bg-blue-600 h-6 rounded"
+            style={{ width: `${progressPercent}%` }}
+          ></div>
+        </div>
+        <p className="mt-1">{progressPercent}% complete</p>
       </div>
 
-      <div>{renderTabContent()}</div>
-    </div>
+      <div className="space-y-2">
+        <p><strong>Date of Birth:</strong> 01/23/1990</p>
+        <p><strong>Age Group:</strong> Adult</p>
+        <p><strong>Skill Level:</strong> Intermediate</p>
+        <p><strong>Contact Email:</strong> john@example.com</p>
+      </div>
+    </section>
+  );
+}
+
+function BookTab() {
+  return (
+    <section>
+      <h1 className="text-3xl font-bold mb-6">Book a Lesson</h1>
+      <p>This is where the calendar UI will go for booking lessons.</p>
+      {/* You can integrate a calendar component here like react-calendar or fullcalendar later */}
+    </section>
+  );
+}
+
+function BuyTab() {
+  return (
+    <section>
+      <h1 className="text-3xl font-bold mb-6">Buy Lessons / Packages</h1>
+      <p>Payment form placeholder (skip for now).</p>
+    </section>
+  );
+}
+
+function UpcomingTab() {
+  // Placeholder lessons
+  const bookedLessons = [
+    {
+      id: 1,
+      date: "Mon, June 15 - 3:00 PM",
+      description: "Guitar Lesson with Instructor Jane Doe",
+    },
+    {
+      id: 2,
+      date: "Wed, June 17 - 5:00 PM",
+      description: "Piano Lesson with Instructor John Smith",
+    },
+  ];
+
+  return (
+    <section>
+      <h1 className="text-3xl font-bold mb-6">Upcoming Lessons</h1>
+      <ul className="space-y-4">
+        {bookedLessons.map((lesson) => (
+          <li
+            key={lesson.id}
+            className="p-4 bg-white rounded shadow flex justify-between items-center"
+          >
+            <div>
+              <p className="font-semibold">{lesson.date}</p>
+              <p>{lesson.description}</p>
+            </div>
+            <div className="space-x-2">
+              <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                Cancel
+              </button>
+              <button className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                Reschedule
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function AccountTab() {
+  return (
+    <section>
+      <h1 className="text-3xl font-bold mb-6">Account</h1>
+      <p className="mb-4 italic text-gray-600">
+        This is a demo dashboard. Please log in or sign up.
+      </p>
+      <div className="space-x-4">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Log In
+        </button>
+        <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-100">
+          Sign Up
+        </button>
+      </div>
+    </section>
   );
 }
 
