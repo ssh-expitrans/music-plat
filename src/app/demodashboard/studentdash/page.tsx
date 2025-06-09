@@ -4,7 +4,7 @@ export default function StudentDashboard() {
   return (
     <main className="p-4">
       <h1 className="text-xl font-bold">Student Dashboard</h1>
-      <p>Welcome! Your next lesson is Monday at 3:00 PM.</p>
+      <p>Welcome! Your next lesson is Tuesday at 3:00 PM.</p>
     </main>
   );
 }
