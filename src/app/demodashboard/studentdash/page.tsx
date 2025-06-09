@@ -135,118 +135,118 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {activeTab === "Book" && (
-          <div className="bg-white p-6 rounded-lg shadow max-w-7xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6 text-blue-700">Book Lessons</h2>
+{activeTab === "Book" && (
+  <div className="bg-white p-6 rounded-lg shadow max-w-7xl mx-auto">
+    <h2 className="text-2xl font-bold mb-6 text-blue-700">Book Lessons</h2>
 
-            {/* Days horizontally - all visible */}
-            <div className="grid grid-cols-7 gap-4">
-              {currentWeek.map((day) => {
-                const dayOfWeek = day.getDay();
+    {/* Days horizontally - all visible */}
+    <div className="grid grid-cols-7 gap-4">
+      {currentWeek.map((day) => {
+        const dayOfWeek = day.getDay();
 
-                // Weekends (Sunday or Saturday) show disabled slots
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                  return (
-                    <div
-                      key={day.toDateString()}
-                      className="p-4 border rounded text-center text-gray-400"
-                    >
-                      <h3 className="text-lg font-semibold mb-3">
-                        {day.toLocaleDateString(undefined, {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </h3>
-                      <p>No slots</p>
-                    </div>
-                  );
-                }
+        // Weekends (Sunday or Saturday) show disabled slots
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          return (
+            <div
+              key={day.toDateString()}
+              className="p-4 border rounded text-center text-gray-400"
+            >
+              <h3 className="text-lg font-semibold mb-3">
+                {day.toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </h3>
+              <p>No slots</p>
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key={day.toDateString()}
+            className="p-4 border rounded flex flex-col items-center"
+          >
+            <h3 className="text-lg font-semibold mb-3 text-blue-700 text-center">
+              {day.toLocaleDateString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+            </h3>
+
+            <div className="flex flex-col space-y-2 w-full">
+              {timeSlots.map((time) => {
+                const key = `${day.toDateString()}-${time}`;
+                const slot = demoSlotData[key];
+                const isSelected =
+                  selectedDay === day.toDateString() && selectedTime === time;
 
                 return (
-                  <div
-                    key={day.toDateString()}
-                    className="p-4 border rounded flex flex-col items-center"
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setSelectedDay(day.toDateString());
+                      setSelectedTime(time);
+                    }}
+                    className={`rounded px-3 py-1 border text-sm flex flex-col items-center transition
+                      ${
+                        isSelected
+                          ? "bg-yellow-400 text-blue-900 border-yellow-400 font-bold"
+                          : "bg-gray-100 text-gray-900 hover:bg-yellow-200 border-transparent"
+                      }`}
+                    aria-label={`Book slot on ${day.toLocaleDateString(undefined, {
+                      weekday: "long",
+                      month: "short",
+                      day: "numeric",
+                    })} at ${time}`}
                   >
-                    <h3 className="text-lg font-semibold mb-3 text-blue-700 text-center">
-                      {day.toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </h3>
-
-                    <div className="flex flex-col space-y-2 w-full">
-                      {timeSlots.map((time) => {
-                        const key = `${day.toDateString()}-${time}`;
-                        const slot = demoSlotData[key];
-                        const isSelected =
-                          selectedDay === day.toDateString() && selectedTime === time;
-
-                        return (
-                          <button
-                            key={key}
-                            onClick={() => {
-                              setSelectedDay(day.toDateString());
-                              setSelectedTime(time);
-                            }}
-                            className={`rounded px-3 py-1 border text-sm flex flex-col items-center transition
-                              ${
-                                isSelected
-                                  ? "bg-yellow-400 text-blue-900 border-yellow-400 font-bold"
-                                  : "bg-gray-100 text-gray-900 hover:bg-yellow-200 border-transparent"
-                              }`}
-                            aria-label={`Book slot on ${day.toLocaleDateString(undefined, {
-                              weekday: "long",
-                              month: "short",
-                              day: "numeric",
-                            })} at ${time}`}
-                          >
-                            <span>{time}</span>
-                            {slot && (
-                              <span className="text-xs text-gray-600 flex flex-col items-center mt-1">
-                                <span>👥 {slot.booked}/8</span>
-                                <span>
-                                  {slot.skill} - {slot.ageGroup}
-                                </span>
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                    <span>{time}</span>
+                    {slot && (
+                      <div className="text-xs text-gray-700 mt-1 flex flex-col items-center">
+                        <span><strong>Signed Up:</strong> {slot.booked} / 8</span>
+                        <span><strong>Skill Level:</strong> {slot.skill}</span>
+                        <span><strong>Age Group:</strong> {slot.ageGroup}</span>
+                      </div>
+                    )}
+                  </button>
                 );
               })}
             </div>
-
-            {selectedDay && selectedTime && (
-              <div className="mt-6 text-center">
-                <p className="mb-2 text-blue-700 font-semibold">
-                  You selected {selectedTime} on{" "}
-                  {new Date(selectedDay).toLocaleDateString(undefined, {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-                <button
-                  onClick={() =>
-                    alert(
-                      `Booked for ${selectedTime} on ${new Date(
-                        selectedDay
-                      ).toLocaleDateString()}`
-                    )
-                  }
-                  className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 transition"
-                >
-                  Book Now
-                </button>
-              </div>
-            )}
           </div>
-        )}
+        );
+      })}
+    </div>
+
+    {selectedDay && selectedTime && (
+      <div className="mt-6 text-center">
+        <p className="mb-2 text-blue-700 font-semibold">
+          You selected {selectedTime} on{" "}
+          {new Date(selectedDay).toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </p>
+        <button
+          onClick={() =>
+            alert(
+              `Booked for ${selectedTime} on ${new Date(
+                selectedDay
+              ).toLocaleDateString()}`
+            )
+          }
+          className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 transition"
+        >
+          Book Now
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
 
         {activeTab === "Buy" && (
           <div className="grid gap-4 md:grid-cols-2 max-w-4xl mx-auto">
