@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-const tabs = ["Home", "Personal", "Book", "Buy", "Upcoming", "Account"];
+const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
 const timeSlots = [
   "9:00 AM",
@@ -87,7 +87,8 @@ export default function StudentDashboard() {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
         {activeTab === "Home" && (
-          <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="space-y-6 max-w-6xl mx-auto">
+            {/* Welcome Section */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
               <h2 className="text-3xl font-bold mb-3 text-slate-800">
                 Welcome Back, {personalInfo.name}!
@@ -97,50 +98,61 @@ export default function StudentDashboard() {
                 <span className="font-semibold text-indigo-600">June 10 at 10:00 AM</span>.
               </p>
             </div>
-          </div>
-        )}
 
-        {activeTab === "Personal" && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 max-w-md mx-auto space-y-6">
-            <h2 className="text-3xl font-bold text-slate-800">Personal Info</h2>
-            <div className="space-y-3">
-              <p className="text-slate-700">
-                <span className="font-semibold text-slate-800">Name:</span> {personalInfo.name}
-              </p>
-              <p className="text-slate-700">
-                <span className="font-semibold text-slate-800">Date of Birth:</span> {personalInfo.dob}
-              </p>
-              <p className="text-slate-700">
-                <span className="font-semibold text-slate-800">Age Group:</span> {personalInfo.ageGroup}
-              </p>
-              <p className="text-slate-700">
-                <span className="font-semibold text-slate-800">Skill Level:</span> {personalInfo.skillLevel}
-              </p>
-              <p className="text-slate-700">
-                <span className="font-semibold text-slate-800">Email:</span> {personalInfo.email}
-              </p>
-            </div>
-            <div>
-              <label className="block font-semibold mb-2 text-slate-800">Progress</label>
-              <div className="w-full bg-slate-200 rounded-full h-8">
-                <div
-                  className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-8 rounded-full transition-all shadow-sm"
-                  style={{ width: `${personalInfo.progress}%` }}
-                />
+            {/* Personal Info Section */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 space-y-6">
+                <h3 className="text-2xl font-bold text-slate-800">Personal Info</h3>
+                <div className="space-y-3">
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-800">Name:</span> {personalInfo.name}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-800">Date of Birth:</span> {personalInfo.dob}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-800">Age Group:</span> {personalInfo.ageGroup}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-800">Skill Level:</span> {personalInfo.skillLevel}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-800">Email:</span> {personalInfo.email}
+                  </p>
+                </div>
               </div>
-              <p className="text-right text-sm text-slate-600 mt-1">
-                {personalInfo.progress}%
-              </p>
+
+              <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                <h3 className="text-2xl font-bold text-slate-800 mb-6">Progress</h3>
+                <div className="w-full bg-slate-200 rounded-full h-8">
+                  <div
+                    className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-8 rounded-full transition-all shadow-sm"
+                    style={{ width: `${personalInfo.progress}%` }}
+                  />
+                </div>
+                <p className="text-right text-sm text-slate-600 mt-1">
+                  {personalInfo.progress}%
+                </p>
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-sm text-slate-600">
+                    <span>Beginner Level</span>
+                    <span>Intermediate Level</span>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    Great progress! Keep practicing to reach the next level.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === "Book" && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 max-w-7xl mx-auto">
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 max-w-full mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-slate-800">Book Lessons</h2>
 
-            {/* Days horizontally - all visible */}
-            <div className="grid grid-cols-7 gap-4">
+            {/* Days horizontally - wider layout */}
+            <div className="grid grid-cols-7 gap-6">
               {currentWeek.map((day) => {
                 const dayOfWeek = day.getDay();
 
@@ -149,9 +161,9 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={day.toDateString()}
-                      className="p-4 border border-slate-200 rounded-lg text-center text-slate-400 bg-slate-50"
+                      className="p-6 border border-slate-200 rounded-lg text-center text-slate-400 bg-slate-50"
                     >
-                      <h3 className="text-lg font-semibold mb-3">
+                      <h3 className="text-lg font-semibold mb-4">
                         {day.toLocaleDateString(undefined, {
                           weekday: "short",
                           month: "short",
@@ -166,9 +178,9 @@ export default function StudentDashboard() {
                 return (
                   <div
                     key={day.toDateString()}
-                    className="p-4 border border-slate-200 rounded-lg flex flex-col items-center bg-white"
+                    className="p-6 border border-slate-200 rounded-lg flex flex-col items-center bg-white"
                   >
-                    <h3 className="text-lg font-semibold mb-3 text-slate-800 text-center">
+                    <h3 className="text-lg font-semibold mb-4 text-slate-800 text-center">
                       {day.toLocaleDateString(undefined, {
                         weekday: "short",
                         month: "short",
@@ -176,7 +188,7 @@ export default function StudentDashboard() {
                       })}
                     </h3>
 
-                    <div className="flex flex-col space-y-2 w-full">
+                    <div className="flex flex-col space-y-3 w-full">
                       {timeSlots.map((time) => {
                         const key = `${day.toDateString()}-${time}`;
                         const slot = demoSlotData[key];
@@ -190,7 +202,7 @@ export default function StudentDashboard() {
                               setSelectedDay(day.toDateString());
                               setSelectedTime(time);
                             }}
-                            className={`rounded-lg px-3 py-2 border text-sm flex flex-col items-center transition-all min-h-[120px] justify-center
+                            className={`rounded-lg px-4 py-4 border text-sm flex flex-col items-center transition-all min-h-[140px] justify-center
                               ${
                                 isSelected
                                   ? "bg-amber-400 text-slate-900 border-amber-400 font-semibold shadow-md"
@@ -202,17 +214,25 @@ export default function StudentDashboard() {
                               day: "numeric",
                             })} at ${time}`}
                           >
-                            <span className="font-semibold text-base mb-2">{time}</span>
+                            <span className="font-semibold text-base mb-3">{time}</span>
                             {slot ? (
                               <div className="text-xs text-slate-600 flex flex-col items-center space-y-1">
                                 <span className="font-medium">{slot.booked}/8 students</span>
-                                <span>{slot.skill}</span>
-                                <span>{slot.ageGroup}</span>
+                                <div className="flex flex-col items-center space-y-1 mt-2">
+                                  <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    {slot.skill}
+                                  </span>
+                                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    {slot.ageGroup}
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <div className="text-xs text-slate-500 flex flex-col items-center space-y-1">
                                 <span>0/8 students</span>
-                                <span>Available</span>
+                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-xs">
+                                  Available
+                                </span>
                               </div>
                             )}
                           </button>
@@ -250,7 +270,7 @@ export default function StudentDashboard() {
               </div>
             )}
           </div>
- )}
+        )}
 
         {activeTab === "Buy" && (
           <div className="max-w-6xl mx-auto">
@@ -413,17 +433,15 @@ export default function StudentDashboard() {
             </div>
           </div>
         )}
-  
 
         {activeTab === "Upcoming" && (
           <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-4 text-blue-700">Upcoming Lessons</h2>
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Upcoming Lessons</h2>
             <ul className="divide-y divide-gray-200">
-              {/* Updated with piano-only and kid/student example */}
               <li className="py-3 flex justify-between items-center">
                 <div>
-                  <p className="font-semibold">June 10, 2024 - 10:00 AM</p>
-                  <p className="text-gray-600">Piano - Timmy Turner (Beginner, Kids)</p>
+                  <p className="font-semibold text-slate-800">June 10, 2024 - 10:00 AM</p>
+                  <p className="text-slate-700">Piano - Timmy Turner (Beginner, Kids)</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
@@ -436,8 +454,8 @@ export default function StudentDashboard() {
               </li>
               <li className="py-3 flex justify-between items-center">
                 <div>
-                  <p className="font-semibold">June 12, 2024 - 1:00 PM</p>
-                  <p className="text-gray-600">Piano - Timmy Turner (Beginner, Kids)</p>
+                  <p className="font-semibold text-slate-800">June 12, 2024 - 1:00 PM</p>
+                  <p className="text-slate-700">Piano - Timmy Turner (Beginner, Kids)</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
@@ -454,9 +472,9 @@ export default function StudentDashboard() {
 
         {activeTab === "Account" && (
           <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow text-center">
-            <h2 className="text-2xl font-bold mb-4 text-blue-700">Account</h2>
-            <p>This is a demo dashboard. Please log in or sign up.</p>
-            <button className="mt-6 px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Account</h2>
+            <p className="text-slate-700">This is a demo dashboard. Please log in or sign up.</p>
+            <button className="mt-6 px-6 py-2 bg-slate-800 text-white rounded hover:bg-slate-900">
               Log In
             </button>
           </div>
@@ -465,7 +483,6 @@ export default function StudentDashboard() {
     </div>
   );
 }
-
 
 /*"use client";
 
