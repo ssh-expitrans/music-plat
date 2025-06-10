@@ -14,18 +14,20 @@ const timeSlots = [
   "4:00 PM",
 ];
 
+
 // Hardcoded demo bookings: key = "DayString-TimeString"
-const demoSlotData: Record<
-  string,
-  { booked: number; skill: string; ageGroup: string }
-> = {
+const demoSlotData: Record<string, { booked: number; skill: string; ageGroup: string }> = {
   "Sun Jun 9 2024-9:00 AM": { booked: 2, skill: "Beginner", ageGroup: "Kids" },
   "Mon Jun 10 2024-10:00 AM": { booked: 5, skill: "Intermediate", ageGroup: "Teens" },
+  "Mon Jun 10 2024-2:00 PM": { booked: 3, skill: "Advanced", ageGroup: "Teens" },
   "Tue Jun 11 2024-11:00 AM": { booked: 1, skill: "Advanced", ageGroup: "Teens" },
+  "Tue Jun 11 2024-3:30 PM": { booked: 4, skill: "Beginner", ageGroup: "Kids" },
   "Wed Jun 12 2024-1:00 PM": { booked: 3, skill: "Beginner", ageGroup: "Kids" },
+  "Wed Jun 12 2024-4:00 PM": { booked: 2, skill: "Intermediate", ageGroup: "Teens" },
   "Thu Jun 13 2024-2:00 PM": { booked: 4, skill: "Intermediate", ageGroup: "Teens" },
+  "Thu Jun 13 2024-9:30 AM": { booked: 6, skill: "Advanced", ageGroup: "Teens" },
   "Fri Jun 14 2024-3:00 PM": { booked: 6, skill: "Advanced", ageGroup: "Teens" },
-  // Saturday has no slots booked (weekend no slots)
+  "Fri Jun 14 2024-12:30 PM": { booked: 2, skill: "Beginner", ageGroup: "Kids" },
 };
 
 // Utility: get current week's Sunday-Saturday dates
@@ -45,8 +47,7 @@ function getCurrentWeekSundayStart() {
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([]); // Array to store multiple selections
 
   // Example kid user info
   const personalInfo = {
@@ -60,6 +61,25 @@ export default function StudentDashboard() {
 
   const currentWeek = getCurrentWeekSundayStart();
 
+  // Handle slot selection/deselection
+  const handleSlotClick = (day: string, time: string) => {
+    const slotKey = `${day}-${time}`;
+    
+    setSelectedSlots(prevSlots => {
+      // If slot is already selected, remove it (unclick functionality)
+      if (prevSlots.includes(slotKey)) {
+        return prevSlots.filter(slot => slot !== slotKey);
+      }
+      // Otherwise, add it to selections
+      return [...prevSlots, slotKey];
+    });
+  };
+
+  // Check if a slot is selected
+  const isSlotSelected = (day: string, time: string) => {
+    return selectedSlots.includes(`${day}-${time}`);
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       {/* Sidebar Tabs */}
@@ -69,8 +89,9 @@ export default function StudentDashboard() {
             key={tab}
             onClick={() => {
               setActiveTab(tab);
-              setSelectedDay(null);
-              setSelectedTime(null);
+              if (tab !== "Book") {
+                setSelectedSlots([]); // Clear selections when switching tabs
+              }
             }}
             className={`py-3 px-4 rounded-lg text-left font-medium hover:bg-indigo-50 transition-colors
               ${
@@ -151,8 +172,35 @@ export default function StudentDashboard() {
           <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 max-w-full mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-slate-800">Book Lessons</h2>
 
+            {/* Selection Summary */}
+            {selectedSlots.length > 0 && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <h3 className="font-semibold text-amber-800 mb-2">
+                  Selected Sessions ({selectedSlots.length}):
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedSlots.map((slotKey) => {
+                    const [day, time] = slotKey.split('-');
+                    const dayName = new Date(day).toLocaleDateString(undefined, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    });
+                    return (
+                      <span
+                        key={slotKey}
+                        className="bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-medium"
+                      >
+                        {dayName} at {time}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Days horizontally - wider layout */}
-            <div className="grid grid-cols-7 gap-6">
+            <div className="grid grid-cols-7 gap-4">
               {currentWeek.map((day) => {
                 const dayOfWeek = day.getDay();
 
@@ -161,16 +209,16 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={day.toDateString()}
-                      className="p-6 border border-slate-200 rounded-lg text-center text-slate-400 bg-slate-50"
+                      className="p-4 border border-slate-200 rounded-lg text-center text-slate-400 bg-slate-50"
                     >
-                      <h3 className="text-lg font-semibold mb-4">
+                      <h3 className="text-base font-semibold mb-3">
                         {day.toLocaleDateString(undefined, {
                           weekday: "short",
                           month: "short",
                           day: "numeric",
                         })}
                       </h3>
-                      <p>No slots</p>
+                      <p className="text-sm">No slots</p>
                     </div>
                   );
                 }
@@ -178,9 +226,9 @@ export default function StudentDashboard() {
                 return (
                   <div
                     key={day.toDateString()}
-                    className="p-6 border border-slate-200 rounded-lg flex flex-col items-center bg-white"
+                    className="p-4 border border-slate-200 rounded-lg flex flex-col items-center bg-white"
                   >
-                    <h3 className="text-lg font-semibold mb-4 text-slate-800 text-center">
+                    <h3 className="text-base font-semibold mb-3 text-slate-800 text-center">
                       {day.toLocaleDateString(undefined, {
                         weekday: "short",
                         month: "short",
@@ -188,49 +236,45 @@ export default function StudentDashboard() {
                       })}
                     </h3>
 
-                    <div className="flex flex-col space-y-3 w-full">
-                      {timeSlots.map((time) => {
+                    {/* Time slots container - no scrolling */}
+                    <div className="flex flex-col space-y-2 w-full">{timeSlots.map((time) => {
                         const key = `${day.toDateString()}-${time}`;
                         const slot = demoSlotData[key];
-                        const isSelected =
-                          selectedDay === day.toDateString() && selectedTime === time;
+                        const isSelected = isSlotSelected(day.toDateString(), time);
 
                         return (
                           <button
                             key={key}
-                            onClick={() => {
-                              setSelectedDay(day.toDateString());
-                              setSelectedTime(time);
-                            }}
-                            className={`rounded-lg px-4 py-4 border text-sm flex flex-col items-center transition-all min-h-[140px] justify-center
+                            onClick={() => handleSlotClick(day.toDateString(), time)}
+                            className={`rounded-md px-3 py-2 border text-xs flex flex-col items-center transition-all min-h-[65px] justify-center
                               ${
                                 isSelected
                                   ? "bg-amber-400 text-slate-900 border-amber-400 font-semibold shadow-md"
                                   : "bg-slate-50 text-slate-700 hover:bg-amber-100 border-slate-200 hover:border-amber-200"
                               }`}
-                            aria-label={`Book slot on ${day.toLocaleDateString(undefined, {
+                            aria-label={`${isSelected ? 'Unselect' : 'Select'} slot on ${day.toLocaleDateString(undefined, {
                               weekday: "long",
                               month: "short",
                               day: "numeric",
                             })} at ${time}`}
                           >
-                            <span className="font-semibold text-base mb-3">{time}</span>
+                            <span className="font-semibold text-sm mb-1">{time}</span>
                             {slot ? (
                               <div className="text-xs text-slate-600 flex flex-col items-center space-y-1">
-                                <span className="font-medium">{slot.booked}/8 students</span>
-                                <div className="flex flex-col items-center space-y-1 mt-2">
-                                  <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
+                                <span className="font-medium">{slot.booked}/8</span>
+                                <div className="flex flex-col items-center space-y-1">
+                                  <span className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-medium">
                                     {slot.skill}
                                   </span>
-                                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
                                     {slot.ageGroup}
                                   </span>
                                 </div>
                               </div>
                             ) : (
                               <div className="text-xs text-slate-500 flex flex-col items-center space-y-1">
-                                <span>0/8 students</span>
-                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-xs">
+                                <span>0/8</span>
+                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs">
                                   Available
                                 </span>
                               </div>
@@ -244,34 +288,46 @@ export default function StudentDashboard() {
               })}
             </div>
 
-            {selectedDay && selectedTime && (
+            {/* Book Now Section */}
+            {selectedSlots.length > 0 && (
               <div className="mt-8 text-center">
                 <p className="mb-4 text-slate-700 font-medium text-lg">
-                  You selected {selectedTime} on{" "}
-                  {new Date(selectedDay).toLocaleDateString(undefined, {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-                <button
-                  onClick={() =>
-                    alert(
-                      `Booked for ${selectedTime} on ${new Date(
-                        selectedDay
-                      ).toLocaleDateString()}`
-                    )
+                  {selectedSlots.length === 1 
+                    ? `You have selected 1 session`
+                    : `You have selected ${selectedSlots.length} sessions`
                   }
-                  className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
-                >
-                  Book Now
-                </button>
+                </p>
+                <div className="flex justify-center space-x-4">
+                  <button
+                    onClick={() => setSelectedSlots([])}
+                    className="px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                  >
+                    Clear All
+                  </button>
+                  <button
+                    onClick={() => {
+                      const sessions = selectedSlots.map(slotKey => {
+                        const [day, time] = slotKey.split('-');
+                        const dayName = new Date(day).toLocaleDateString(undefined, {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                        });
+                        return `${dayName} at ${time}`;
+                      }).join(', ');
+                      alert(`Booking confirmed for: ${sessions}`);
+                      setSelectedSlots([]);
+                    }}
+                    className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
+                  >
+                    Book {selectedSlots.length} Session{selectedSlots.length > 1 ? 's' : ''}
+                  </button>
+                </div>
               </div>
             )}
           </div>
         )}
-
+  
         {activeTab === "Buy" && (
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-slate-800 text-center">Piano Lesson Packages</h2>
