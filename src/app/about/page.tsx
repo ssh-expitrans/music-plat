@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+
 
 export default function About() {
   return (
@@ -21,11 +23,12 @@ export default function About() {
         {/* PROFILE SECTION */}
         <div className="flex flex-col md:flex-row items-center gap-10">
           <div className="flex-shrink-0 w-52 h-52 sm:w-64 sm:h-64 rounded-2xl overflow-hidden shadow-xl border-4 border-indigo-500">
-            <img
-              src="/stockwoman.jpg"
+            <Image
+              src="/teacher-photo.jpg"
               alt="Teacher portrait"
-              className="object-cover w-full h-full"
-              loading="lazy"
+              width={256} // Adjust to match your design
+              height={256}
+              className="object-cover w-full h-full rounded-2xl"
             />
           </div>
 

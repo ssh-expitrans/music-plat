@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
+import Image from "next/image";
+
 
 export default function Home() {
   const router = useRouter();
@@ -40,11 +42,12 @@ export default function Home() {
       {/* HERO / TEACHER INTRO */}
       <section className="bg-gradient-to-r from-[var(--accent)] to-indigo-600 rounded-2xl shadow-lg p-10 flex flex-col sm:flex-row items-center gap-10 mb-16 text-white">
         <div className="flex-shrink-0 w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden shadow-2xl border-4 border-white">
-          <img
-            src="/stockwoman.jpg"
-            alt="Photo of the music teacher"
-            className="object-cover w-full h-full"
-            loading="lazy"
+          <Image
+            src="/teacher-photo.jpg"
+            alt="Teacher portrait"
+            width={256} // Adjust to match your design
+            height={256}
+            className="object-cover w-full h-full rounded-2xl"
           />
         </div>
 
@@ -100,7 +103,9 @@ export default function Home() {
 
       <section className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-md mb-20 text-center max-w-3xl mx-auto">
         <h3 className="text-2xl font-semibold text-[var(--accent)] mb-4">Student Success</h3>
-        <p className="text-lg text-neutral-700 dark:text-neutral-300 italic">"After just a few months with Jane, I was confidently performing in front of my friends and family!"</p>
+          <p className="text-lg text-neutral-700 dark:text-neutral-300 italic">
+            &quot;After just a few months with Jane, I was confidently performing in front of my friends and family!&quot;
+          </p>
         <p className="mt-2 font-semibold">— Alex, beginner piano student</p>
       </section>
 
