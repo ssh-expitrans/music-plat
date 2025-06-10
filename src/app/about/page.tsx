@@ -3,40 +3,58 @@ import Link from "next/link";
 export default function About() {
   return (
     <>
+      {/* HEADER */}
       <header className="bg-indigo-700 text-white p-4 shadow flex items-center">
         <Link href="/" className="font-semibold text-lg hover:underline">
           &larr; Back to Homepage
         </Link>
       </header>
 
-      <main className="max-w-4xl mx-auto p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-8">
-        <h1 className="text-5xl font-extrabold mb-8 text-center text-gray-900 dark:text-white">
-          About the Teacher
+      {/* MAIN */}
+      <main className="max-w-5xl mx-auto p-6 sm:p-10 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-8 space-y-12">
+
+        {/* PAGE TITLE */}
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-center text-gray-900 dark:text-white">
+          Meet Your Instructor
         </h1>
 
+        {/* PROFILE SECTION */}
         <div className="flex flex-col md:flex-row items-center gap-10">
-          <div className="flex-shrink-0 w-64 h-64 rounded-xl overflow-hidden shadow-lg border-4 border-indigo-500">
+          <div className="flex-shrink-0 w-52 h-52 sm:w-64 sm:h-64 rounded-2xl overflow-hidden shadow-xl border-4 border-indigo-500">
             <img
-              src="/teacher-photo.jpg"
+              src="/stockwoman.jpg"
               alt="Teacher portrait"
               className="object-cover w-full h-full"
+              loading="lazy"
             />
           </div>
 
-          <section className="flex-1 text-gray-800 dark:text-gray-300 text-lg space-y-6">
+          <section className="flex-1 text-gray-800 dark:text-gray-300 text-lg space-y-6 leading-relaxed">
             <p>
-              Hi! I’m <strong>[Teacher Name]</strong>, a passionate music teacher with over <strong>X years</strong> of experience.
-              I specialize in piano lessons tailored to all ages and skill levels.
+              Hello! I’m <strong>[Teacher Name]</strong>, a passionate and experienced music educator with over <strong>X years</strong> of teaching piano.
+              I work with students of all ages — from wide-eyed beginners to seasoned players looking to level up.
             </p>
             <p>
-              My teaching style focuses on building confidence and fostering a lifelong love of music.
-              Whether you’re a beginner or preparing for advanced exams, I’m here to guide you every step of the way.
+              My lessons focus on building confidence, mastering technique, and — most importantly — keeping music fun and engaging. I tailor each session to the individual student’s goals, pace, and personality.
             </p>
             <p>
-              Feel free to reach out if you have any questions or want to schedule a lesson!
+              Whether you want to read sheet music, play by ear, or prep for performances, I’ll help you get there with expert guidance and encouragement.
             </p>
           </section>
         </div>
+
+        {/* CALL TO ACTION */}
+        <div className="text-center">
+          <p className="text-lg mb-4 text-gray-700 dark:text-gray-300">
+            Ready to get started? Book your first lesson today or reach out with any questions.
+          </p>
+          <Link href="/signup">
+            <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-indigo-700 transition-colors font-semibold">
+              Sign Up for Lessons
+            </button>
+          </Link>
+        </div>
+
       </main>
     </>
   );
