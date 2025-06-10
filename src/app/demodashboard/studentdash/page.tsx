@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -28,14 +29,21 @@ const demoSlotData: Record<string, { booked: number; skill: string; ageGroup: st
   "Thu Jun 13 2024-9:30 AM": { booked: 6, skill: "Advanced", ageGroup: "Teens" },
   "Fri Jun 14 2024-3:00 PM": { booked: 6, skill: "Advanced", ageGroup: "Teens" },
   "Fri Jun 14 2024-12:30 PM": { booked: 2, skill: "Beginner", ageGroup: "Kids" },
+  // Extended data for multiple weeks
+  "Sun Jun 16 2024-9:00 AM": { booked: 1, skill: "Beginner", ageGroup: "Kids" },
+  "Mon Jun 17 2024-10:00 AM": { booked: 3, skill: "Intermediate", ageGroup: "Teens" },
+  "Tue Jun 18 2024-2:00 PM": { booked: 2, skill: "Advanced", ageGroup: "Teens" },
+  "Wed Jun 19 2024-11:00 AM": { booked: 4, skill: "Beginner", ageGroup: "Kids" },
+  "Thu Jun 20 2024-1:00 PM": { booked: 1, skill: "Intermediate", ageGroup: "Teens" },
+  "Fri Jun 21 2024-3:00 PM": { booked: 5, skill: "Advanced", ageGroup: "Teens" },
 };
 
-// Utility: get current week's Sunday-Saturday dates
-function getCurrentWeekSundayStart() {
+// Utility: get week's Sunday-Saturday dates based on offset
+function getWeekSundayStart(weekOffset: number = 0) {
   const today = new Date();
   const dayOfWeek = today.getDay(); // Sunday = 0
   const sunday = new Date(today);
-  sunday.setDate(today.getDate() - dayOfWeek);
+  sunday.setDate(today.getDate() - dayOfWeek + (weekOffset * 7));
   const week = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(sunday);
@@ -48,6 +56,8 @@ function getCurrentWeekSundayStart() {
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]); // Array to store multiple selections
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0); // 0 = current week, 1 = next week, etc.
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Example kid user info
   const personalInfo = {
@@ -59,7 +69,7 @@ export default function StudentDashboard() {
     progress: 40,
   };
 
-  const currentWeek = getCurrentWeekSundayStart();
+  const currentWeek = getWeekSundayStart(currentWeekOffset);
 
   // Handle slot selection/deselection
   const handleSlotClick = (day: string, time: string) => {
@@ -80,17 +90,88 @@ export default function StudentDashboard() {
     return selectedSlots.includes(`${day}-${time}`);
   };
 
+  // Navigate to booking tab
+  const goToBooking = () => {
+    setActiveTab("Book");
+    setIsMobileMenuOpen(false);
+  };
+
+  // Get week display text
+  const getWeekDisplayText = () => {
+    if (currentWeekOffset === 0) return "This Week";
+    if (currentWeekOffset === 1) return "Next Week";
+    if (currentWeekOffset === -1) return "Last Week";
+    return `${currentWeekOffset > 0 ? `${currentWeekOffset} weeks ahead` : `${Math.abs(currentWeekOffset)} weeks ago`}`;
+  };
+
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
       {/* Floating particles background effect */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+        <div className="absolute top-1/4 left-1/4 w-32 lg:w-72 h-32 lg:h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute top-3/4 right-1/4 w-48 lg:w-96 h-48 lg:h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-40 lg:w-80 h-40 lg:h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
 
-      {/* Sidebar Tabs */}
-      <nav className="relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex flex-col space-y-3 shadow-2xl">
+      {/* Mobile Header */}
+      <div className="lg:hidden relative z-20 bg-white/90 backdrop-blur-lg border-b border-white/20 p-4 shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              🎵 MusicLearn
+            </h1>
+            <p className="text-xs text-gray-600">Student Portal</p>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+          >
+            <div className="w-6 h-6 flex flex-col justify-center space-y-1">
+              <div className={`w-full h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+              <div className={`w-full h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
+              <div className={`w-full h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+            </div>
+          </button>
+        </div>
+        
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-lg border-b border-white/20 shadow-2xl animate-slideInDown">
+            <div className="p-4 space-y-2">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setIsMobileMenuOpen(false);
+                    if (tab !== "Book") {
+                      setSelectedSlots([]);
+                    }
+                  }}
+                  className={`w-full group py-3 px-4 rounded-xl text-left font-semibold transition-all duration-300 flex items-center space-x-3
+                    ${
+                      activeTab === tab
+                        ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg"
+                        : "text-gray-700 hover:bg-purple-50 hover:text-purple-600"
+                    }`}
+                >
+                  <span className="text-lg">
+                    {tab === "Home" && "🏠"}
+                    {tab === "Book" && "📅"}
+                    {tab === "Buy" && "💳"}
+                    {tab === "Upcoming" && "⏰"}
+                    {tab === "Account" && "👤"}
+                  </span>
+                  <span>{tab}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Sidebar Tabs */}
+      <nav className="hidden lg:flex relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex-col space-y-3 shadow-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
             🎵 MusicLearn
@@ -135,22 +216,22 @@ export default function StudentDashboard() {
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 p-8 overflow-auto">
+      <main className="relative z-10 flex-1 p-4 lg:p-8 overflow-auto">
         {activeTab === "Home" && (
-          <div className="space-y-8 max-w-7xl mx-auto animate-fadeIn">
+          <div className="space-y-6 lg:space-y-8 max-w-7xl mx-auto animate-fadeIn">
             {/* Welcome Section */}
-            <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-8 rounded-3xl shadow-2xl text-white overflow-hidden">
+            <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-6 lg:p-8 rounded-2xl lg:rounded-3xl shadow-2xl text-white overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
+              <div className="absolute top-0 right-0 w-32 lg:w-64 h-32 lg:h-64 bg-white/10 rounded-full -translate-y-16 lg:-translate-y-32 translate-x-16 lg:translate-x-32"></div>
+              <div className="absolute bottom-0 left-0 w-24 lg:w-48 h-24 lg:h-48 bg-white/5 rounded-full translate-y-12 lg:translate-y-24 -translate-x-12 lg:-translate-x-24"></div>
               
               <div className="relative z-10">
-                <h2 className="text-4xl font-bold mb-4 animate-slideInLeft">
+                <h2 className="text-2xl lg:text-4xl font-bold mb-3 lg:mb-4 animate-slideInLeft">
                   Welcome Back, {personalInfo.name}! 🎉
                 </h2>
-                <p className="text-xl text-purple-100 animate-slideInLeft animation-delay-200">
+                <p className="text-base lg:text-xl text-purple-100 animate-slideInLeft animation-delay-200">
                   Your next session is on{" "}
-                  <span className="font-bold text-yellow-300 px-3 py-1 bg-white/20 rounded-full">
+                  <span className="font-bold text-yellow-300 px-2 lg:px-3 py-1 bg-white/20 rounded-full text-sm lg:text-base">
                     June 10 at 10:00 AM
                   </span>
                 </p>
@@ -158,17 +239,17 @@ export default function StudentDashboard() {
             </div>
 
             {/* Personal Info Section */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="group bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+              <div className="group bg-white/70 backdrop-blur-sm p-6 lg:p-8 rounded-2xl lg:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div className="flex items-center mb-4 lg:mb-6">
+                  <div className="w-10 lg:w-12 h-10 lg:h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-lg lg:text-xl mr-3 lg:mr-4">
                     👤
                   </div>
-                  <h3 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                  <h3 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                     Personal Info
                   </h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 lg:space-y-4">
                   {Object.entries({
                     "Name": personalInfo.name,
                     "Date of Birth": personalInfo.dob,
@@ -178,46 +259,46 @@ export default function StudentDashboard() {
                   }).map(([key, value], index) => (
                     <div 
                       key={key}
-                      className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300"
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300 gap-1 sm:gap-0"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <span className="font-semibold text-gray-700">{key}:</span>
-                      <span className="text-gray-800 font-medium">{value}</span>
+                      <span className="font-semibold text-gray-700 text-sm lg:text-base">{key}:</span>
+                      <span className="text-gray-800 font-medium text-sm lg:text-base break-all sm:break-normal">{value}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="group bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
+              <div className="group bg-white/70 backdrop-blur-sm p-6 lg:p-8 rounded-2xl lg:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div className="flex items-center mb-4 lg:mb-6">
+                  <div className="w-10 lg:w-12 h-10 lg:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-lg lg:text-xl mr-3 lg:mr-4">
                     📈
                   </div>
-                  <h3 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                  <h3 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                     Progress
                   </h3>
                 </div>
                 
                 <div className="relative">
-                  <div className="w-full bg-gray-200 rounded-full h-6 mb-4 overflow-hidden">
+                  <div className="w-full bg-gray-200 rounded-full h-4 lg:h-6 mb-4 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
+                      className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-4 lg:h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
                       style={{ width: `${personalInfo.progress}%` }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
                     </div>
                   </div>
-                  <p className="text-right text-lg font-bold text-gray-700 mb-4">
+                  <p className="text-right text-base lg:text-lg font-bold text-gray-700 mb-4">
                     {personalInfo.progress}% Complete
                   </p>
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm font-medium text-gray-600">
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">Beginner Level</span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Intermediate Level</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between text-xs lg:text-sm font-medium text-gray-600 gap-2 sm:gap-0">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-center">Beginner Level</span>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-center">Intermediate Level</span>
                   </div>
-                  <p className="text-center text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl">
+                  <p className="text-center text-sm lg:text-base text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl">
                     🌟 Great progress! Keep practicing to reach the next level.
                   </p>
                 </div>
@@ -225,7 +306,6 @@ export default function StudentDashboard() {
             </div>
           </div>
         )}
-
         {activeTab === "Book" && (
           <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
             <div className="flex items-center mb-8">
