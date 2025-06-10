@@ -2,10 +2,7 @@
 
 import React, { useState } from "react";
 
-export const metadata = {
-  title: "Demo Teacher | Dashboard",
-  description: "Access your upcoming lessons, manage bookings, and track your music progress all in one place.",
-};
+
 
 const tabs = ["Students", "Upcoming", "Homework", "Notes", "Calendar", "Settings"];
 

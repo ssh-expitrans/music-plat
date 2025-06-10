@@ -4,10 +4,6 @@ import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 
-export const metadata = {
-  title: "Music Lessons",
-  description: "Access your upcoming lessons, manage bookings, and track your music progress all in one place.",
-};
 
 export default function Home() {
   const router = useRouter();
