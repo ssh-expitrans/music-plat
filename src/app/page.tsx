@@ -61,18 +61,62 @@ export default function Home() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+<section className="mb-24 text-center">
+  <h2 className="text-4xl font-bold text-[var(--accent)] mb-10">How It Works</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto px-4">
+
+    {/* Step 1 */}
+    <div className="flex flex-col items-center bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+      <span className="text-4xl mb-4">📝</span>
+      <h3 className="text-xl font-semibold mb-2">Sign Up</h3>
+      <p className="text-neutral-600 dark:text-neutral-400 text-sm">Create your account to get started and explore your dashboard.</p>
+    </div>
+
+    {/* Step 2 */}
+    <div className="flex flex-col items-center bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+      <span className="text-4xl mb-4">💳</span>
+      <h3 className="text-xl font-semibold mb-2">Buy Lessons</h3>
+      <p className="text-neutral-600 dark:text-neutral-400 text-sm">Choose a lesson package that fits your goals and schedule.</p>
+    </div>
+
+    {/* Step 3 */}
+    <div className="flex flex-col items-center bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+      <span className="text-4xl mb-4">📅</span>
+      <h3 className="text-xl font-semibold mb-2">Book a Time</h3>
+      <p className="text-neutral-600 dark:text-neutral-400 text-sm">Reserve your lesson slot with our easy booking tool.</p>
+    </div>
+
+    {/* Step 4 */}
+    <div className="flex flex-col items-center bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+      <span className="text-4xl mb-4">🎵</span>
+      <h3 className="text-xl font-semibold mb-2">Start Learning</h3>
+      <p className="text-neutral-600 dark:text-neutral-400 text-sm">Join your lessons and grow your skills with personalized guidance.</p>
+    </div>
+
+  </div>
+</section>
+
+
+      <section className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-md mb-20 text-center max-w-3xl mx-auto">
+        <h3 className="text-2xl font-semibold text-[var(--accent)] mb-4">Student Success</h3>
+        <p className="text-lg text-neutral-700 dark:text-neutral-300 italic">"After just a few months with Jane, I was confidently performing in front of my friends and family!"</p>
+        <p className="mt-2 font-semibold">— Alex, beginner piano student</p>
+      </section>
+
+
       {/* PRICING + CONTACT CONTAINER */}
       <section className="flex flex-col sm:flex-row sm:justify-center sm:gap-12 mb-24 max-w-6xl mx-auto px-4">
 
         {/* PRICING */}
-        <div className="flex-1 max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-10 sm:mb-0 text-center mx-auto sm:mx-0 w-full sm:w-auto">
+        <div className="flex-1 max-w-full sm:max-w-md mx-auto w-full sm:w-auto">
           <h2 className="text-3xl font-semibold mb-4 text-[var(--accent)]">Group Pricing</h2>
           <p className="text-lg mb-2">Starting at <span className="font-bold">$50</span> per group session.</p>
           <p className="italic text-neutral-600 dark:text-neutral-400">Contact for individual class pricing.</p>
         </div>
 
         {/* CONTACT */}
-        <div className="flex-1 max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 text-center mx-auto sm:mx-0 w-full sm:w-auto">
+        <div className="flex-1 max-w-full sm:max-w-md mx-auto w-full sm:w-auto">
           <h2 className="text-3xl font-semibold mb-6 text-[var(--accent)]">Contact Information</h2>
           <div className="space-y-4">
             <p className="text-lg">
