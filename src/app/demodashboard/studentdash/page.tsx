@@ -14,7 +14,6 @@ const timeSlots = [
   "4:00 PM",
 ];
 
-
 // Hardcoded demo bookings: key = "DayString-TimeString"
 const demoSlotData: Record<string, { booked: number; skill: string; ageGroup: string }> = {
   "Sun Jun 9 2024-9:00 AM": { booked: 2, skill: "Beginner", ageGroup: "Kids" },
@@ -81,10 +80,24 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
+      {/* Floating particles background effect */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+      </div>
+
       {/* Sidebar Tabs */}
-      <nav className="w-48 bg-white border-r border-slate-200 p-4 flex flex-col space-y-2 shadow-sm">
-        {tabs.map((tab) => (
+      <nav className="relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex flex-col space-y-3 shadow-2xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            🎵 MusicLearn
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">Student Portal</p>
+        </div>
+        
+        {tabs.map((tab, index) => (
           <button
             key={tab}
             onClick={() => {
@@ -93,74 +106,118 @@ export default function StudentDashboard() {
                 setSelectedSlots([]); // Clear selections when switching tabs
               }
             }}
-            className={`py-3 px-4 rounded-lg text-left font-medium hover:bg-indigo-50 transition-colors
+            className={`group relative py-4 px-5 rounded-xl text-left font-semibold transition-all duration-300 transform hover:scale-105
               ${
                 activeTab === tab
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "text-slate-700 hover:text-indigo-600"
+                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25"
+                  : "text-gray-700 hover:bg-white/60 hover:text-purple-600 hover:shadow-lg"
               }`}
+            style={{ animationDelay: `${index * 100}ms` }}
           >
-            {tab}
+            <div className="flex items-center space-x-3">
+              <span className="text-lg">
+                {tab === "Home" && "🏠"}
+                {tab === "Book" && "📅"}
+                {tab === "Buy" && "💳"}
+                {tab === "Upcoming" && "⏰"}
+                {tab === "Account" && "👤"}
+              </span>
+              <span>{tab}</span>
+            </div>
+            {activeTab === tab && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              </div>
+            )}
           </button>
         ))}
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="relative z-10 flex-1 p-8 overflow-auto">
         {activeTab === "Home" && (
-          <div className="space-y-6 max-w-6xl mx-auto">
+          <div className="space-y-8 max-w-7xl mx-auto animate-fadeIn">
             {/* Welcome Section */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h2 className="text-3xl font-bold mb-3 text-slate-800">
-                Welcome Back, {personalInfo.name}!
-              </h2>
-              <p className="text-slate-600 text-lg">
-                Your next session is on{" "}
-                <span className="font-semibold text-indigo-600">June 10 at 10:00 AM</span>.
-              </p>
+            <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-8 rounded-3xl shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
+              
+              <div className="relative z-10">
+                <h2 className="text-4xl font-bold mb-4 animate-slideInLeft">
+                  Welcome Back, {personalInfo.name}! 🎉
+                </h2>
+                <p className="text-xl text-purple-100 animate-slideInLeft animation-delay-200">
+                  Your next session is on{" "}
+                  <span className="font-bold text-yellow-300 px-3 py-1 bg-white/20 rounded-full">
+                    June 10 at 10:00 AM
+                  </span>
+                </p>
+              </div>
             </div>
 
             {/* Personal Info Section */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 space-y-6">
-                <h3 className="text-2xl font-bold text-slate-800">Personal Info</h3>
-                <div className="space-y-3">
-                  <p className="text-slate-700">
-                    <span className="font-semibold text-slate-800">Name:</span> {personalInfo.name}
-                  </p>
-                  <p className="text-slate-700">
-                    <span className="font-semibold text-slate-800">Date of Birth:</span> {personalInfo.dob}
-                  </p>
-                  <p className="text-slate-700">
-                    <span className="font-semibold text-slate-800">Age Group:</span> {personalInfo.ageGroup}
-                  </p>
-                  <p className="text-slate-700">
-                    <span className="font-semibold text-slate-800">Skill Level:</span> {personalInfo.skillLevel}
-                  </p>
-                  <p className="text-slate-700">
-                    <span className="font-semibold text-slate-800">Email:</span> {personalInfo.email}
-                  </p>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="group bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
+                    👤
+                  </div>
+                  <h3 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    Personal Info
+                  </h3>
+                </div>
+                <div className="space-y-4">
+                  {Object.entries({
+                    "Name": personalInfo.name,
+                    "Date of Birth": personalInfo.dob,
+                    "Age Group": personalInfo.ageGroup,
+                    "Skill Level": personalInfo.skillLevel,
+                    "Email": personalInfo.email
+                  }).map(([key, value], index) => (
+                    <div 
+                      key={key}
+                      className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <span className="font-semibold text-gray-700">{key}:</span>
+                      <span className="text-gray-800 font-medium">{value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6">Progress</h3>
-                <div className="w-full bg-slate-200 rounded-full h-8">
-                  <div
-                    className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-8 rounded-full transition-all shadow-sm"
-                    style={{ width: `${personalInfo.progress}%` }}
-                  />
-                </div>
-                <p className="text-right text-sm text-slate-600 mt-1">
-                  {personalInfo.progress}%
-                </p>
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>Beginner Level</span>
-                    <span>Intermediate Level</span>
+              <div className="group bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
+                    📈
                   </div>
-                  <p className="text-sm text-slate-600">
-                    Great progress! Keep practicing to reach the next level.
+                  <h3 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    Progress
+                  </h3>
+                </div>
+                
+                <div className="relative">
+                  <div className="w-full bg-gray-200 rounded-full h-6 mb-4 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
+                      style={{ width: `${personalInfo.progress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                    </div>
+                  </div>
+                  <p className="text-right text-lg font-bold text-gray-700 mb-4">
+                    {personalInfo.progress}% Complete
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm font-medium text-gray-600">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">Beginner Level</span>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Intermediate Level</span>
+                  </div>
+                  <p className="text-center text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl">
+                    🌟 Great progress! Keep practicing to reach the next level.
                   </p>
                 </div>
               </div>
@@ -169,16 +226,29 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === "Book" && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 max-w-full mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-slate-800">Book Lessons</h2>
+          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
+            <div className="flex items-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center text-white text-2xl mr-6 shadow-lg">
+                📅
+              </div>
+              <div>
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  Book Lessons
+                </h2>
+                <p className="text-gray-600 mt-1">Select your preferred time slots</p>
+              </div>
+            </div>
 
             {/* Selection Summary */}
             {selectedSlots.length > 0 && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <h3 className="font-semibold text-amber-800 mb-2">
-                  Selected Sessions ({selectedSlots.length}):
-                </h3>
-                <div className="flex flex-wrap gap-2">
+              <div className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg animate-slideInDown">
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-3">✨</span>
+                  <h3 className="font-bold text-amber-800 text-xl">
+                    Selected Sessions ({selectedSlots.length})
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
                   {selectedSlots.map((slotKey) => {
                     const [day, time] = slotKey.split('-');
                     const dayName = new Date(day).toLocaleDateString(undefined, {
@@ -189,7 +259,7 @@ export default function StudentDashboard() {
                     return (
                       <span
                         key={slotKey}
-                        className="bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-medium"
+                        className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
                       >
                         {dayName} at {time}
                       </span>
@@ -200,8 +270,8 @@ export default function StudentDashboard() {
             )}
 
             {/* Days horizontally - wider layout */}
-            <div className="grid grid-cols-7 gap-4">
-              {currentWeek.map((day) => {
+            <div className="grid grid-cols-7 gap-6">
+              {currentWeek.map((day, dayIndex) => {
                 const dayOfWeek = day.getDay();
 
                 // Weekends (Sunday or Saturday) show disabled slots
@@ -209,16 +279,18 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={day.toDateString()}
-                      className="p-4 border border-slate-200 rounded-lg text-center text-slate-400 bg-slate-50"
+                      className="p-6 bg-gray-100/60 backdrop-blur-sm border-2 border-gray-200 rounded-2xl text-center text-gray-400 shadow-lg animate-fadeInUp"
+                      style={{ animationDelay: `${dayIndex * 100}ms` }}
                     >
-                      <h3 className="text-base font-semibold mb-3">
+                      <h3 className="text-lg font-bold mb-4">
                         {day.toLocaleDateString(undefined, {
                           weekday: "short",
                           month: "short",
                           day: "numeric",
                         })}
                       </h3>
-                      <p className="text-sm">No slots</p>
+                      <div className="text-4xl mb-2">😴</div>
+                      <p className="font-medium">Weekend Rest</p>
                     </div>
                   );
                 }
@@ -226,9 +298,10 @@ export default function StudentDashboard() {
                 return (
                   <div
                     key={day.toDateString()}
-                    className="p-4 border border-slate-200 rounded-lg flex flex-col items-center bg-white"
+                    className="p-6 bg-white/70 backdrop-blur-sm border-2 border-white/30 rounded-2xl flex flex-col items-center shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-fadeInUp"
+                    style={{ animationDelay: `${dayIndex * 100}ms` }}
                   >
-                    <h3 className="text-base font-semibold mb-3 text-slate-800 text-center">
+                    <h3 className="text-lg font-bold mb-4 text-gray-800 text-center bg-gradient-to-r from-purple-100 to-indigo-100 px-4 py-2 rounded-full">
                       {day.toLocaleDateString(undefined, {
                         weekday: "short",
                         month: "short",
@@ -237,7 +310,8 @@ export default function StudentDashboard() {
                     </h3>
 
                     {/* Time slots container - no scrolling */}
-                    <div className="flex flex-col space-y-2 w-full">{timeSlots.map((time) => {
+                    <div className="flex flex-col space-y-3 w-full">
+                      {timeSlots.map((time, timeIndex) => {
                         const key = `${day.toDateString()}-${time}`;
                         const slot = demoSlotData[key];
                         const isSelected = isSlotSelected(day.toDateString(), time);
@@ -246,36 +320,53 @@ export default function StudentDashboard() {
                           <button
                             key={key}
                             onClick={() => handleSlotClick(day.toDateString(), time)}
-                            className={`rounded-md px-3 py-2 border text-xs flex flex-col items-center transition-all min-h-[65px] justify-center
+                            className={`group relative rounded-xl px-4 py-3 border-2 text-sm flex flex-col items-center transition-all duration-300 transform hover:scale-105 min-h-[70px] justify-center overflow-hidden
                               ${
                                 isSelected
-                                  ? "bg-amber-400 text-slate-900 border-amber-400 font-semibold shadow-md"
-                                  : "bg-slate-50 text-slate-700 hover:bg-amber-100 border-slate-200 hover:border-amber-200"
+                                  ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white border-amber-300 shadow-2xl shadow-amber-500/25 scale-105"
+                                  : "bg-white/80 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 border-gray-200 hover:border-purple-300 shadow-lg hover:shadow-xl"
                               }`}
+                            style={{ animationDelay: `${(dayIndex * timeSlots.length + timeIndex) * 50}ms` }}
                             aria-label={`${isSelected ? 'Unselect' : 'Select'} slot on ${day.toLocaleDateString(undefined, {
                               weekday: "long",
                               month: "short",
                               day: "numeric",
                             })} at ${time}`}
                           >
-                            <span className="font-semibold text-sm mb-1">{time}</span>
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 animate-pulse"></div>
+                            )}
+                            
+                            <span className="relative z-10 font-bold text-base mb-2">
+                              {time}
+                            </span>
+                            
                             {slot ? (
-                              <div className="text-xs text-slate-600 flex flex-col items-center space-y-1">
-                                <span className="font-medium">{slot.booked}/8</span>
+                              <div className="relative z-10 text-xs flex flex-col items-center space-y-1">
+                                <span className="font-semibold">
+                                  {slot.booked}/8 students
+                                </span>
                                 <div className="flex flex-col items-center space-y-1">
-                                  <span className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    slot.skill === 'Beginner' ? 'bg-green-100 text-green-800' :
+                                    slot.skill === 'Intermediate' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-purple-100 text-purple-800'
+                                  }`}>
                                     {slot.skill}
                                   </span>
-                                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    slot.ageGroup === 'Kids' ? 'bg-pink-100 text-pink-800' :
+                                    'bg-indigo-100 text-indigo-800'
+                                  }`}>
                                     {slot.ageGroup}
                                   </span>
                                 </div>
                               </div>
                             ) : (
-                              <div className="text-xs text-slate-500 flex flex-col items-center space-y-1">
-                                <span>0/8</span>
-                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs">
-                                  Available
+                              <div className="relative z-10 text-xs flex flex-col items-center space-y-1">
+                                <span className="font-medium text-green-600">0/8 students</span>
+                                <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                                  ✨ Available
                                 </span>
                               </div>
                             )}
@@ -290,18 +381,19 @@ export default function StudentDashboard() {
 
             {/* Book Now Section */}
             {selectedSlots.length > 0 && (
-              <div className="mt-8 text-center">
-                <p className="mb-4 text-slate-700 font-medium text-lg">
+              <div className="mt-10 text-center animate-slideInUp">
+                <p className="mb-6 text-gray-700 font-semibold text-xl">
                   {selectedSlots.length === 1 
-                    ? `You have selected 1 session`
-                    : `You have selected ${selectedSlots.length} sessions`
+                    ? `🎯 You have selected 1 session`
+                    : `🎯 You have selected ${selectedSlots.length} sessions`
                   }
                 </p>
-                <div className="flex justify-center space-x-4">
+                <div className="flex justify-center space-x-6">
                   <button
                     onClick={() => setSelectedSlots([])}
-                    className="px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                    className="group px-8 py-4 bg-gray-200 text-gray-700 rounded-2xl hover:bg-gray-300 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
+                    <span className="group-hover:animate-bounce inline-block mr-2">🗑️</span>
                     Clear All
                   </button>
                   <button
@@ -315,11 +407,12 @@ export default function StudentDashboard() {
                         });
                         return `${dayName} at ${time}`;
                       }).join(', ');
-                      alert(`Booking confirmed for: ${sessions}`);
+                      alert(`🎉 Booking confirmed for: ${sessions}`);
                       setSelectedSlots([]);
                     }}
-                    className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
+                    className="group px-10 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105"
                   >
+                    <span className="group-hover:animate-bounce inline-block mr-2">🚀</span>
                     Book {selectedSlots.length} Session{selectedSlots.length > 1 ? 's' : ''}
                   </button>
                 </div>
@@ -327,12 +420,101 @@ export default function StudentDashboard() {
             )}
           </div>
         )}
-  
+
+        {/* Placeholder content for other tabs */}
+        {activeTab === "Buy" && (
+          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-2xl mr-6">
+                💳
+              </div>
+              <div>
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                  Buy Credits
+                </h2>
+                <p className="text-gray-600 mt-1">Purchase lesson credits here</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "Upcoming" && (
+          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white text-2xl mr-6">
+                ⏰
+              </div>
+              <div>
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                  Upcoming Sessions
+                </h2>
+                <p className="text-gray-600 mt-1">View your scheduled sessions here</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "Account" && (
+          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center text-white text-2xl mr-6">
+                👤
+              </div>
+              <div>
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-transparent">
+                  Account Settings
+                </h2>
+                <p className="text-gray-600 mt-1">Manage your account settings here</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Custom styles for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-30px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+        .animate-slideInLeft { animation: slideInLeft 0.6s ease-out; }
+        .animate-slideInDown { animation: slideInDown 0.4s ease-out; }
+        .animate-slideInUp { animation: slideInUp 0.5s ease-out; }
+        .animate-fadeInUp { animation: fadeInUp 0.6s ease-out; }
+        .animate-shimmer { animation: shimmer 2s infinite; }
+        .animation-delay-200 { animation-delay: 200ms; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+      `}</style>
+    </div>
+  );
+}
+  /*
         {activeTab === "Buy" && (
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-slate-800 text-center">Piano Lesson Packages</h2>
             
-            {/* Individual Lesson Packages */}
             <div className="mb-12">
               <h3 className="text-2xl font-semibold mb-6 text-slate-700">Individual Lessons</h3>
               <div className="grid gap-6 md:grid-cols-4">
@@ -391,7 +573,6 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* Extended Lesson Options */}
             <div className="mb-12">
               <h3 className="text-2xl font-semibold mb-6 text-slate-700">Extended Lessons</h3>
               <div className="grid gap-6 md:grid-cols-3">
@@ -413,7 +594,6 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* Monthly Unlimited */}
             <div className="mb-12">
               <h3 className="text-2xl font-semibold mb-6 text-slate-700">Monthly Unlimited</h3>
               <div className="grid gap-6 md:grid-cols-2">
@@ -451,7 +631,6 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* Special Piano Programs */}
             <div>
               <h3 className="text-2xl font-semibold mb-6 text-slate-700">Special Programs</h3>
               <div className="grid gap-6 md:grid-cols-3">
@@ -538,9 +717,9 @@ export default function StudentDashboard() {
       </main>
     </div>
   );
-}
+} 
 
-/*"use client";
+"use client";
 
 import React, { useState } from "react";
 
