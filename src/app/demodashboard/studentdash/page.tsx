@@ -20,8 +20,8 @@ const ageGroups = ["Kids", "Teens"];
 // Utility: get week's Sunday-Saturday dates for any starting date
 function getWeekDates(startDate: Date) {
   const sunday = new Date(startDate);
-  const dayOfWeek = sunday.getDay(); // Sunday = 0
-  sunday.setDate(startDate.getDate() - dayOfWeek);
+ // const dayOfWeek = sunday.getDay(); // Sunday = 0
+ // sunday.setDate(startDate.getDate() - dayOfWeek);
   
   const week = [];
   for (let i = 0; i < 7; i++) {
