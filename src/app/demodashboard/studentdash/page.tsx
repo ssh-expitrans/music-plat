@@ -2,6 +2,11 @@
 
 import React, { useState } from "react";
 
+export const metadata = {
+  title: "Demo Student | Dashboard",
+  description: "Access your upcoming lessons, manage bookings, and track your music progress all in one place.",
+};
+
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
 const timeSlots = [

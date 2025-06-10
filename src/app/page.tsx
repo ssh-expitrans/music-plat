@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 
+export const metadata = {
+  title: "Music Lessons",
+  description: "Access your upcoming lessons, manage bookings, and track your music progress all in one place.",
+};
 
 export default function Home() {
   const router = useRouter();
@@ -45,9 +49,10 @@ export default function Home() {
           <Image
             src="/teacher-photo.jpg"
             alt="Teacher portrait"
-            width={256} // Adjust to match your design
-            height={256}
-            className="object-cover w-full h-full rounded-2xl"
+            width={144}  // matches sm:w-36 (9rem = 144px)
+            height={144}
+            className="object-cover"
+            priority={true} // optional: preload important images for better LCP
           />
         </div>
 
