@@ -2,12 +2,11 @@
 
 import React, { useState } from "react";
 
-
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
 const timeSlots = [
   "9:00 AM",
-  "10:00 AM",
+  "10:00 AM", 
   "11:00 AM",
   "1:00 PM",
   "2:00 PM",
@@ -31,11 +30,11 @@ const demoSlotData: Record<string, { booked: number; skill: string; ageGroup: st
 };
 
 // Utility: get current week's Sunday-Saturday dates
-function getCurrentWeekSundayStart() {
+function getWeekByOffset(offset = 0) {
   const today = new Date();
   const dayOfWeek = today.getDay(); // Sunday = 0
   const sunday = new Date(today);
-  sunday.setDate(today.getDate() - dayOfWeek);
+  sunday.setDate(today.getDate() - dayOfWeek + (offset * 7));
   const week = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(sunday);
@@ -47,7 +46,8 @@ function getCurrentWeekSundayStart() {
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([]); // Array to store multiple selections
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0); // MOVE THIS HERE
 
   // Example kid user info
   const personalInfo = {
@@ -59,18 +59,16 @@ export default function StudentDashboard() {
     progress: 40,
   };
 
-  const currentWeek = getCurrentWeekSundayStart();
+  const currentWeek = getWeekByOffset(currentWeekOffset);
 
   // Handle slot selection/deselection
   const handleSlotClick = (day: string, time: string) => {
     const slotKey = `${day}-${time}`;
     
     setSelectedSlots(prevSlots => {
-      // If slot is already selected, remove it (unclick functionality)
       if (prevSlots.includes(slotKey)) {
         return prevSlots.filter(slot => slot !== slotKey);
       }
-      // Otherwise, add it to selections
       return [...prevSlots, slotKey];
     });
   };
@@ -78,6 +76,25 @@ export default function StudentDashboard() {
   // Check if a slot is selected
   const isSlotSelected = (day: string, time: string) => {
     return selectedSlots.includes(`${day}-${time}`);
+  };
+
+  const goToPreviousWeek = () => {
+    setCurrentWeekOffset(prev => prev - 1);
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeekOffset(prev => prev + 1);
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeekOffset(0);
+  };
+
+  const getWeekRange = (week: Date[]) => { // ADD TYPE ANNOTATION
+    const start = week[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const end = week[6].toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const year = week[0].getFullYear();
+    return `${start} - ${end}, ${year}`;
   };
 
   return (
