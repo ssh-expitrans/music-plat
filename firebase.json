@@ -8,7 +8,16 @@
     ],
     "headers": [
       {
-        "source": "/index.html",
+        "source": "/_next/static/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=31536000,immutable"
+          }
+        ]
+      },
+      {
+        "source": "/_next/data/**",
         "headers": [
           {
             "key": "Cache-Control",
@@ -22,6 +31,15 @@
           {
             "key": "Cache-Control",
             "value": "public,max-age=31536000,immutable"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
           }
         ]
       }
