@@ -45,12 +45,13 @@ export default function Home() {
           <Image
             src="/stockwoman.jpg"
             alt="Teacher portrait"
-            width={144}  // matches sm:w-36 (9rem = 144px)
-            height={144} 
-            className="object-cover"
-            priority={true} // optional: preload important images for better LCP
+            width={144}
+            height={144}
+            className="object-cover w-full h-full"
+            priority={true}
           />
         </div>
+
 
         <div className="max-w-lg space-y-4 w-full">
           <h2 className="text-4xl font-bold drop-shadow-lg">Meet Jane Doe</h2>
