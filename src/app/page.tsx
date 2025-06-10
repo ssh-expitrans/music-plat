@@ -61,25 +61,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section className="mb-16 max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 text-center">
-        <h2 className="text-3xl font-semibold mb-4 text-[var(--accent)]">Group Pricing</h2>
-        <p className="text-lg mb-2">Starting at <span className="font-bold">$50</span> per group session.</p>
-        <p className="italic text-neutral-600 dark:text-neutral-400">Contact for individual class pricing.</p>
-      </section>
+  {/* PRICING + CONTACT CONTAINER */}
+  <section className="flex flex-col sm:flex-row sm:justify-center sm:gap-12 mb-24 max-w-6xl mx-auto px-4">
 
-      {/* CONTACT */}
-      <section className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-24">
-        <h2 className="text-3xl font-semibold mb-6 text-[var(--accent)] text-center">Contact Information</h2>
-        <div className="space-y-4 text-center">
-          <p className="text-lg">
-            📧 Email: <a href="mailto:music.teacher@example.com" className="text-indigo-600 hover:underline dark:text-indigo-400">music.teacher@example.com</a>
-          </p>
-          <p className="text-lg">
-            📞 Phone: <a href="tel:+1234567890" className="text-indigo-600 hover:underline dark:text-indigo-400">(123) 456-7890</a>
-          </p>
-        </div>
-      </section>
+    {/* PRICING */}
+    <div className="flex-1 max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-10 sm:mb-0 text-center">
+      <h2 className="text-3xl font-semibold mb-4 text-[var(--accent)]">Group Pricing</h2>
+      <p className="text-lg mb-2">Starting at <span className="font-bold">$50</span> per group session.</p>
+      <p className="italic text-neutral-600 dark:text-neutral-400">Contact for individual class pricing.</p>
+    </div>
+
+    {/* CONTACT */}
+    <div className="flex-1 max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 text-center">
+      <h2 className="text-3xl font-semibold mb-6 text-[var(--accent)]">Contact Information</h2>
+      <div className="space-y-4">
+        <p className="text-lg">
+          📧 Email: <a href="mailto:music.teacher@example.com" className="text-indigo-600 hover:underline dark:text-indigo-400">music.teacher@example.com</a>
+        </p>
+        <p className="text-lg">
+          📞 Phone: <a href="tel:+1234567890" className="text-indigo-600 hover:underline dark:text-indigo-400">(123) 456-7890</a>
+        </p>
+      </div>
+    </div>
+
+  </section>
+
 
       {/* FOOTER */}
       <footer className="mt-auto py-6 text-center text-neutral-500 dark:text-neutral-400 text-sm border-t border-neutral-300 dark:border-neutral-700">
