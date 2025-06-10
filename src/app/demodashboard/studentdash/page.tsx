@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 
-
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
 const timeSlots = [
@@ -15,27 +14,15 @@ const timeSlots = [
   "4:00 PM",
 ];
 
-// Hardcoded demo bookings: key = "DayString-TimeString"
-const demoSlotData: Record<string, { booked: number; skill: string; ageGroup: string }> = {
-  "Sun Jun 9 2024-9:00 AM": { booked: 2, skill: "Beginner", ageGroup: "Kids" },
-  "Mon Jun 10 2024-10:00 AM": { booked: 5, skill: "Intermediate", ageGroup: "Teens" },
-  "Mon Jun 10 2024-2:00 PM": { booked: 3, skill: "Advanced", ageGroup: "Teens" },
-  "Tue Jun 11 2024-11:00 AM": { booked: 1, skill: "Advanced", ageGroup: "Teens" },
-  "Tue Jun 11 2024-3:30 PM": { booked: 4, skill: "Beginner", ageGroup: "Kids" },
-  "Wed Jun 12 2024-1:00 PM": { booked: 3, skill: "Beginner", ageGroup: "Kids" },
-  "Wed Jun 12 2024-4:00 PM": { booked: 2, skill: "Intermediate", ageGroup: "Teens" },
-  "Thu Jun 13 2024-2:00 PM": { booked: 4, skill: "Intermediate", ageGroup: "Teens" },
-  "Thu Jun 13 2024-9:30 AM": { booked: 6, skill: "Advanced", ageGroup: "Teens" },
-  "Fri Jun 14 2024-3:00 PM": { booked: 6, skill: "Advanced", ageGroup: "Teens" },
-  "Fri Jun 14 2024-12:30 PM": { booked: 2, skill: "Beginner", ageGroup: "Kids" },
-};
+const skillLevels = ["Beginner", "Intermediate", "Advanced"];
+const ageGroups = ["Kids", "Teens"];
 
-// Utility: get current week's Sunday-Saturday dates
-function getCurrentWeekSundayStart() {
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // Sunday = 0
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() - dayOfWeek);
+// Utility: get week's Sunday-Saturday dates for any starting date
+function getWeekDates(startDate: Date) {
+  const sunday = new Date(startDate);
+  const dayOfWeek = sunday.getDay(); // Sunday = 0
+  sunday.setDate(startDate.getDate() - dayOfWeek);
+  
   const week = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(sunday);
@@ -45,9 +32,47 @@ function getCurrentWeekSundayStart() {
   return week;
 }
 
+// Utility: get current week's Sunday
+function getCurrentWeekSunday() {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - dayOfWeek);
+  return sunday;
+}
+
+// Generate dynamic slot data based on date and time
+function generateSlotData(date: Date, time: string) {
+  const dayOfWeek = date.getDay();
+  const dateStr = date.toDateString();
+  
+  // Use date and time as seed for consistent "random" generation
+  const seed = dateStr.length + time.length + date.getDate() + date.getMonth();
+  const pseudoRandom = (seed * 9301 + 49297) % 233280 / 233280;
+  
+  // Skip some slots to make it more realistic (about 60% have bookings)
+  if (pseudoRandom < 0.4) {
+    return null; // No existing bookings for this slot
+  }
+  
+  // Generate number of booked students (1-7, max capacity 8)
+  const booked = Math.floor(pseudoRandom * 7) + 1;
+  
+  // Generate skill level and age group based on time and day
+  const skillIndex = Math.floor((seed % 3));
+  const ageIndex = Math.floor((seed % 2));
+  
+  return {
+    booked,
+    skill: skillLevels[skillIndex],
+    ageGroup: ageGroups[ageIndex],
+  };
+}
+
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([]); // Array to store multiple selections
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
 
   // Example kid user info
   const personalInfo = {
@@ -59,18 +84,46 @@ export default function StudentDashboard() {
     progress: 40,
   };
 
-  const currentWeek = getCurrentWeekSundayStart();
+  const currentWeek = getWeekDates(currentWeekStart);
+
+  // Navigation functions
+  const goToPreviousWeek = () => {
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(currentWeekStart.getDate() - 7);
+    setCurrentWeekStart(newWeekStart);
+  };
+
+  const goToNextWeek = () => {
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(currentWeekStart.getDate() + 7);
+    setCurrentWeekStart(newWeekStart);
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeekStart(getCurrentWeekSunday());
+  };
+
+  // Check if we're viewing the current week
+  const isCurrentWeek = () => {
+    const current = getCurrentWeekSunday();
+    return currentWeekStart.getTime() === current.getTime();
+  };
+
+  // Get week range display
+  const getWeekRange = () => {
+    const startDate = currentWeek[0];
+    const endDate = currentWeek[6];
+    return `${startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  };
 
   // Handle slot selection/deselection
   const handleSlotClick = (day: string, time: string) => {
     const slotKey = `${day}-${time}`;
     
     setSelectedSlots(prevSlots => {
-      // If slot is already selected, remove it (unclick functionality)
       if (prevSlots.includes(slotKey)) {
         return prevSlots.filter(slot => slot !== slotKey);
       }
-      // Otherwise, add it to selections
       return [...prevSlots, slotKey];
     });
   };
@@ -104,7 +157,7 @@ export default function StudentDashboard() {
             onClick={() => {
               setActiveTab(tab);
               if (tab !== "Book") {
-                setSelectedSlots([]); // Clear selections when switching tabs
+                setSelectedSlots([]);
               }
             }}
             className={`group relative py-4 px-5 rounded-xl text-left font-semibold transition-all duration-300 transform hover:scale-105
@@ -240,6 +293,44 @@ export default function StudentDashboard() {
               </div>
             </div>
 
+            {/* Week Navigation */}
+            <div className="mb-8 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-2xl border-2 border-purple-200 shadow-lg">
+              <button
+                onClick={goToPreviousWeek}
+                className="group flex items-center px-6 py-3 bg-white/80 text-purple-600 rounded-xl hover:bg-purple-100 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span className="text-xl mr-2 group-hover:-translate-x-1 transition-transform duration-300">←</span>
+                Previous Week
+              </button>
+              
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  {getWeekRange()}
+                </h3>
+                {!isCurrentWeek() && (
+                  <button
+                    onClick={goToCurrentWeek}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-400 text-white rounded-full text-sm font-semibold hover:from-amber-500 hover:to-orange-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    ⏰ Go to Current Week
+                  </button>
+                )}
+                {isCurrentWeek() && (
+                  <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+                    ✨ Current Week
+                  </span>
+                )}
+              </div>
+              
+              <button
+                onClick={goToNextWeek}
+                className="group flex items-center px-6 py-3 bg-white/80 text-purple-600 rounded-xl hover:bg-purple-100 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Next Week
+                <span className="text-xl ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+              </button>
+            </div>
+
             {/* Selection Summary */}
             {selectedSlots.length > 0 && (
               <div className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg animate-slideInDown">
@@ -310,11 +401,11 @@ export default function StudentDashboard() {
                       })}
                     </h3>
 
-                    {/* Time slots container - no scrolling */}
+                    {/* Time slots container */}
                     <div className="flex flex-col space-y-3 w-full">
                       {timeSlots.map((time, timeIndex) => {
                         const key = `${day.toDateString()}-${time}`;
-                        const slot = demoSlotData[key];
+                        const slot = generateSlotData(day, time);
                         const isSelected = isSlotSelected(day.toDateString(), time);
 
                         return (
@@ -421,6 +512,38 @@ export default function StudentDashboard() {
             )}
           </div>
         )}
+
+        {/* Placeholder content for other tabs */}
+        {activeTab === "Buy" && (
+          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 max-w-4xl mx-auto animate-fadeIn">
+            <div className="text-center">
+              <div className="text-6xl mb-6">💳</div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Buy Credits</h2>
+              <p className="text-gray-600">Purchase lesson credits and packages</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "Upcoming" && (
+          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 max-w-4xl mx-auto animate-fadeIn">
+            <div className="text-center">
+              <div className="text-6xl mb-6">⏰</div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Upcoming Sessions</h2>
+              <p className="text-gray-600">View your scheduled lessons</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "Account" && (
+          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 max-w-4xl mx-auto animate-fadeIn">
+            <div className="text-center">
+              <div className="text-6xl mb-6">👤</div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Account Settings</h2>
+              <p className="text-gray-600">Manage your profile and preferences</p>
+            </div>
+          </div>
+        )}
+   
 
         {activeTab === "Buy" && (
           <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
