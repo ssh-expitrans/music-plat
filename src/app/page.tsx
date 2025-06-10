@@ -47,7 +47,7 @@ export default function Home() {
       <section className="bg-gradient-to-r from-[var(--accent)] to-indigo-600 rounded-2xl shadow-lg p-10 flex flex-col sm:flex-row items-center gap-10 mb-16 text-white">
         <div className="flex-shrink-0 w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden shadow-2xl border-4 border-white">
           <Image
-            src="/teacher-photo.jpg"
+            src="/stockwoman.jpg"
             alt="Teacher portrait"
             width={144}  // matches sm:w-36 (9rem = 144px)
             height={144}
