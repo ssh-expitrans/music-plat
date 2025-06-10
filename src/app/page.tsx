@@ -46,7 +46,7 @@ export default function Home() {
             src="/stockwoman.jpg"
             alt="Teacher portrait"
             width={144}  // matches sm:w-36 (9rem = 144px)
-            height={144}
+            height={144} 
             className="object-cover"
             priority={true} // optional: preload important images for better LCP
           />
