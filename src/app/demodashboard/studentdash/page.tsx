@@ -421,52 +421,207 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {/* Placeholder content for other tabs */}
         {activeTab === "Buy" && (
           <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-2xl mr-6">
-                💳
+            <h2 className="flex items-center mb-6">Piano Lesson Packages</h2>
+            
+            <div className="mb-12">
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Individual Lessons</h3>
+              <div className="grid gap-6 md:grid-cols-4">
+                {[
+                  { 
+                    name: "Single Lesson", 
+                    price: "$30", 
+                    desc: "One 30-minute session",
+                    popular: false,
+                    features: ["Individual attention", "Flexible scheduling", "Perfect for trying out"]
+                  },
+                  { 
+                    name: "4-Pack", 
+                    price: "$115", 
+                    desc: "Save $5 on 4 lessons",
+                    popular: false,
+                    features: ["$28.75 per lesson", "1-month validity", "Great for beginners"]
+                  },
+                  { 
+                    name: "8-Pack", 
+                    price: "$220", 
+                    desc: "Save $20 on 8 lessons",
+                    popular: true,
+                    features: ["$27.50 per lesson", "2-month validity", "Most popular choice"]
+                  },
+                  { 
+                    name: "12-Pack", 
+                    price: "$315", 
+                    desc: "Save $45 on 12 lessons",
+                    popular: false,
+                    features: ["$26.25 per lesson", "3-month validity", "Best value"]
+                  },
+                ].map((pkg) => (
+                  <div key={pkg.name} className={`border rounded-xl p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
+                    {pkg.popular && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                      </div>
+                    )}
+                    <h4 className="text-xl font-bold text-slate-800 mb-2">{pkg.name}</h4>
+                    <p className="text-slate-600 mb-3">{pkg.desc}</p>
+                    <p className="text-3xl font-bold text-indigo-600 mb-4">{pkg.price}</p>
+                    <ul className="text-sm text-slate-600 mb-6 space-y-2">
+                      {pkg.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center">
+                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-3"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <button className={`w-full py-3 rounded-lg font-medium transition-colors ${pkg.popular ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                      Purchase
+                    </button>
+                  </div>
+                ))}
               </div>
-              <div>
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  Buy Credits
-                </h2>
-                <p className="text-gray-600 mt-1">Purchase lesson credits here</p>
+            </div>
+
+            <div className="mb-12">
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Extended Lessons</h3>
+              <div className="grid gap-6 md:grid-cols-3">
+                {[
+                  { name: "45-Minute Single", price: "$40", desc: "Extended individual session", duration: "45 minutes" },
+                  { name: "45-Minute 6-Pack", price: "$225", desc: "Save $15 on extended lessons", duration: "6 x 45-minute sessions" },
+                  { name: "60-Minute Single", price: "$50", desc: "Full hour private lesson", duration: "60 minutes" },
+                ].map((item) => (
+                  <div key={item.name} className="border border-slate-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-lg font-semibold text-slate-800 mb-2">{item.name}</h4>
+                    <p className="text-slate-600 text-sm mb-2">{item.desc}</p>
+                    <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
+                    <p className="text-xl font-bold text-indigo-600 mb-4">{item.price}</p>
+                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                      Purchase
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-12">
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Monthly Unlimited</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                {[
+                  { 
+                    name: "Unlimited Standard", 
+                    price: "$199/month", 
+                    desc: "Unlimited 30-minute lessons",
+                    features: ["Book up to 2 lessons per day", "30-minute sessions", "Cancel anytime", "Practice room access"]
+                  },
+                  { 
+                    name: "Unlimited Premium", 
+                    price: "$299/month", 
+                    desc: "Unlimited lessons + perks",
+                    features: ["Mix of 30, 45, 60-minute sessions", "Priority booking", "Sheet music library access", "Recital preparation included"]
+                  },
+                ].map((membership) => (
+                  <div key={membership.name} className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-xl font-bold text-slate-800 mb-2">{membership.name}</h4>
+                    <p className="text-slate-600 mb-3">{membership.desc}</p>
+                    <p className="text-2xl font-bold text-indigo-600 mb-4">{membership.price}</p>
+                    <ul className="text-sm text-slate-600 mb-6 space-y-2">
+                      {membership.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center">
+                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-3"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <button className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                      Start Plan
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Special Programs</h3>
+              <div className="grid gap-6 md:grid-cols-3">
+                {[
+                  { 
+                    name: "Recital Prep Package", 
+                    price: "$150", 
+                    desc: "5 focused sessions for performance",
+                    duration: "5 x 45-minute sessions"
+                  },
+                  { 
+                    name: "Theory Intensive", 
+                    price: "$120", 
+                    desc: "4 sessions focused on music theory",
+                    duration: "4 x 30-minute sessions"
+                  },
+                  { 
+                    name: "Sight-Reading Bootcamp", 
+                    price: "$100", 
+                    desc: "6 sessions to improve reading skills",
+                    duration: "6 x 30-minute sessions"
+                  },
+                ].map((program) => (
+                  <div key={program.name} className="border border-slate-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-lg font-semibold text-slate-800 mb-2">{program.name}</h4>
+                    <p className="text-slate-600 text-sm mb-2">{program.desc}</p>
+                    <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
+                    <p className="text-xl font-bold text-indigo-600 mb-4">{program.price}</p>
+                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                      Enroll Now
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
         {activeTab === "Upcoming" && (
-          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white text-2xl mr-6">
-                ⏰
-              </div>
-              <div>
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                  Upcoming Sessions
-                </h2>
-                <p className="text-gray-600 mt-1">View your scheduled sessions here</p>
-              </div>
-            </div>
+          <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Upcoming Lessons</h2>
+            <ul className="divide-y divide-gray-200">
+              <li className="py-3 flex justify-between items-center">
+                <div>
+                  <p className="font-semibold text-slate-800">June 10, 2024 - 10:00 AM</p>
+                  <p className="text-slate-700">Piano - Timmy Turner (Beginner, Kids)</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
+                    Reschedule
+                  </button>
+                  <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    Cancel
+                  </button>
+                </div>
+              </li>
+              <li className="py-3 flex justify-between items-center">
+                <div>
+                  <p className="font-semibold text-slate-800">June 12, 2024 - 1:00 PM</p>
+                  <p className="text-slate-700">Piano - Timmy Turner (Beginner, Kids)</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-300">
+                    Reschedule
+                  </button>
+                  <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    Cancel
+                  </button>
+                </div>
+              </li>
+            </ul>
           </div>
         )}
 
         {activeTab === "Account" && (
-          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center text-white text-2xl mr-6">
-                👤
-              </div>
-              <div>
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-transparent">
-                  Account Settings
-                </h2>
-                <p className="text-gray-600 mt-1">Manage your account settings here</p>
-              </div>
-            </div>
+          <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow text-center">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Account</h2>
+            <p className="text-slate-700">This is a demo dashboard. Please log in or sign up.</p>
+            <button className="mt-6 px-6 py-2 bg-slate-800 text-white rounded hover:bg-slate-900">
+              Log In
+            </button>
           </div>
         )}
       </main>
