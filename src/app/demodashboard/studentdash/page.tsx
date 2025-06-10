@@ -725,7 +725,7 @@ export default function StudentDashboard() {
     <div className="mt-8 text-center p-8 bg-gradient-to-r from-gray-50 to-white rounded-3xl border-2 border-gray-100 shadow-lg">
       <div className="text-6xl mb-4">🎵</div>
       <p className="text-gray-600 font-medium text-lg">
-        That's all your upcoming lessons! Ready to book more?
+        That&apos;s all your upcoming lessons! Ready to book more?
       </p>
       <button className="mt-4 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
         <span className="mr-2">📅</span>
@@ -765,7 +765,7 @@ export default function StudentDashboard() {
         Demo Dashboard
       </h3>
       <p className="text-gray-600 text-lg mb-6 max-w-2xl mx-auto">
-        You're currently viewing a demonstration of our piano lesson booking system. 
+        You&apos;re currently viewing a demonstration of our piano lesson booking system. 
         Sign in to access your personalized dashboard with real lesson data and account settings.
       </p>
       
@@ -809,7 +809,7 @@ export default function StudentDashboard() {
       </div>
     </div>
   </div>
-  )}
+)}
       </main>
 
       {/* Custom styles for animations */}
