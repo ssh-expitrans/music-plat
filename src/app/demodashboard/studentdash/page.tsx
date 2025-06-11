@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 
-
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
 const timeSlots = [
@@ -48,6 +47,7 @@ function getCurrentWeekSundayStart() {
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]); // Array to store multiple selections
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Example kid user info
   const personalInfo = {
@@ -80,8 +80,17 @@ export default function StudentDashboard() {
     return selectedSlots.includes(`${day}-${time}`);
   };
 
+  // Handle tab change and close mobile menu
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+    if (tab !== "Book") {
+      setSelectedSlots([]);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
       {/* Floating particles background effect */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -89,8 +98,61 @@ export default function StudentDashboard() {
         <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
 
-      {/* Sidebar Tabs */}
-      <nav className="relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex flex-col space-y-3 shadow-2xl">
+      {/* Mobile Header */}
+      <div className="lg:hidden relative z-20 bg-white/90 backdrop-blur-lg border-b border-white/20 px-4 py-3 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              🎵 MusicLearn
+            </h1>
+            <p className="text-xs text-gray-600">Student Portal</p>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+          >
+            <div className="w-6 h-6 flex flex-col justify-center space-y-1">
+              <div className={`h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+              <div className={`h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
+              <div className={`h-0.5 bg-current transition-all ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+            </div>
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-lg border-b border-white/20 shadow-xl">
+            <div className="px-4 py-2">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab}
+                  onClick={() => handleTabChange(tab)}
+                  className={`w-full group relative py-3 px-4 rounded-xl text-left font-semibold transition-all duration-300 mb-2
+                    ${
+                      activeTab === tab
+                        ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg"
+                        : "text-gray-700 hover:bg-white/60 hover:text-purple-600 hover:shadow-md"
+                    }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-lg">
+                      {tab === "Home" && "🏠"}
+                      {tab === "Book" && "📅"}
+                      {tab === "Buy" && "💳"}
+                      {tab === "Upcoming" && "⏰"}
+                      {tab === "Account" && "👤"}
+                    </span>
+                    <span>{tab}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Sidebar */}
+      <nav className="hidden lg:flex relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex-col space-y-3 shadow-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
             🎵 MusicLearn
@@ -101,12 +163,7 @@ export default function StudentDashboard() {
         {tabs.map((tab, index) => (
           <button
             key={tab}
-            onClick={() => {
-              setActiveTab(tab);
-              if (tab !== "Book") {
-                setSelectedSlots([]); // Clear selections when switching tabs
-              }
-            }}
+            onClick={() => handleTabChange(tab)}
             className={`group relative py-4 px-5 rounded-xl text-left font-semibold transition-all duration-300 transform hover:scale-105
               ${
                 activeTab === tab
@@ -135,22 +192,22 @@ export default function StudentDashboard() {
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 p-8 overflow-auto">
+      <main className="relative z-10 flex-1 p-4 lg:p-8 overflow-auto">
         {activeTab === "Home" && (
-          <div className="space-y-8 max-w-7xl mx-auto animate-fadeIn">
+          <div className="space-y-6 lg:space-y-8 max-w-7xl mx-auto animate-fadeIn">
             {/* Welcome Section */}
-            <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-8 rounded-3xl shadow-2xl text-white overflow-hidden">
+            <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-6 lg:p-8 rounded-3xl shadow-2xl text-white overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 lg:w-64 lg:h-64 bg-white/10 rounded-full -translate-y-16 lg:-translate-y-32 translate-x-16 lg:translate-x-32"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 lg:w-48 lg:h-48 bg-white/5 rounded-full translate-y-12 lg:translate-y-24 -translate-x-12 lg:-translate-x-24"></div>
               
               <div className="relative z-10">
-                <h2 className="text-4xl font-bold mb-4 animate-slideInLeft">
+                <h2 className="text-2xl lg:text-4xl font-bold mb-4 animate-slideInLeft">
                   Welcome Back, {personalInfo.name}! 🎉
                 </h2>
-                <p className="text-xl text-purple-100 animate-slideInLeft animation-delay-200">
+                <p className="text-lg lg:text-xl text-purple-100 animate-slideInLeft animation-delay-200">
                   Your next session is on{" "}
-                  <span className="font-bold text-yellow-300 px-3 py-1 bg-white/20 rounded-full">
+                  <span className="font-bold text-yellow-300 px-2 lg:px-3 py-1 bg-white/20 rounded-full text-sm lg:text-base">
                     June 10 at 10:00 AM
                   </span>
                 </p>
@@ -158,17 +215,17 @@ export default function StudentDashboard() {
             </div>
 
             {/* Personal Info Section */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="group bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+              <div className="group bg-white/70 backdrop-blur-sm p-6 lg:p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-lg lg:text-xl mr-4">
                     👤
                   </div>
-                  <h3 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                  <h3 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                     Personal Info
                   </h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 lg:space-y-4">
                   {Object.entries({
                     "Name": personalInfo.name,
                     "Date of Birth": personalInfo.dob,
@@ -178,46 +235,46 @@ export default function StudentDashboard() {
                   }).map(([key, value], index) => (
                     <div 
                       key={key}
-                      className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300"
+                      className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300 gap-1 sm:gap-0"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <span className="font-semibold text-gray-700">{key}:</span>
-                      <span className="text-gray-800 font-medium">{value}</span>
+                      <span className="font-semibold text-gray-700 text-sm lg:text-base">{key}:</span>
+                      <span className="text-gray-800 font-medium text-sm lg:text-base break-all sm:break-normal">{value}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="group bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+              <div className="group bg-white/70 backdrop-blur-sm p-6 lg:p-8 rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-lg lg:text-xl mr-4">
                     📈
                   </div>
-                  <h3 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                  <h3 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                     Progress
                   </h3>
                 </div>
                 
                 <div className="relative">
-                  <div className="w-full bg-gray-200 rounded-full h-6 mb-4 overflow-hidden">
+                  <div className="w-full bg-gray-200 rounded-full h-4 lg:h-6 mb-4 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
+                      className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-4 lg:h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
                       style={{ width: `${personalInfo.progress}%` }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
                     </div>
                   </div>
-                  <p className="text-right text-lg font-bold text-gray-700 mb-4">
+                  <p className="text-right text-base lg:text-lg font-bold text-gray-700 mb-4">
                     {personalInfo.progress}% Complete
                   </p>
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm font-medium text-gray-600">
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">Beginner Level</span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Intermediate Level</span>
+                  <div className="flex flex-col sm:flex-row justify-between gap-2 text-sm font-medium text-gray-600">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-center">Beginner Level</span>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-center">Intermediate Level</span>
                   </div>
-                  <p className="text-center text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl">
+                  <p className="text-center text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl text-sm lg:text-base">
                     🌟 Great progress! Keep practicing to reach the next level.
                   </p>
                 </div>
@@ -227,29 +284,29 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === "Book" && (
-          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
-            <div className="flex items-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center text-white text-2xl mr-6 shadow-lg">
+          <div className="bg-white/80 backdrop-blur-lg p-4 lg:p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
+            <div className="flex flex-col sm:flex-row items-center mb-6 lg:mb-8 gap-4">
+              <div className="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center text-white text-xl lg:text-2xl shadow-lg">
                 📅
               </div>
-              <div>
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                   Book Lessons
                 </h2>
-                <p className="text-gray-600 mt-1">Select your preferred time slots</p>
+                <p className="text-gray-600 mt-1 text-sm lg:text-base">Select your preferred time slots</p>
               </div>
             </div>
 
             {/* Selection Summary */}
             {selectedSlots.length > 0 && (
-              <div className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg animate-slideInDown">
+              <div className="mb-6 lg:mb-8 p-4 lg:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg animate-slideInDown">
                 <div className="flex items-center mb-4">
-                  <span className="text-2xl mr-3">✨</span>
-                  <h3 className="font-bold text-amber-800 text-xl">
+                  <span className="text-xl lg:text-2xl mr-3">✨</span>
+                  <h3 className="font-bold text-amber-800 text-lg lg:text-xl">
                     Selected Sessions ({selectedSlots.length})
                   </h3>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2 lg:gap-3">
                   {selectedSlots.map((slotKey) => {
                     const [day, time] = slotKey.split('-');
                     const dayName = new Date(day).toLocaleDateString(undefined, {
@@ -260,7 +317,7 @@ export default function StudentDashboard() {
                     return (
                       <span
                         key={slotKey}
-                        className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+                        className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-3 lg:px-4 py-1 lg:py-2 rounded-full text-xs lg:text-sm font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
                       >
                         {dayName} at {time}
                       </span>
@@ -270,8 +327,8 @@ export default function StudentDashboard() {
               </div>
             )}
 
-            {/* Days horizontally - wider layout */}
-            <div className="grid grid-cols-7 gap-6">
+            {/* Days Layout - Mobile: vertical stack, Desktop: horizontal grid */}
+            <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-7 lg:gap-6">
               {currentWeek.map((day, dayIndex) => {
                 const dayOfWeek = day.getDay();
 
@@ -280,18 +337,18 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={day.toDateString()}
-                      className="p-6 bg-gray-100/60 backdrop-blur-sm border-2 border-gray-200 rounded-2xl text-center text-gray-400 shadow-lg animate-fadeInUp"
+                      className="p-4 lg:p-6 bg-gray-100/60 backdrop-blur-sm border-2 border-gray-200 rounded-2xl text-center text-gray-400 shadow-lg animate-fadeInUp"
                       style={{ animationDelay: `${dayIndex * 100}ms` }}
                     >
-                      <h3 className="text-lg font-bold mb-4">
+                      <h3 className="text-base lg:text-lg font-bold mb-4">
                         {day.toLocaleDateString(undefined, {
                           weekday: "short",
                           month: "short",
                           day: "numeric",
                         })}
                       </h3>
-                      <div className="text-4xl mb-2">😴</div>
-                      <p className="font-medium">Weekend Rest</p>
+                      <div className="text-3xl lg:text-4xl mb-2">😴</div>
+                      <p className="font-medium text-sm lg:text-base">Weekend Rest</p>
                     </div>
                   );
                 }
@@ -299,10 +356,10 @@ export default function StudentDashboard() {
                 return (
                   <div
                     key={day.toDateString()}
-                    className="p-6 bg-white/70 backdrop-blur-sm border-2 border-white/30 rounded-2xl flex flex-col items-center shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-fadeInUp"
+                    className="p-4 lg:p-6 bg-white/70 backdrop-blur-sm border-2 border-white/30 rounded-2xl flex flex-col items-center shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-fadeInUp"
                     style={{ animationDelay: `${dayIndex * 100}ms` }}
                   >
-                    <h3 className="text-lg font-bold mb-4 text-gray-800 text-center bg-gradient-to-r from-purple-100 to-indigo-100 px-4 py-2 rounded-full">
+                    <h3 className="text-base lg:text-lg font-bold mb-4 text-gray-800 text-center bg-gradient-to-r from-purple-100 to-indigo-100 px-3 lg:px-4 py-2 rounded-full">
                       {day.toLocaleDateString(undefined, {
                         weekday: "short",
                         month: "short",
@@ -310,8 +367,8 @@ export default function StudentDashboard() {
                       })}
                     </h3>
 
-                    {/* Time slots container - no scrolling */}
-                    <div className="flex flex-col space-y-3 w-full">
+                    {/* Time slots container */}
+                    <div className="flex flex-col space-y-2 lg:space-y-3 w-full">
                       {timeSlots.map((time, timeIndex) => {
                         const key = `${day.toDateString()}-${time}`;
                         const slot = demoSlotData[key];
@@ -321,7 +378,7 @@ export default function StudentDashboard() {
                           <button
                             key={key}
                             onClick={() => handleSlotClick(day.toDateString(), time)}
-                            className={`group relative rounded-xl px-4 py-3 border-2 text-sm flex flex-col items-center transition-all duration-300 transform hover:scale-105 min-h-[70px] justify-center overflow-hidden
+                            className={`group relative rounded-xl px-3 lg:px-4 py-2 lg:py-3 border-2 text-xs lg:text-sm flex flex-col items-center transition-all duration-300 transform hover:scale-105 min-h-[60px] lg:min-h-[70px] justify-center overflow-hidden
                               ${
                                 isSelected
                                   ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white border-amber-300 shadow-2xl shadow-amber-500/25 scale-105"
@@ -338,7 +395,7 @@ export default function StudentDashboard() {
                               <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 animate-pulse"></div>
                             )}
                             
-                            <span className="relative z-10 font-bold text-base mb-2">
+                            <span className="relative z-10 font-bold text-sm lg:text-base mb-1 lg:mb-2">
                               {time}
                             </span>
                             
@@ -382,17 +439,17 @@ export default function StudentDashboard() {
 
             {/* Book Now Section */}
             {selectedSlots.length > 0 && (
-              <div className="mt-10 text-center animate-slideInUp">
-                <p className="mb-6 text-gray-700 font-semibold text-xl">
+              <div className="mt-8 lg:mt-10 text-center animate-slideInUp">
+                <p className="mb-4 lg:mb-6 text-gray-700 font-semibold text-lg lg:text-xl">
                   {selectedSlots.length === 1 
                     ? `🎯 You have selected 1 session`
                     : `🎯 You have selected ${selectedSlots.length} sessions`
                   }
                 </p>
-                <div className="flex justify-center space-x-6">
+                <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-6">
                   <button
                     onClick={() => setSelectedSlots([])}
-                    className="group px-8 py-4 bg-gray-200 text-gray-700 rounded-2xl hover:bg-gray-300 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="group px-6 lg:px-8 py-3 lg:py-4 bg-gray-200 text-gray-700 rounded-2xl hover:bg-gray-300 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     <span className="group-hover:animate-bounce inline-block mr-2">🗑️</span>
                     Clear All
@@ -411,7 +468,7 @@ export default function StudentDashboard() {
                       alert(`🎉 Booking confirmed for: ${sessions}`);
                       setSelectedSlots([]);
                     }}
-                    className="group px-10 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105"
+                    className="group px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105"
                   >
                     <span className="group-hover:animate-bounce inline-block mr-2">🚀</span>
                     Book {selectedSlots.length} Session{selectedSlots.length > 1 ? 's' : ''}
