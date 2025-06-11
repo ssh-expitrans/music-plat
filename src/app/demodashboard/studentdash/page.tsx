@@ -685,6 +685,7 @@ export default function StudentDashboard() {
     )}
   </div>
 )}
+
         {activeTab === "Buy" && (
           <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
             <h2 className="flex items-center mb-6">Piano Lesson Packages</h2>
