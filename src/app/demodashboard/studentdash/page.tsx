@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from 'next/link';
+
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
@@ -833,7 +835,10 @@ export default function StudentDashboard() {
       <p className="text-gray-600 font-medium text-lg">
         That&apos;s all your upcoming lessons! Ready to book more?
       </p>
-      <button className="mt-4 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
+      <button
+        onClick={() => setActiveTab("Book")}
+        className="mt-4 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+      >
         <span className="mr-2">📅</span>
         Book New Lessons
       </button>
@@ -895,16 +900,24 @@ export default function StudentDashboard() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+      {/* Log In Button */}
+      <Link href="/login">
         <button className="group px-10 py-4 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-2xl hover:from-slate-800 hover:to-gray-800 transition-all duration-300 font-bold shadow-2xl hover:shadow-slate-500/25 transform hover:scale-105">
           <span className="group-hover:animate-bounce inline-block mr-3">🚀</span>
           Log In to Your Account
         </button>
+      </Link>
+
+      {/* Sign Up Button */}
+      <Link href="/signup">
         <button className="group px-8 py-4 bg-white text-slate-700 border-2 border-slate-300 rounded-2xl hover:bg-slate-50 hover:border-slate-400 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
           <span className="group-hover:animate-bounce inline-block mr-3">✨</span>
           Create New Account
         </button>
-      </div>
+      </Link>
+    </div>
+
     </div>
 
     {/* Additional Info */}
