@@ -149,7 +149,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Sidebar Tabs */}
-      <nav className="relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex flex-col space-y-3 shadow-2xl">
+      <nav className="hidden md:flex relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex-col space-y-3 shadow-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
             🎵 MusicLearn
@@ -900,7 +900,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Action Buttons */}
-    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
       {/* Log In Button */}
       <Link href="/login">
         <button className="group px-10 py-4 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-2xl hover:from-slate-800 hover:to-gray-800 transition-all duration-300 font-bold shadow-2xl hover:shadow-slate-500/25 transform hover:scale-105">
@@ -930,6 +930,32 @@ export default function StudentDashboard() {
   </div>
 )}
       </main>
+
+      {/* Bottom Mobile Nav */}
+<nav className="fixed bottom-0 left-0 right-0 z-20 flex justify-around bg-white border-t border-gray-300 shadow-md p-2 md:hidden">
+  {tabs.map((tab) => (
+    <button
+      key={tab}
+      onClick={() => {
+        setActiveTab(tab);
+        if (tab !== "Book") setSelectedSlots([]);
+      }}
+      className={`flex flex-col items-center text-xs ${
+        activeTab === tab ? "text-indigo-600" : "text-gray-500"
+      }`}
+    >
+      <span className="text-lg">
+        {tab === "Home" && "🏠"}
+        {tab === "Book" && "📅"}
+        {tab === "Buy" && "💳"}
+        {tab === "Upcoming" && "⏰"}
+        {tab === "Account" && "👤"}
+      </span>
+      <span>{tab}</span>
+    </button>
+  ))}
+</nav>
+
 
       {/* Custom styles for animations */}
       <style jsx>{`
