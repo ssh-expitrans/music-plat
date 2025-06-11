@@ -1,16 +1,12 @@
-"use client";
+'use client';
 
 import React, { useState } from "react";
 import Link from "next/link";
-// import { useRouter } from "next/navigation";
-// import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-// import { auth } from "../../lib/firebase";
 
 export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  // const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,109 +32,112 @@ export default function Signup() {
     }
 
     try {
-      // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Send email verification
-      // if (auth.currentUser) {
-      //   await sendEmailVerification(auth.currentUser);
-      //   setMessage("Account created! Please check your email to verify your account.");
-      // }
-
-      // Temporary message for demo purposes
+      // Demo mode message; implement signup logic here
       setMessage("Sign up functionality is currently disabled for demo.");
       setLoading(false);
-
-      // Optionally redirect or require email verification before login
-      // router.push("/login");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Sign-up failed. Please try again.");
-      }
+      setError(err instanceof Error ? err.message : "Sign-up failed. Please try again.");
       setLoading(false);
     }
   }
 
   return (
-    <>
-      <header className="bg-indigo-700 text-white p-4 shadow flex items-center">
-        <Link href="/" className="font-semibold text-lg hover:underline">
-          &larr; Back to Homepage
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-serif flex flex-col">
+      
+      {/* HEADER */}
+      <header className="px-6 py-4">
+        <Link href="/" className="text-[var(--accent)] font-semibold hover:underline">
+          ← Back to Homepage
         </Link>
       </header>
 
-      <main className="max-w-md mx-auto p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-8">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-900 dark:text-white">
-          Sign Up
-        </h1>
+      {/* FORM CONTAINER */}
+      <main className="flex-grow flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-xl p-10 max-w-md w-full space-y-6">
+          <h1 className="text-4xl font-bold text-center text-[var(--accent)]">Sign Up</h1>
 
-        {error && (
-          <p className="mb-4 text-red-600 font-semibold text-center">{error}</p>
-        )}
+          {error && (
+            <div className="bg-red-100 text-red-700 p-3 rounded-md text-sm text-center font-medium">
+              {error}
+            </div>
+          )}
 
-        {message && (
-          <p className="mb-4 text-green-600 font-semibold text-center">{message}</p>
-        )}
+          {message && (
+            <div className="bg-green-100 text-green-700 p-3 rounded-md text-sm text-center font-medium">
+              {message}
+            </div>
+          )}
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-semibold">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            disabled={loading}
-          />
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                disabled={loading}
+              />
+            </div>
 
-          <label htmlFor="password" className="text-gray-700 dark:text-gray-300 font-semibold">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            disabled={loading}
-          />
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                minLength={6}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                disabled={loading}
+              />
+            </div>
 
-          <label htmlFor="confirmPassword" className="text-gray-700 dark:text-gray-300 font-semibold">
-            Confirm Password
-          </label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            required
-            minLength={6}
-            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            disabled={loading}
-          />
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-700 mb-1">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                minLength={6}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                disabled={loading}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`mt-4 bg-indigo-600 text-white rounded py-2 font-semibold hover:bg-indigo-700 transition ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {loading ? "Creating Account..." : "Sign Up"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 rounded-lg font-semibold text-white bg-[var(--accent)] hover:bg-indigo-700 transition ${
+                loading ? "opacity-60 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Creating Account..." : "Sign Up"}
+            </button>
+          </form>
 
-        <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
-          Already have an account?{" "}
-          <Link href="/login" className="text-indigo-600 hover:underline">
-            Log in here
-          </Link>
-          .
-        </p>
+          <p className="text-center text-sm text-neutral-600">
+            Already have an account?{" "}
+            <Link href="/login" className="text-[var(--accent)] hover:underline font-medium">
+              Log in here
+            </Link>
+            .
+          </p>
+        </div>
       </main>
-    </>
+
+      {/* FOOTER */}
+      <footer className="py-6 text-center text-neutral-500 text-sm border-t border-neutral-300 mt-10">
+        © 2025 Buzz Financial
+      </footer>
+    </div>
   );
 }
