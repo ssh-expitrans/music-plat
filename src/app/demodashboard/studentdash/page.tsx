@@ -16,6 +16,18 @@ const timeSlots = [
   "4:00 PM",
 ];
 
+const getTabIcon = (tab: string) => {
+  switch (tab) {
+    case "Home": return "🏠";
+    case "Book": return "📅";
+    case "Buy": return "💳";
+    case "Upcoming": return "⏰";
+    case "Account": return "👤";
+    default: return "";
+  }
+};
+
+
 // Generate demo data for multiple weeks
 const generateDemoSlotData = () => {
   const data: Record<string, { booked: number; skill: string; ageGroup: string }> = {};
@@ -175,15 +187,10 @@ export default function StudentDashboard() {
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <div className="flex items-center space-x-3">
-              <span className="text-lg">
-                {tab === "Home" && "🏠"}
-                {tab === "Book" && "📅"}
-                {tab === "Buy" && "💳"}
-                {tab === "Upcoming" && "⏰"}
-                {tab === "Account" && "👤"}
-              </span>
-              <span>{tab}</span>
+              <span className="text-lg">{getTabIcon(tab)}</span>
+              <span className="hidden sm:inline">{tab}</span>
             </div>
+
             {activeTab === tab && (
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
@@ -934,25 +941,19 @@ export default function StudentDashboard() {
       {/* Bottom Mobile Nav */}
 <nav className="fixed bottom-0 left-0 right-0 z-20 flex justify-around bg-white border-t border-gray-300 shadow-md p-2 md:hidden">
   {tabs.map((tab) => (
-    <button
-      key={tab}
-      onClick={() => {
-        setActiveTab(tab);
-        if (tab !== "Book") setSelectedSlots([]);
-      }}
-      className={`flex flex-col items-center text-xs ${
-        activeTab === tab ? "text-indigo-600" : "text-gray-500"
-      }`}
-    >
-      <span className="text-lg">
-        {tab === "Home" && "🏠"}
-        {tab === "Book" && "📅"}
-        {tab === "Buy" && "💳"}
-        {tab === "Upcoming" && "⏰"}
-        {tab === "Account" && "👤"}
-      </span>
-      <span>{tab}</span>
-    </button>
+ <button
+  key={tab}
+  onClick={() => {
+    setActiveTab(tab);
+    if (tab !== "Book") setSelectedSlots([]);
+  }}
+  className={`flex flex-col items-center text-[10px] sm:text-xs ${
+    activeTab === tab ? "text-indigo-600" : "text-gray-500"
+  }`}
+>
+  <span className="text-lg">{getTabIcon(tab)}</span>
+</button>
+
   ))}
 </nav>
 
