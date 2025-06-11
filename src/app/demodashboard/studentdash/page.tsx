@@ -106,7 +106,6 @@ export default function StudentDashboard() {
     setCurrentWeekStart(getCurrentWeekSunday());
   };
 
-  // Helper function to format week range
   const formatWeekRange = (weekStart: Date) => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
@@ -118,13 +117,11 @@ export default function StudentDashboard() {
     }
   };
 
-  // Check if current week is being displayed
   const isCurrentWeek = () => {
     const today = getCurrentWeekSunday();
     return currentWeekStart.getTime() === today.getTime();
   };
 
-  // Handle slot selection/deselection
   const handleSlotClick = (day: string, time: string) => {
     const slotKey = `${day}-${time}`;
     
@@ -136,7 +133,6 @@ export default function StudentDashboard() {
     });
   };
 
-  // Check if a slot is selected
   const isSlotSelected = (day: string, time: string) => {
     return selectedSlots.includes(`${day}-${time}`);
   };
@@ -165,7 +161,7 @@ export default function StudentDashboard() {
             onClick={() => {
               setActiveTab(tab);
               if (tab !== "Book") {
-                setSelectedSlots([]); // Clear selections when switching tabs
+                setSelectedSlots([]); 
               }
             }}
             className={`group relative py-4 px-5 rounded-xl text-left font-semibold transition-all duration-300 transform hover:scale-105
@@ -287,7 +283,6 @@ export default function StudentDashboard() {
           </div>
         )}
 
-      // Updated JSX for the Book tab
 {activeTab === "Book" && (
   <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
     <div className="flex items-center mb-8">
