@@ -1,26 +1,24 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";  // Add this import!
-//import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// lib/firebase.js
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCgwQGhkc9JPP67ny_H7hs0QuwfANdgXJM",
-  authDomain: "music-platform-3cd20.firebaseapp.com",
-  projectId: "music-platform-3cd20",
-  storageBucket: "music-platform-3cd20.firebasestorage.app",
-  messagingSenderId: "1055014994233",
-  appId: "1:1055014994233:web:b4bdfb442dd9fe649b68e8",
-  measurementId: "G-1W3ET1Q5EN"
+  apiKey: "AIzaSyCxyjQmvxrHtHj24fX2lbUeCTDZNWDc3o0",
+  authDomain: "music-plat.firebaseapp.com",
+  projectId: "music-plat",
+  storageBucket: "music-plat.firebasestorage.app",
+  messagingSenderId: "288855710473",
+  appId: "1:288855710473:web:0c271189d208928e17d1d8"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-//const analytics = getAnalytics(app);
 
+// Initialize Firebase services
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 export default app;
