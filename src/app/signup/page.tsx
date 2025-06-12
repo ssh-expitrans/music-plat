@@ -2,11 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { auth } from "../../lib/firebase";
 
 export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,12 +35,43 @@ export default function Signup() {
       return;
     }
 
-    try {
-      // Demo mode message; implement signup logic here
-      setMessage("Sign up functionality is currently disabled for demo.");
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
       setLoading(false);
+      return;
+    }
+
+    try {
+      // Create user account
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Send email verification
+      await sendEmailVerification(user);
+      
+      setMessage("Account created successfully! Please check your email to verify your account before logging in.");
+      
+      // Optionally redirect to login after a delay
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000);
+      
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Sign-up failed. Please try again.");
+      if (err instanceof Error) {
+        // Handle specific Firebase errors
+        if (err.message.includes("email-already-in-use")) {
+          setError("This email is already registered. Please use a different email or try logging in.");
+        } else if (err.message.includes("weak-password")) {
+          setError("Password is too weak. Please use a stronger password.");
+        } else if (err.message.includes("invalid-email")) {
+          setError("Please enter a valid email address.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Sign-up failed. Please try again.");
+      }
+    } finally {
       setLoading(false);
     }
   }
@@ -85,7 +120,7 @@ export default function Signup() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1">
-                Password
+                Password (min 6 characters)
               </label>
               <input
                 id="password"
