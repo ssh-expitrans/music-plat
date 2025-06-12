@@ -52,7 +52,7 @@ export default function Login() {
 
       const idToken = await user.getIdToken();
       Cookies.set("token", idToken, { expires: 1 });
-      router.push("/dashboard/personal");
+      router.push("/demodashboard/studentdash");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed. Please try again.");
       setLoading(false);
