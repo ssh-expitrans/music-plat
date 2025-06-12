@@ -201,7 +201,7 @@ export default function StudentDashboard() {
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 p-8 overflow-auto">
+      <main className="relative z-10 flex-1 p-8 overflow-auto pb-20 md:pb-0">
   
   {activeTab === "Home" && (
   <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-fadeIn px-4 sm:px-6 lg:px-8">
