@@ -36,7 +36,7 @@ export default function Login() {
     const password = formData.get("password")?.toString() || "";
 
     if (!email || !password) {
-      setError("Please enter both email and password.");
+      setError("Please enter email and password.");
       setLoading(false);
       return;
     }
