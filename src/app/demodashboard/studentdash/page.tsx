@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
 
@@ -30,10 +30,21 @@ export default function StudentDashboard() {
   if (loading) return <p>Loading...</p>;
 
   if (!user) {
+    // User not logged in - show login UI here:
     return (
       <div>
-        <h1>Demo Dashboard</h1>
-        {/* Your hardcoded demo components here */}
+        <h1>Please log in to see your dashboard</h1>
+        <button
+          onClick={() => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(console.error);
+          }}
+        >
+          Log in with Google
+        </button>
+
+        <h2>Or view the demo dashboard below</h2>
+        <DemoDashboard />
       </div>
     );
   }
@@ -41,10 +52,22 @@ export default function StudentDashboard() {
   return (
     <div>
       <h1>Welcome, {realData?.name || user.email}</h1>
-      {/* Your real user dashboard components here */}
+      {/* Your real user dashboard components */}
     </div>
   );
 }
+
+// You can define a demo dashboard component separately:
+function DemoDashboard() {
+  return (
+    <div>
+      <h3>Demo Dashboard</h3>
+      {/* Your hardcoded demo content here */}
+      <p>This is example demo data.</p>
+    </div>
+  );
+}
+
 
 /*
 
