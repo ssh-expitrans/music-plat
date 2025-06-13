@@ -1,75 +1,9 @@
-"use client";
+//components/demodashboard.tsx
 
+
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, User } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, DocumentData } from "firebase/firestore";
 
-export default function StudentDashboard() {
-  const [user, setUser] = useState<User | null>(null);
-  const [realData, setRealData] = useState<DocumentData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-
-      if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, "students", firebaseUser.uid));
-        if (userDoc.exists()) {
-          setRealData(userDoc.data());
-        }
-      }
-
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) return <p>Loading...</p>;
-
-  if (!user) {
-    // User not logged in - show login UI here:
-    return (
-      <div>
-        <h1>Please log in to see your dashboard</h1>
-        <button
-          onClick={() => {
-            const provider = new GoogleAuthProvider();
-            signInWithPopup(auth, provider).catch(console.error);
-          }}
-        >
-          Log in with Google
-        </button>
-
-        <h2>Or view the demo dashboard below</h2>
-        <DemoDashboard />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <h1>Welcome, {realData?.name || user.email}</h1>
-      {/* Your real user dashboard components */}
-    </div>
-  );
-}
-
-// You can define a demo dashboard component separately:
-function DemoDashboard() {
-  return (
-    <div>
-      <h3>Demo Dashboard</h3>
-      {/* Your hardcoded demo content here */}
-      <p>This is example demo data.</p>
-    </div>
-  );
-}
-
-
-/*
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
@@ -134,6 +68,7 @@ const generateDemoSlotData = () => {
 
 const demoSlotData = generateDemoSlotData();
 
+
 // Get week dates starting from a specific Sunday
 function getWeekDates(sundayDate: Date) {
   const week = [];
@@ -155,7 +90,7 @@ function getCurrentWeekSunday() {
   return sunday;
 }
 
-export default function StudentDashboard() {
+export default function DemoDashboard() {
   const [activeTab, setActiveTab] = useState("Home");
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
@@ -267,19 +202,13 @@ export default function StudentDashboard() {
         ))}
       </nav>
 
-      {/* Main Content 
+      {/* Main Content */}
       <main className="relative z-10 flex-1 p-8 overflow-auto pb-20 md:pb-0">
-  
-  {isDemo && (
-    <div className="bg-yellow-100 text-yellow-800 p-3 rounded-md text-center mb-6 font-medium">
-      You’re viewing the demo dashboard. <a href="/login" className="underline">Log in</a> to see your real schedule.
-    </div>
-  )}
 
 
   {activeTab === "Home" && (
   <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-fadeIn px-4 sm:px-6 lg:px-8">
-    {/* Welcome Section 
+    {/* Welcome Section */}
     <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-2xl text-white overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
       <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-white/10 rounded-full -translate-y-16 sm:-translate-y-24 lg:-translate-y-32 translate-x-16 sm:translate-x-24 lg:translate-x-32"></div>
@@ -300,7 +229,7 @@ export default function StudentDashboard() {
       </div>
     </div>
 
-    {/* Personal Info Section 
+    {/* Personal Info Section */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
       <div className="group bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
         <div className="flex items-center mb-4 sm:mb-6">
@@ -383,7 +312,7 @@ export default function StudentDashboard() {
       </div>
     </div>
 
-    {/* Week Navigation - Mobile Optimized 
+    {/* Week Navigation - Mobile Optimized */}
     <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-purple-200 shadow-lg space-y-4 sm:space-y-0">
       <div className="flex space-x-2 sm:space-x-0 sm:block order-2 sm:order-1">
         <button
@@ -432,7 +361,7 @@ export default function StudentDashboard() {
       </button>
     </div>
 
-    {/* Selection Summary - Mobile Optimized 
+    {/* Selection Summary - Mobile Optimized */}
     {selectedSlots.length > 0 && (
       <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg animate-slideInDown">
         <div className="flex items-center mb-3 sm:mb-4">
@@ -462,7 +391,7 @@ export default function StudentDashboard() {
       </div>
     )}
 
-    {/* Mobile View - Dropdown Style 
+    {/* Mobile View - Dropdown Style */}
     <div className="block sm:hidden space-y-4">
       {currentWeek.map((day, dayIndex) => {
         const dayOfWeek = day.getDay();
@@ -500,7 +429,7 @@ export default function StudentDashboard() {
             }`}
             style={{ animationDelay: `${dayIndex * 100}ms` }}
           >
-            {/* Day Header - Clickable 
+            {/* Day Header - Clickable */}
             <summary className="w-full p-4 text-left rounded-2xl transition-all duration-300 cursor-pointer list-none">
               <div className="flex items-center justify-between">
                 <h3 className={`text-lg font-bold px-3 py-2 rounded-full ${
@@ -524,7 +453,7 @@ export default function StudentDashboard() {
               </div>
             </summary>
 
-            {/* Time Slots - Expandable 
+            {/* Time Slots - Expandable */}
             <div className="px-4 pb-4 space-y-3 border-t border-gray-200">
               {timeSlots.map((time, timeIndex) => {
                 const key = `${day.toDateString()}-${time}`;
@@ -600,7 +529,7 @@ export default function StudentDashboard() {
       })}
     </div>
 
-    {/* Desktop View - Grid Layout 
+    {/* Desktop View - Grid Layout */}
     <div className="hidden sm:grid grid-cols-2 lg:grid-cols-7 gap-6">
       {currentWeek.map((day, dayIndex) => {
         const dayOfWeek = day.getDay();
@@ -651,7 +580,7 @@ export default function StudentDashboard() {
               {isToday && <span className="block text-xs mt-1">Today</span>}
             </h3>
 
-            {/* Time slots container 
+            {/* Time slots container */}
             <div className="flex flex-col space-y-3 w-full">
               {timeSlots.map((time, timeIndex) => {
                 const key = `${day.toDateString()}-${time}`;
@@ -721,7 +650,7 @@ export default function StudentDashboard() {
       })}
     </div>
 
-    {/* Book Now Section - Mobile Optimized 
+    {/* Book Now Section - Mobile Optimized */}
     {selectedSlots.length > 0 && (
       <div className="mt-8 sm:mt-10 text-center animate-slideInUp">
         <p className="mb-4 sm:mb-6 text-gray-700 font-semibold text-lg sm:text-xl">
@@ -923,7 +852,7 @@ export default function StudentDashboard() {
 
        {activeTab === "Upcoming" && (
   <div className="max-w-6xl mx-auto animate-fadeIn">
-    {/* Header Section 
+    {/* Header Section */}
     <div className="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-8 rounded-3xl shadow-2xl text-white overflow-hidden mb-8">
       <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/90 to-teal-600/90"></div>
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
@@ -944,7 +873,7 @@ export default function StudentDashboard() {
       </div>
     </div>
 
-    {/* Lessons Grid 
+    {/* Lessons Grid */}
     <div className="space-y-6">
       {[
         {
@@ -972,9 +901,9 @@ export default function StudentDashboard() {
           style={{ animationDelay: `${index * 200}ms` }}
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Lesson Info 
+            {/* Lesson Info */}
             <div className="flex items-center space-x-6">
-              {/* Date Circle 
+              {/* Date Circle */}
               <div className="relative">
                 <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex flex-col items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <span className="text-xs font-medium">
@@ -991,7 +920,7 @@ export default function StudentDashboard() {
                 )}
               </div>
 
-              {/* Lesson Details 
+              {/* Lesson Details */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
@@ -1031,7 +960,7 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* Action Buttons 
+            {/* Action Buttons */}
             <div className="flex gap-3">
               <button className="group/btn px-6 py-3 bg-gradient-to-r from-amber-400 to-orange-400 text-white rounded-2xl hover:from-amber-500 hover:to-orange-500 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
                 <span className="group-hover/btn:animate-bounce inline-block mr-2">🔄</span>
@@ -1044,7 +973,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          {/* Progress Bar for today's lesson 
+          {/* Progress Bar for today's lesson */}
           {lesson.daysTill === 0 && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between mb-3">
@@ -1062,7 +991,7 @@ export default function StudentDashboard() {
       ))}
     </div>
 
-    {/* No More Lessons Message 
+    {/* No More Lessons Message */}
     <div className="mt-8 text-center p-8 bg-gradient-to-r from-gray-50 to-white rounded-3xl border-2 border-gray-100 shadow-lg">
       <div className="text-6xl mb-4">🎵</div>
       <p className="text-gray-600 font-medium text-lg">
@@ -1081,7 +1010,7 @@ export default function StudentDashboard() {
 
 {activeTab === "Account" && (
   <div className="max-w-4xl mx-auto animate-fadeIn">
-    {/* Header Section 
+    {/* Header Section */}
     <div className="relative bg-gradient-to-r from-slate-700 via-gray-700 to-zinc-700 p-8 rounded-3xl shadow-2xl text-white overflow-hidden mb-8">
       <div className="absolute inset-0 bg-gradient-to-r from-slate-700/90 to-gray-700/90"></div>
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
@@ -1100,7 +1029,7 @@ export default function StudentDashboard() {
       </div>
     </div>
 
-    {/* Demo Notice 
+    {/* Demo Notice */}
     <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/30 text-center mb-8">
       <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg animate-bounce">
         🎭
@@ -1113,7 +1042,7 @@ export default function StudentDashboard() {
         Sign in to access your personalized dashboard with real lesson data and account settings.
       </p>
       
-      {/* Feature Preview Cards 
+      {/* Feature Preview Cards */}
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         {[
           { icon: "📊", title: "Progress Tracking", desc: "Monitor your musical journey" },
@@ -1132,9 +1061,9 @@ export default function StudentDashboard() {
         ))}
       </div>
 
-      {/* Action Buttons 
+      {/* Action Buttons */}
   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-      {/* Log In Button 
+      {/* Log In Button */}
       <Link href="/login">
         <button className="group px-10 py-4 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-2xl hover:from-slate-800 hover:to-gray-800 transition-all duration-300 font-bold shadow-2xl hover:shadow-slate-500/25 transform hover:scale-105">
           <span className="group-hover:animate-bounce inline-block mr-3">🚀</span>
@@ -1142,7 +1071,7 @@ export default function StudentDashboard() {
         </button>
       </Link>
 
-      {/* Sign Up Button 
+      {/* Sign Up Button */}
       <Link href="/signup">
         <button className="group px-8 py-4 bg-white text-slate-700 border-2 border-slate-300 rounded-2xl hover:bg-slate-50 hover:border-slate-400 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
           <span className="group-hover:animate-bounce inline-block mr-3">✨</span>
@@ -1153,7 +1082,7 @@ export default function StudentDashboard() {
 
     </div>
 
-    {/* Additional Info 
+    {/* Additional Info */}
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200 text-center">
       <div className="flex items-center justify-center gap-2 text-blue-700 font-medium">
         <span className="text-xl">🔒</span>
@@ -1190,7 +1119,7 @@ export default function StudentDashboard() {
       </nav>
 
 
-      {/* Custom styles for animations 
+      {/* Custom styles for animations */}
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
@@ -1230,40 +1159,5 @@ export default function StudentDashboard() {
   );
 }
 
-const name = isDemo ? "Demo Student" : studentData?.name;
-const bookings = isDemo
-  ? [
-      { date: "2025-06-20", time: "4 PM", location: "Zoom", notes: "Sample lesson" },
-      { date: "2025-06-27", time: "5 PM", location: "Studio", notes: "" }
-    ]
-  : studentData?.bookings || [];
 
 
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      // Not logged in → show demo data
-      setIsDemo(true);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const docRef = doc(db, "students", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        setStudentData(docSnap.data());
-        setIsDemo(false);
-      } else {
-        console.warn("No student data found in Firestore.");
-      }
-    } catch (err) {
-      console.error("Error fetching student data", err);
-    } finally {
-      setLoading(false);
-    }
-  });
-
-  return () => unsubscribe();
-}, []); */
