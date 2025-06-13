@@ -992,7 +992,7 @@ export default function StudentDashboard() {
     <div className="mt-8 text-center p-8 bg-gradient-to-r from-gray-50 to-white rounded-3xl border-2 border-gray-100 shadow-lg">
       <div className="text-6xl mb-4">🎵</div>
       <p className="text-gray-600 font-medium text-lg">
-        That&apos;s all your upcoming lessons! Ready to book more?
+        That&apos;s all your upcoming lessons! Ready to book some more?
       </p>
       <button
         onClick={() => setActiveTab("Book")}
