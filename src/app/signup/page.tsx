@@ -160,7 +160,7 @@ export default function Signup() {
           </form>
 
           <p className="text-center text-sm text-neutral-600">
-            Already have an account?{" "}
+            Already have an account with us?{" "}
             <Link href="/login" className="text-[var(--accent)] hover:underline font-medium">
               Log in here
             </Link>
