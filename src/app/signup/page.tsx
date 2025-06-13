@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "../../lib/firebase";
+import { setDoc, doc } from "firebase/firestore";
+import { db } from "../../lib/firebase"; // if you’ve set up Firestore
+
 
 export default function Signup() {
   const [error, setError] = useState("");
@@ -44,11 +47,18 @@ export default function Signup() {
     try {
       // Create user account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            
       const user = userCredential.user;
 
       // Send email verification
       await sendEmailVerification(user);
-      
+
+        await setDoc(doc(db, "students", user.uid), {
+        name: email.split("@")[0],
+        email: email,
+        bookings: [],
+      });
+
       setMessage("Account created successfully! Please check your email to verify your account before logging in.");
       
       // Optionally redirect to login after a delay
@@ -75,6 +85,7 @@ export default function Signup() {
       setLoading(false);
     }
   }
+  
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-serif flex flex-col">

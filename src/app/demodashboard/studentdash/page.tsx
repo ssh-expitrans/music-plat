@@ -3,6 +3,13 @@
 import React, { useState } from "react";
 import Link from 'next/link';
 
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../../lib/firebase"; // adjust path as needed
+
+const [studentData, setStudentData] = useState(null);
+const [loading, setLoading] = useState(true);
+const [isDemo, setIsDemo] = useState(true); // ← NEW
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
@@ -15,6 +22,7 @@ const timeSlots = [
   "3:00 PM",
   "4:00 PM",
 ];
+
 
 const getTabIcon = (tab: string) => {
   switch (tab) {
@@ -76,6 +84,7 @@ function getWeekDates(sundayDate: Date) {
   }
   return week;
 }
+
 
 // Get Sunday of current week
 function getCurrentWeekSunday() {
@@ -203,6 +212,13 @@ export default function StudentDashboard() {
       {/* Main Content */}
       <main className="relative z-10 flex-1 p-8 overflow-auto pb-20 md:pb-0">
   
+  {isDemo && (
+    <div className="bg-yellow-100 text-yellow-800 p-3 rounded-md text-center mb-6 font-medium">
+      You’re viewing the demo dashboard. <a href="/login" className="underline">Log in</a> to see your real schedule.
+    </div>
+  )}
+
+
   {activeTab === "Home" && (
   <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-fadeIn px-4 sm:px-6 lg:px-8">
     {/* Welcome Section */}
@@ -1155,3 +1171,41 @@ export default function StudentDashboard() {
     </div>
   );
 }
+
+const name = isDemo ? "Demo Student" : studentData?.name;
+const bookings = isDemo
+  ? [
+      { date: "2025-06-20", time: "4 PM", location: "Zoom", notes: "Sample lesson" },
+      { date: "2025-06-27", time: "5 PM", location: "Studio", notes: "" }
+    ]
+  : studentData?.bookings || [];
+
+
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      // Not logged in → show demo data
+      setIsDemo(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "students", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setStudentData(docSnap.data());
+        setIsDemo(false);
+      } else {
+        console.warn("No student data found in Firestore.");
+      }
+    } catch (err) {
+      console.error("Error fetching student data", err);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
