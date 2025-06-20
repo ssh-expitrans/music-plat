@@ -31,7 +31,7 @@ export default function Home() {
             </button>
           </Link>
           <button
-            onClick={() => router.push('/demodashboard/studentdash')}
+            onClick={() => router.push('/demodashboard/studentdash/real')}
             className="btn-outline px-7 py-3 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 font-semibold w-full sm:w-auto"
           >
             My Dash
