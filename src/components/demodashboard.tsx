@@ -2,7 +2,7 @@
 
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
