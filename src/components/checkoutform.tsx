@@ -24,6 +24,43 @@ interface FormData {
 
 type FormErrors = Partial<Record<keyof FormData | "submit", string>>;
 
+  type InputFieldProps = {
+  label: string;
+  name: keyof FormData;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  type?: string;
+  maxLength?: number;
+};
+
+
+  function InputField({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  type = "text",
+  maxLength,
+}: InputFieldProps) {
+  return (
+    <div className="flex flex-col">
+      <label htmlFor={name} className="mb-1 font-medium">{label}</label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        value={value}
+        maxLength={maxLength}
+        onChange={(e) => onChange(e.target.value)}
+        className="border rounded p-2"
+      />
+      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
+    </div>
+  );
+}
+
 export default function CheckoutForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -106,42 +143,7 @@ export default function CheckoutForm() {
     }
   };
 
-  type InputFieldProps = {
-  label: string;
-  name: keyof FormData;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  type?: string;
-  maxLength?: number;
-};
 
-
-  function InputField({
-  label,
-  name,
-  value,
-  onChange,
-  error,
-  type = "text",
-  maxLength,
-}: InputFieldProps) {
-  return (
-    <div className="flex flex-col">
-      <label htmlFor={name} className="mb-1 font-medium">{label}</label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        maxLength={maxLength}
-        onChange={(e) => onChange(e.target.value)}
-        className="border rounded p-2"
-      />
-      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
-    </div>
-  );
-}
 
 
   return (
