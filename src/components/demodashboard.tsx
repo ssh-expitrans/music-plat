@@ -35,7 +35,7 @@ const getTabIcon = (tab: string) => {
 const generateDemoSlotData = () => {
   const data: Record<string, { booked: number; skill: string; ageGroup: string }> = {};
   const skills = ["Beginner", "Intermediate", "Advanced"];
-  const ageGroups = ["Kids", "Teens"];
+  const ageGroups = ["12-14", "15-17", "Adult"];
   
   // Generate data for 8 weeks (4 past, current, 3 future)
   const today = new Date();
@@ -100,7 +100,7 @@ export default function DemoDashboard() {
   const personalInfo = {
     name: "Timmy Turner",
     dob: "2011-09-15",
-    ageGroup: "Kids",
+    ageGroup: "12-14",
     skillLevel: "Beginner",
     email: "timmy.turner@example.com",
     progress: 40,
@@ -509,7 +509,7 @@ export default function DemoDashboard() {
                             {slot.skill}
                           </span>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            slot.ageGroup === 'Kids' ? 'bg-pink-100 text-pink-800' :
+                            slot.ageGroup === '12-14' ? 'bg-pink-100 text-pink-800' :
                             'bg-indigo-100 text-indigo-800'
                           }`}>
                             {slot.ageGroup}
@@ -627,7 +627,7 @@ export default function DemoDashboard() {
                             {slot.skill}
                           </span>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            slot.ageGroup === 'Kids' ? 'bg-pink-100 text-pink-800' :
+                            slot.ageGroup === '12-14' ? 'bg-pink-100 text-pink-800' :
                             'bg-indigo-100 text-indigo-800'
                           }`}>
                             {slot.ageGroup}
@@ -885,7 +885,7 @@ export default function DemoDashboard() {
           time: "10:00 AM",
           student: "Timmy Turner",
           level: "Beginner",
-          ageGroup: "Kids",
+          ageGroup: "12-14",
           status: "confirmed",
           daysTill: 0
         },
@@ -894,7 +894,7 @@ export default function DemoDashboard() {
           time: "1:00 PM",
           student: "Timmy Turner",
           level: "Beginner", 
-          ageGroup: "Kids",
+          ageGroup: "12-14",
           status: "confirmed",
           daysTill: 2
         }
@@ -955,7 +955,7 @@ export default function DemoDashboard() {
                     {lesson.level}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    lesson.ageGroup === 'Kids' ? 'bg-pink-100 text-pink-800' :
+                    lesson.ageGroup === '12-14' ? 'bg-pink-100 text-pink-800' :
                     'bg-indigo-100 text-indigo-800'
                   }`}>
                     {lesson.ageGroup}
