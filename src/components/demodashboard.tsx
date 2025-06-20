@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useState } from "react";
 //import { useRouter } from 'next/navigation';
 
-
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
 const timeSlots = [
@@ -18,7 +17,6 @@ const timeSlots = [
   "4:00 PM",
 ];
 
-
 const getTabIcon = (tab: string) => {
   switch (tab) {
     case "Home": return "🏠";
@@ -30,6 +28,23 @@ const getTabIcon = (tab: string) => {
   }
 };
 
+// TypeScript interfaces
+interface CartItem {
+  id: string;
+  name: string;
+  price: string;
+  priceValue: number;
+  desc: string;
+  category: string;
+  quantity: number;
+  popular?: boolean;
+  features?: string[];
+  duration?: string;
+}
+
+interface Quantities {
+  [key: string]: number;
+}
 
 // Generate demo data for multiple weeks
 const generateDemoSlotData = () => {
@@ -69,7 +84,6 @@ const generateDemoSlotData = () => {
 
 const demoSlotData = generateDemoSlotData();
 
-
 // Get week dates starting from a specific Sunday
 function getWeekDates(sundayDate: Date) {
   const week = [];
@@ -81,7 +95,6 @@ function getWeekDates(sundayDate: Date) {
   return week;
 }
 
-
 // Get Sunday of current week
 function getCurrentWeekSunday() {
   const today = new Date();
@@ -91,10 +104,87 @@ function getCurrentWeekSunday() {
   return sunday;
 }
 
+// SINGLE MERGED COMPONENT - Remove the duplicate!
 export default function DemoDashboard() {
+  // All state in one place
   const [activeTab, setActiveTab] = useState("Home");
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [quantities, setQuantities] = useState<Quantities>({});
+  const [showCart, setShowCart] = useState<boolean>(false);
+
+  // Helper functions - moved inside the single component
+  const updateQuantity = (itemId: string, quantity: number): void => {
+    setQuantities(prev => ({
+      ...prev,
+      [itemId]: quantity
+    }));
+  };
+
+  // Function to add items to cart
+  const addToCart = (item: Omit<CartItem, 'quantity'>): void => {
+    const quantity = quantities[item.id] || 0;
+    if (quantity <= 0) return;
+
+    setCart(prev => {
+      const existingItem = prev.find(cartItem => cartItem.id === item.id);
+      if (existingItem) {
+        // Update existing item quantity
+        return prev.map(cartItem =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + quantity }
+            : cartItem
+        );
+      } else {
+        // Add new item to cart
+        return [...prev, { ...item, quantity }];
+      }
+    });
+
+    // Reset the quantity selector for this item
+    setQuantities(prev => ({
+      ...prev,
+      [item.id]: 0
+    }));
+
+    // Show cart briefly after adding
+    setShowCart(true);
+  };
+
+  // Function to update cart item quantities
+  const updateCartItemQuantity = (itemId: string, newQuantity: number): void => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+
+    setCart(prev =>
+      prev.map(item =>
+        item.id === itemId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  // Function to remove items from cart
+  const removeFromCart = (itemId: string): void => {
+    setCart(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  // Function to clear entire cart
+  const clearCart = (): void => {
+    setCart([]);
+    setQuantities({});
+  };
+
+  // Function to calculate cart total
+  const getCartTotal = (): string => {
+    return cart.reduce((total, item) => {
+      return total + (item.priceValue * item.quantity);
+    }, 0).toFixed(2);
+  };
 
   // Example kid user info
   const personalInfo = {
@@ -694,165 +784,392 @@ export default function DemoDashboard() {
 )}
 
 {activeTab === "Buy" && (
-          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
-            <h2 className="flex items-center mb-4 sm:mb-6 text-xl sm:text-2xl">Piano Lesson Packages</h2>
+  <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
+    <div className="flex items-center justify-between mb-4 sm:mb-6">
+      <h2 className="text-xl sm:text-2xl">Piano Lesson Packages</h2>
+      {cart.length > 0 && (
+        <button
+          onClick={() => setShowCart(!showCart)}
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          🛒
+          Cart ({cart.reduce((sum, item) => sum + item.quantity, 0)})
+        </button>
+      )}
+    </div>
+
+    {showCart && (
+      <div className="mb-8 bg-slate-50 rounded-xl p-6 border border-slate-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Your Cart</h3>
+          <button
+            onClick={() => setShowCart(false)}
+            className="text-slate-500 hover:text-slate-700"
+          >
+            ✕
+          </button>
+        </div>
+        
+        {cart.length === 0 ? (
+          <p className="text-slate-500">Your cart is empty</p>
+        ) : (
+          <>
+            <div className="space-y-3 mb-4">
+              {cart.map((item) => (
+                <div key={item.id} className="flex items-center justify-between bg-white p-4 rounded-lg">
+                  <div className="flex-1">
+                    <h4 className="font-medium">{item.name}</h4>
+                    <p className="text-sm text-slate-600">{item.category}</p>
+                    <p className="text-sm font-medium text-indigo-600">{item.price}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateCartItemQuantity(item.id, Math.max(0, item.quantity - 1))}
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-medium">{item.quantity}</span>
+                      <button
+                        onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-red-500 hover:text-red-700 ml-2"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
             
-            <div className="mb-8 sm:mb-12">
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Individual Lessons</h3>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  { 
-                    name: "Single Lesson", 
-                    price: "$30", 
-                    desc: "One 30-minute session",
-                    popular: false,
-                    features: ["Individual attention", "Flexible scheduling", "Perfect for trying out"]
-                  },
-                  { 
-                    name: "4-Pack", 
-                    price: "$115", 
-                    desc: "Save $5 on 4 lessons",
-                    popular: false,
-                    features: ["$28.75 per lesson", "1-month validity", "Great for beginners"]
-                  },
-                  { 
-                    name: "8-Pack", 
-                    price: "$220", 
-                    desc: "Save $20 on 8 lessons",
-                    popular: true,
-                    features: ["$27.50 per lesson", "2-month validity", "Most popular choice"]
-                  },
-                  { 
-                    name: "12-Pack", 
-                    price: "$315", 
-                    desc: "Save $45 on 12 lessons",
-                    popular: false,
-                    features: ["$26.25 per lesson", "3-month validity", "Best value"]
-                  },
-                ].map((pkg) => (
-                  <div key={pkg.name} className={`border rounded-xl p-4 sm:p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
-                    <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">{pkg.name}</h4>
-                    <p className="text-sm sm:text-base text-slate-600 mb-3">{pkg.desc}</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-4">{pkg.price}</p>
-                    <ul className="text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6 space-y-1 sm:space-y-2">
-                      {pkg.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center">
-                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 sm:mr-3 flex-shrink-0"></span>
-                          <span className="leading-tight">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link href="/checkout/">
-                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
-                        Purchase
-                      </button>
-                    </Link>
-                  </div>
-                ))}
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold">Total: ${getCartTotal()}</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={clearCart}
+                    className="px-4 py-2 text-slate-600 hover:text-slate-800 border border-slate-300 rounded-lg hover:bg-slate-50"
+                  >
+                    Clear Cart
+                  </button>
+                  <Link href="/checkout/">
+                    <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                      Checkout
+                    </button>
+                  </Link>
+                </div>
               </div>
             </div>
-
-            <div className="mb-8 sm:mb-12">
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Extended Lessons</h3>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  { name: "45-Minute Single", price: "$40", desc: "Extended individual session", duration: "45 minutes" },
-                  { name: "45-Minute 6-Pack", price: "$225", desc: "Save $15 on extended lessons", duration: "6 x 45-minute sessions" },
-                  { name: "60-Minute Single", price: "$50", desc: "Full hour private lesson", duration: "60 minutes" },
-                ].map((item) => (
-                  <div key={item.name} className="border border-slate-200 rounded-lg p-4 sm:p-5 bg-white shadow-sm hover:shadow-md transition-all">
-                    <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{item.name}</h4>
-                    <p className="text-slate-600 text-xs sm:text-sm mb-2">{item.desc}</p>
-                    <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
-                    <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
-                    <Link href="/checkout/">
-                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
-                        Purchase
-                      </button>
-                    </Link>
-                  </div>
-                ))}
+          </>
+        )}
+      </div>
+    )}
+    
+    <div className="mb-8 sm:mb-12">
+      <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Individual Lessons</h3>
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { 
+            id: "single-lesson",
+            name: "Single Lesson", 
+            price: "$30", 
+            priceValue: 30,
+            desc: "One 30-minute session",
+            popular: false,
+            category: "Individual Lessons",
+            features: ["Individual attention", "Flexible scheduling", "Perfect for trying out"]
+          },
+          { 
+            id: "4-pack",
+            name: "4-Pack", 
+            price: "$115", 
+            priceValue: 115,
+            desc: "Save $5 on 4 lessons",
+            popular: false,
+            category: "Individual Lessons",
+            features: ["$28.75 per lesson", "1-month validity", "Great for beginners"]
+          },
+          { 
+            id: "8-pack",
+            name: "8-Pack", 
+            price: "$220", 
+            priceValue: 220,
+            desc: "Save $20 on 8 lessons",
+            popular: true,
+            category: "Individual Lessons",
+            features: ["$27.50 per lesson", "2-month validity", "Most popular choice"]
+          },
+          { 
+            id: "12-pack",
+            name: "12-Pack", 
+            price: "$315", 
+            priceValue: 315,
+            desc: "Save $45 on 12 lessons",
+            popular: false,
+            category: "Individual Lessons",
+            features: ["$26.25 per lesson", "3-month validity", "Best value"]
+          },
+        ].map((pkg) => (
+          <div key={pkg.id} className={`border rounded-xl p-4 sm:p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
+            {pkg.popular && (
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                  Most Popular
+                </span>
               </div>
-            </div>
-
-            <div className="mb-8 sm:mb-12">
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Monthly Unlimited</h3>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-                {[
-                  { 
-                    name: "Unlimited Standard", 
-                    price: "$199/month", 
-                    desc: "Unlimited 30-minute lessons",
-                    features: ["Book up to 2 lessons per day", "30-minute sessions", "Cancel anytime", "Practice room access"]
-                  },
-                  { 
-                    name: "Unlimited Premium", 
-                    price: "$299/month", 
-                    desc: "Unlimited lessons + perks",
-                    features: ["Mix of 30, 45, 60-minute sessions", "Priority booking", "Sheet music library access", "Recital preparation included"]
-                  },
-                ].map((membership) => (
-                  <div key={membership.name} className="border border-slate-200 rounded-xl p-4 sm:p-6 bg-white shadow-sm hover:shadow-md transition-all">
-                    <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">{membership.name}</h4>
-                    <p className="text-sm sm:text-base text-slate-600 mb-3">{membership.desc}</p>
-                    <p className="text-xl sm:text-2xl font-bold text-indigo-600 mb-4">{membership.price}</p>
-                    <ul className="text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6 space-y-1 sm:space-y-2">
-                      {membership.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start">
-                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 sm:mr-3 flex-shrink-0 mt-1.5"></span>
-                          <span className="leading-tight">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link href="/checkout/">
-                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
-                        Purchase
-                      </button>
-                    </Link>
-                  </div>
-                ))}
+            )}
+            <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">{pkg.name}</h4>
+            <p className="text-sm sm:text-base text-slate-600 mb-3">{pkg.desc}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-4">{pkg.price}</p>
+            <ul className="text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6 space-y-1 sm:space-y-2">
+              {pkg.features.map((feature, idx) => (
+                <li key={idx} className="flex items-center">
+                  <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 sm:mr-3 flex-shrink-0"></span>
+                  <span className="leading-tight">{feature}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => updateQuantity(pkg.id, Math.max(0, (quantities[pkg.id] || 0) - 1))}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center font-medium">{quantities[pkg.id] || 0}</span>
+                <button
+                  onClick={() => updateQuantity(pkg.id, (quantities[pkg.id] || 0) + 1)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  +
+                </button>
               </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Special Programs</h3>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  { 
-                    name: "Recital Prep Package", 
-                    price: "$150", 
-                    desc: "5 focused sessions for performance",
-                    duration: "5 x 45-minute sessions"
-                  },
-                  { 
-                    name: "Theory Intensive", 
-                    price: "$120", 
-                    desc: "4 sessions focused on music theory",
-                    duration: "4 x 30-minute sessions"
-                  },
-                  { 
-                    name: "Sight-Reading Bootcamp", 
-                    price: "$100", 
-                    desc: "6 sessions to improve reading skills",
-                    duration: "6 x 30-minute sessions"
-                  },
-                ].map((program) => (
-                  <div key={program.name} className="border border-slate-200 rounded-lg p-4 sm:p-5 bg-white shadow-sm hover:shadow-md transition-all">
-                    <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{program.name}</h4>
-                    <p className="text-slate-600 text-xs sm:text-sm mb-2">{program.desc}</p>
-                    <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
-                    <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
-                    <Link href="/checkout/">
-                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
-                        Purchase
-                      </button>
-                    </Link>
-                  </div>
-                ))}
-              </div>
+              
+              <button
+                onClick={() => addToCart(pkg)}
+                disabled={!quantities[pkg.id] || quantities[pkg.id] === 0}
+                className="w-full py-3 rounded-lg font-medium transition-colors disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                {quantities[pkg.id] > 0 ? `Add ${quantities[pkg.id]} to Cart` : 'Select Quantity'}
+              </button>
             </div>
           </div>
-        )}
+        ))}
+      </div>
+    </div>
+
+    <div className="mb-8 sm:mb-12">
+      <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Extended Lessons</h3>
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          { 
+            id: "45-min-single",
+            name: "45-Minute Single", 
+            price: "$40", 
+            priceValue: 40,
+            desc: "Extended individual session", 
+            duration: "45 minutes",
+            category: "Extended Lessons"
+          },
+          { 
+            id: "45-min-6pack",
+            name: "45-Minute 6-Pack", 
+            price: "$225", 
+            priceValue: 225,
+            desc: "Save $15 on extended lessons", 
+            duration: "6 x 45-minute sessions",
+            category: "Extended Lessons"
+          },
+          { 
+            id: "60-min-single",
+            name: "60-Minute Single", 
+            price: "$50", 
+            priceValue: 50,
+            desc: "Full hour private lesson", 
+            duration: "60 minutes",
+            category: "Extended Lessons"
+          },
+        ].map((item) => (
+          <div key={item.id} className="border border-slate-200 rounded-lg p-4 sm:p-5 bg-white shadow-sm hover:shadow-md transition-all">
+            <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{item.name}</h4>
+            <p className="text-slate-600 text-xs sm:text-sm mb-2">{item.desc}</p>
+            <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
+            <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => updateQuantity(item.id, Math.max(0, (quantities[item.id] || 0) - 1))}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center font-medium">{quantities[item.id] || 0}</span>
+                <button
+                  onClick={() => updateQuantity(item.id, (quantities[item.id] || 0) + 1)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              
+              <button
+                onClick={() => addToCart(item)}
+                disabled={!quantities[item.id] || quantities[item.id] === 0}
+                className="w-full py-3 rounded-lg font-medium transition-colors disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                {quantities[item.id] > 0 ? `Add ${quantities[item.id]} to Cart` : 'Select Quantity'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="mb-8 sm:mb-12">
+      <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Monthly Unlimited</h3>
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+        {[
+          { 
+            id: "unlimited-standard",
+            name: "Unlimited Standard", 
+            price: "$199/month", 
+            priceValue: 199,
+            desc: "Unlimited 30-minute lessons",
+            category: "Monthly Unlimited",
+            features: ["Book up to 2 lessons per day", "30-minute sessions", "Cancel anytime", "Practice room access"]
+          },
+          { 
+            id: "unlimited-premium",
+            name: "Unlimited Premium", 
+            price: "$299/month", 
+            priceValue: 299,
+            desc: "Unlimited lessons + perks",
+            category: "Monthly Unlimited",
+            features: ["Mix of 30, 45, 60-minute sessions", "Priority booking", "Sheet music library access", "Recital preparation included"]
+          },
+        ].map((membership) => (
+          <div key={membership.id} className="border border-slate-200 rounded-xl p-4 sm:p-6 bg-white shadow-sm hover:shadow-md transition-all">
+            <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">{membership.name}</h4>
+            <p className="text-sm sm:text-base text-slate-600 mb-3">{membership.desc}</p>
+            <p className="text-xl sm:text-2xl font-bold text-indigo-600 mb-4">{membership.price}</p>
+            <ul className="text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6 space-y-1 sm:space-y-2">
+              {membership.features.map((feature, idx) => (
+                <li key={idx} className="flex items-start">
+                  <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 sm:mr-3 flex-shrink-0 mt-1.5"></span>
+                  <span className="leading-tight">{feature}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => updateQuantity(membership.id, Math.max(0, (quantities[membership.id] || 0) - 1))}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center font-medium">{quantities[membership.id] || 0}</span>
+                <button
+                  onClick={() => updateQuantity(membership.id, (quantities[membership.id] || 0) + 1)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              
+              <button
+                onClick={() => addToCart(membership)}
+                disabled={!quantities[membership.id] || quantities[membership.id] === 0}
+                className="w-full py-3 rounded-lg font-medium transition-colors disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                {quantities[membership.id] > 0 ? `Add ${quantities[membership.id]} to Cart` : 'Select Quantity'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div>
+      <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Special Programs</h3>
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          { 
+            id: "recital-prep",
+            name: "Recital Prep Package", 
+            price: "$150", 
+            priceValue: 150,
+            desc: "5 focused sessions for performance",
+            duration: "5 x 45-minute sessions",
+            category: "Special Programs"
+          },
+          { 
+            id: "theory-intensive",
+            name: "Theory Intensive", 
+            price: "$120", 
+            priceValue: 120,
+            desc: "4 sessions focused on music theory",
+            duration: "4 x 30-minute sessions",
+            category: "Special Programs"
+          },
+          { 
+            id: "sight-reading",
+            name: "Sight-Reading Bootcamp", 
+            price: "$100", 
+            priceValue: 100,
+            desc: "6 sessions to improve reading skills",
+            duration: "6 x 30-minute sessions",
+            category: "Special Programs"
+          },
+        ].map((program) => (
+          <div key={program.id} className="border border-slate-200 rounded-lg p-4 sm:p-5 bg-white shadow-sm hover:shadow-md transition-all">
+            <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{program.name}</h4>
+            <p className="text-slate-600 text-xs sm:text-sm mb-2">{program.desc}</p>
+            <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
+            <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => updateQuantity(program.id, Math.max(0, (quantities[program.id] || 0) - 1))}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center font-medium">{quantities[program.id] || 0}</span>
+                <button
+                  onClick={() => updateQuantity(program.id, (quantities[program.id] || 0) + 1)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              
+              <button
+                onClick={() => addToCart(program)}
+                disabled={!quantities[program.id] || quantities[program.id] === 0}
+                className="w-full py-3 rounded-lg font-medium transition-colors disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                {quantities[program.id] > 0 ? `Add ${quantities[program.id]} to Cart` : 'Select Quantity'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
     {activeTab === "Upcoming" && (
   <div className="max-w-6xl mx-auto animate-fadeIn">
