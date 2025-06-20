@@ -728,46 +728,61 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
                 const key = `${day.toDateString()}-${time}`;
                 const slot = demoSlotData[key];
                 const isSelected = isSlotSelected(day.toDateString(), time);
+                
+                // Check if this slot is in the past
+                const slotDateTime = new Date(day);
+                const [hours, minutes] = time.split(':').map(Number);
+                slotDateTime.setHours(hours, minutes, 0, 0);
+                const now = new Date();
+                const isPastSlot = slotDateTime < now;
 
                 return (
                   <button
                     key={key}
-                    onClick={() => handleSlotClick(day.toDateString(), time)}
-                    className={`group relative w-full rounded-xl px-4 py-3 border-2 text-sm flex items-center justify-between transition-all duration-300 transform hover:scale-105 min-h-[70px] overflow-hidden active:scale-95
-                      ${
-                        isSelected
-                          ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white border-amber-300 shadow-2xl shadow-amber-500/25 scale-105"
-                          : "bg-white/80 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 border-gray-200 hover:border-purple-300 shadow-lg hover:shadow-xl"
+                    onClick={() => !isPastSlot && handleSlotClick(day.toDateString(), time)}
+                    disabled={isPastSlot}
+                    className={`group relative w-full rounded-xl px-4 py-3 border-2 text-sm flex items-center justify-between transition-all duration-300 transform min-h-[70px] overflow-hidden
+                      ${isPastSlot
+                        ? "bg-gray-100/60 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
+                        : isSelected
+                          ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white border-amber-300 shadow-2xl shadow-amber-500/25 scale-105 hover:scale-105"
+                          : "bg-white/80 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 border-gray-200 hover:border-purple-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                       }`}
                     style={{ animationDelay: `${timeIndex * 50}ms` }}
-                    aria-label={`${isSelected ? 'Unselect' : 'Select'} slot on ${day.toLocaleDateString(undefined, {
+                    aria-label={`${isPastSlot ? 'Past slot - unavailable' : isSelected ? 'Unselect' : 'Select'} slot on ${day.toLocaleDateString(undefined, {
                       weekday: "long",
                       month: "short",
                       day: "numeric",
                     })} at ${time}`}
                   >
-                    {isSelected && (
+                    {isSelected && !isPastSlot && (
                       <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 animate-pulse"></div>
                     )}
                     
                     <div className="flex items-center space-x-3 relative z-10">
-                      <span className="font-bold text-base">
+                      <span className={`font-bold text-base ${isPastSlot ? 'line-through' : ''}`}>
                         {time}
                       </span>
                       
-                      {slot ? (
+                      {isPastSlot && (
+                        <span className="text-xs bg-gray-200 text-gray-500 px-2 py-1 rounded-full font-medium">
+                          Past
+                        </span>
+                      )}
+                      
+                      {!isPastSlot && slot ? (
                         <div className="flex items-center space-x-2">
                           <span className="font-semibold text-sm">
                             {slot.booked}/8 students
                           </span>
                         </div>
-                      ) : (
+                      ) : !isPastSlot ? (
                         <span className="font-medium text-green-600 text-sm">0/8 students</span>
-                      )}
+                      ) : null}
                     </div>
 
                     <div className="flex flex-col items-end space-y-1 relative z-10">
-                      {slot ? (
+                      {!isPastSlot && slot ? (
                         <>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             slot.skill === 'Beginner' ? 'bg-green-100 text-green-800' :
@@ -783,9 +798,13 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
                             {slot.ageGroup}
                           </span>
                         </>
-                      ) : (
+                      ) : !isPastSlot ? (
                         <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
                           ✨ Available
+                        </span>
+                      ) : (
+                        <span className="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-xs font-medium">
+                          ⏰ Unavailable
                         </span>
                       )}
                     </div>
@@ -855,33 +874,48 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
                 const key = `${day.toDateString()}-${time}`;
                 const slot = demoSlotData[key];
                 const isSelected = isSlotSelected(day.toDateString(), time);
+                
+                // Check if this slot is in the past
+                const slotDateTime = new Date(day);
+                const [hours, minutes] = time.split(':').map(Number);
+                slotDateTime.setHours(hours, minutes, 0, 0);
+                const now = new Date();
+                const isPastSlot = slotDateTime < now;
 
                 return (
                   <button
                     key={key}
-                    onClick={() => handleSlotClick(day.toDateString(), time)}
-                    className={`group relative rounded-xl px-4 py-3 border-2 text-sm flex flex-col items-center transition-all duration-300 transform hover:scale-105 min-h-[70px] justify-center overflow-hidden active:scale-95
-                      ${
-                        isSelected
-                          ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white border-amber-300 shadow-2xl shadow-amber-500/25 scale-105"
-                          : "bg-white/80 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 border-gray-200 hover:border-purple-300 shadow-lg hover:shadow-xl"
+                    onClick={() => !isPastSlot && handleSlotClick(day.toDateString(), time)}
+                    disabled={isPastSlot}
+                    className={`group relative rounded-xl px-4 py-3 border-2 text-sm flex flex-col items-center transition-all duration-300 transform min-h-[70px] justify-center overflow-hidden
+                      ${isPastSlot
+                        ? "bg-gray-100/60 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
+                        : isSelected
+                          ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white border-amber-300 shadow-2xl shadow-amber-500/25 scale-105 hover:scale-105"
+                          : "bg-white/80 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 border-gray-200 hover:border-purple-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                       }`}
                     style={{ animationDelay: `${(dayIndex * timeSlots.length + timeIndex) * 50}ms` }}
-                    aria-label={`${isSelected ? 'Unselect' : 'Select'} slot on ${day.toLocaleDateString(undefined, {
+                    aria-label={`${isPastSlot ? 'Past slot - unavailable' : isSelected ? 'Unselect' : 'Select'} slot on ${day.toLocaleDateString(undefined, {
                       weekday: "long",
                       month: "short",
                       day: "numeric",
                     })} at ${time}`}
                   >
-                    {isSelected && (
+                    {isSelected && !isPastSlot && (
                       <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 animate-pulse"></div>
                     )}
                     
-                    <span className="relative z-10 font-bold text-base mb-2">
+                    <span className={`relative z-10 font-bold text-base mb-2 ${isPastSlot ? 'line-through' : ''}`}>
                       {time}
                     </span>
                     
-                    {slot ? (
+                    {isPastSlot ? (
+                      <div className="relative z-10 text-xs flex flex-col items-center space-y-1">
+                        <span className="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-xs font-medium">
+                          ⏰ Past
+                        </span>
+                      </div>
+                    ) : slot ? (
                       <div className="relative z-10 text-xs flex flex-col items-center space-y-1">
                         <span className="font-semibold">
                           {slot.booked}/8 students
