@@ -500,7 +500,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
                         {assignment.notes && (
                           <div className="bg-white/60 p-3 rounded-lg mb-3">
                             <p className="text-sm text-gray-600">
-                              <span className="font-semibold">Teacher's Note:</span> {assignment.notes}
+                              <span className="font-semibold">Teacher&apos;s Note:</span> {assignment.notes}
                             </p>
                           </div>
                         )}
