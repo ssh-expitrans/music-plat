@@ -1,4 +1,10 @@
 This uses Next.js and hosts/auth/database is on Firebase with Tailwind CSS and TypeScript.
 
-Currently have a basic site setup and hosted, working to implement actual usability.
-# Updated Fri, Jun 13, 2025  9:00:02 AM
+
+The user views the intro website, and can either sign up or log in directly to their personal dashboard, or view a demo. 
+
+The demo looks just how the actual dash will, only with different info. 
+
+The student dashboard includes info on homework, booking, purchasing, progress, and their personal account.
+
+There will also be implemented a teacher login, where the teacher may view information on students as well as assign homework. 
