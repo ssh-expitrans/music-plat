@@ -196,6 +196,68 @@ export default function DemoDashboard() {
     progress: 40,
   };
 
+// Define the homework assignment type
+interface HomeworkAssignment {
+  id: number;
+  title: string;
+  description: string;
+  assignedDate: string;
+  dueDate: string;
+  completed: boolean;
+  difficulty: string;
+  estimatedTime: string;
+  notes: string;
+}
+
+// Replace the const homeworkAssignments with useState
+const [homeworkAssignments, setHomeworkAssignments] = useState<HomeworkAssignment[]>([
+  {
+    id: 1,
+    title: "Practice C Major Scale",
+    description: "Practice the C major scale 10 times daily, focusing on finger placement and rhythm.",
+    assignedDate: "2024-06-15",
+    dueDate: "2024-06-22",
+    completed: true,
+    difficulty: "Beginner",
+    estimatedTime: "15 minutes",
+    notes: "Great improvement on timing!"
+  },
+  {
+    id: 2,
+    title: "Learn 'Twinkle Twinkle Little Star'",
+    description: "Memorize and play the melody smoothly. Focus on maintaining steady tempo.",
+    assignedDate: "2024-06-18",
+    dueDate: "2024-06-25",
+    completed: false,
+    difficulty: "Beginner",
+    estimatedTime: "20 minutes",
+    notes: "Remember to practice slowly first"
+  },
+  {
+    id: 3,
+    title: "Rhythm Clapping Exercise",
+    description: "Practice clapping different rhythm patterns from the worksheet. Record yourself and listen back.",
+    assignedDate: "2024-06-20",
+    dueDate: "2024-06-27",
+    completed: false,
+    difficulty: "Intermediate",
+    estimatedTime: "10 minutes",
+    notes: "Focus on keeping steady beat"
+  }
+]);
+
+// Function to toggle homework completion
+const toggleHomeworkCompletion = (assignmentId: number) => {
+  setHomeworkAssignments(prevAssignments => 
+    prevAssignments.map(assignment => 
+      assignment.id === assignmentId 
+        ? { ...assignment, completed: !assignment.completed }
+        : assignment
+    )
+  );
+};
+
+
   const currentWeek = getWeekDates(currentWeekStart);
 
   // Navigation functions
@@ -297,97 +359,213 @@ export default function DemoDashboard() {
       <main className="relative z-10 flex-1 p-8 overflow-auto pb-20 md:pb-0">
 
 
-  {activeTab === "Home" && (
-  <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-fadeIn px-4 sm:px-6 lg:px-8">
-    {/* Welcome Section */}
-    <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-2xl text-white overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
-      <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-white/10 rounded-full -translate-y-16 sm:-translate-y-24 lg:-translate-y-32 translate-x-16 sm:translate-x-24 lg:translate-x-32"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-36 sm:h-36 lg:w-48 lg:h-48 bg-white/5 rounded-full translate-y-12 sm:translate-y-18 lg:translate-y-24 -translate-x-12 sm:-translate-x-18 lg:-translate-x-24"></div>
-      
-      <div className="relative z-10">
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 animate-slideInLeft leading-tight">
-          Welcome Back, {personalInfo.name}! 🎉
-        </h2>
-        <div className="animate-slideInLeft animation-delay-200">
-          <p className="text-base sm:text-lg lg:text-xl text-purple-100 mb-2">
-            Your next session is on
-          </p>
-          <span className="inline-block font-bold text-yellow-300 px-3 py-2 bg-white/20 rounded-full text-sm sm:text-base">
-            June 10 at 10:00 AM
-          </span>
-        </div>
-      </div>
-    </div>
-
-    {/* Personal Info Section */}
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-      <div className="group bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-        <div className="flex items-center mb-4 sm:mb-6">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
-            👤
-          </div>
-          <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
-            Personal Info
-          </h3>
-        </div>
-        <div className="space-y-3 sm:space-y-4">
-          {Object.entries({
-            "Name": personalInfo.name,
-            "Date of Birth": personalInfo.dob,
-            "Age Group": personalInfo.ageGroup,
-            "Skill Level": personalInfo.skillLevel,
-            "Email": personalInfo.email
-          }).map(([key, value], index) => (
-            <div 
-              key={key}
-              className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300 space-y-1 sm:space-y-0"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <span className="font-semibold text-gray-700 text-sm sm:text-base">{key}:</span>
-              <span className="text-gray-800 font-medium text-sm sm:text-base break-words">{value}</span>
+       {activeTab === "Home" && (
+          <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-fadeIn px-4 sm:px-6 lg:px-8">
+            {/* Welcome Section */}
+            <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-2xl text-white overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-white/10 rounded-full -translate-y-16 sm:-translate-y-24 lg:-translate-y-32 translate-x-16 sm:translate-x-24 lg:translate-x-32"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-36 sm:h-36 lg:w-48 lg:h-48 bg-white/5 rounded-full translate-y-12 sm:translate-y-18 lg:translate-y-24 -translate-x-12 sm:-translate-x-18 lg:-translate-x-24"></div>
+              
+              <div className="relative z-10">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 animate-slideInLeft leading-tight">
+                  Welcome Back, {personalInfo.name}! 🎉
+                </h2>
+                <div className="animate-slideInLeft animation-delay-200">
+                  <p className="text-base sm:text-lg lg:text-xl text-purple-100 mb-2">
+                    Your next session is on
+                  </p>
+                  <span className="inline-block font-bold text-yellow-300 px-3 py-2 bg-white/20 rounded-full text-sm sm:text-base">
+                    June 10 at 10:00 AM
+                  </span>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="group bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-        <div className="flex items-center mb-4 sm:mb-6">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
-            📈
-          </div>
-          <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
-            Progress
-          </h3>
-        </div>
-        
-        <div className="relative">
-          <div className="w-full bg-gray-200 rounded-full h-4 sm:h-6 mb-3 sm:mb-4 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-4 sm:h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
-              style={{ width: `${personalInfo.progress}%` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+            {/* Personal Info Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+              <div className="group bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div className="flex items-center mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
+                    👤
+                  </div>
+                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
+                    Personal Info
+                  </h3>
+                </div>
+                <div className="space-y-3 sm:space-y-4">
+                  {Object.entries({
+                    "Name": personalInfo.name,
+                    "Date of Birth": personalInfo.dob,
+                    "Age Group": personalInfo.ageGroup,
+                    "Skill Level": personalInfo.skillLevel,
+                    "Email": personalInfo.email
+                  }).map(([key, value], index) => (
+                    <div 
+                      key={key}
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300 space-y-1 sm:space-y-0"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <span className="font-semibold text-gray-700 text-sm sm:text-base">{key}:</span>
+                      <span className="text-gray-800 font-medium text-sm sm:text-base break-words">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="group bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div className="flex items-center mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
+                    📈
+                  </div>
+                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
+                    Progress
+                  </h3>
+                </div>
+                
+                <div className="relative">
+                  <div className="w-full bg-gray-200 rounded-full h-4 sm:h-6 mb-3 sm:mb-4 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-4 sm:h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
+                      style={{ width: `${personalInfo.progress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                    </div>
+                  </div>
+                  <p className="text-right text-base sm:text-lg font-bold text-gray-700 mb-3 sm:mb-4">
+                    {personalInfo.progress}% Complete
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-0 text-xs sm:text-sm font-medium text-gray-600">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-center">Beginner Level</span>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-center">Intermediate Level</span>
+                  </div>
+                  <p className="text-center text-sm sm:text-base text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl">
+                    🌟 Great progress! Keep practicing to reach the next level.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Homework Section */}
+            <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20">
+              <div className="flex items-center mb-4 sm:mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
+                  📚
+                </div>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
+                  Homework Assignments
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                {homeworkAssignments.map((assignment, index) => (
+                  <div 
+                    key={assignment.id}
+                    className={`p-4 sm:p-5 rounded-xl border-l-4 transition-all duration-300 hover:shadow-lg ${
+                      assignment.completed 
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-500' 
+                        : 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-500'
+                    }`}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                          <h4 className="text-lg sm:text-xl font-bold text-gray-800">
+                            {assignment.title}
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              assignment.difficulty === 'Beginner' 
+                                ? 'bg-green-100 text-green-700'
+                                : assignment.difficulty === 'Intermediate'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {assignment.difficulty}
+                            </span>
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                              {assignment.estimatedTime}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <p className="text-gray-700 text-sm sm:text-base mb-3 leading-relaxed">
+                          {assignment.description}
+                        </p>
+                        
+                        {assignment.notes && (
+                          <div className="bg-white/60 p-3 rounded-lg mb-3">
+                            <p className="text-sm text-gray-600">
+                              <span className="font-semibold">Teacher's Note:</span> {assignment.notes}
+                            </p>
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-col sm:flex-row gap-2 text-xs sm:text-sm text-gray-600">
+                          <span>
+                            <strong>Assigned:</strong> {new Date(assignment.assignedDate).toLocaleDateString()}
+                          </span>
+                          <span>
+                            <strong>Due:</strong> {new Date(assignment.dueDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => toggleHomeworkCompletion(assignment.id)}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                            assignment.completed
+                              ? 'bg-green-500 text-white hover:bg-green-600'
+                              : 'bg-orange-500 text-white hover:bg-orange-600'
+                          }`}
+                        >
+                          {assignment.completed ? '✓ Completed' : 'Mark Complete'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Homework Summary */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="text-center sm:text-left">
+                    <p className="text-lg font-bold text-gray-800">
+                      {homeworkAssignments.filter(hw => hw.completed).length} of {homeworkAssignments.length} assignments completed
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Keep up the great work! 🎵
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-16 relative">
+                      <div className="w-full h-full rounded-full border-4 border-gray-200"></div>
+                      <div 
+                        className="absolute top-0 left-0 w-full h-full rounded-full border-4 border-purple-500 transition-all duration-1000"
+                        style={{ 
+                          strokeDasharray: '100 100',
+                          strokeDashoffset: 100 - (homeworkAssignments.filter(hw => hw.completed).length / homeworkAssignments.length * 100),
+                          transform: 'rotate(-90deg)'
+                        }}
+                      ></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-sm font-bold text-purple-600">
+                          {Math.round(homeworkAssignments.filter(hw => hw.completed).length / homeworkAssignments.length * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <p className="text-right text-base sm:text-lg font-bold text-gray-700 mb-3 sm:mb-4">
-            {personalInfo.progress}% Complete
-          </p>
-        </div>
-        
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-0 text-xs sm:text-sm font-medium text-gray-600">
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-center">Beginner Level</span>
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-center">Intermediate Level</span>
-          </div>
-          <p className="text-center text-sm sm:text-base text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl">
-            🌟 Great progress! Keep practicing to reach the next level.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+        )}
 
 {activeTab === "Book" && (
   <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
