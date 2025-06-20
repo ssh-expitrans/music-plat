@@ -3,7 +3,49 @@
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
+import React, { useState, useEffect } from "react";
 
+
+function StudentSuccessRotator() {
+  const testimonials = [
+    {
+      quote: "After just a few months with Jane, I was confidently performing in front of my friends and family!",
+      name: "Alex",
+      detail: "beginner piano student",
+    },
+    {
+      quote: "Jane's teaching method helped me finally understand music theory. She's amazing!",
+      name: "Chris",
+      detail: "intermediate guitar student",
+    },
+    {
+      quote: "I used to be terrified of recitals. Now I look forward to them!",
+      name: "Taylor",
+      detail: "vocal student",
+    },
+  ];
+
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000); // change every 5 seconds
+    return () => clearInterval(timer);
+  }, [testimonials.length]);
+
+  const current = testimonials[index];
+
+  return (
+    <section className="bg-white p-8 rounded-xl shadow-md mb-20 text-center max-w-3xl mx-auto transition-all duration-500 ease-in-out">
+      <h3 className="text-2xl font-semibold text-[var(--accent)] mb-4">Student Success</h3>
+      <p className="text-lg text-neutral-700 italic transition-opacity duration-500">
+        &quot;{current.quote}&quot;
+      </p>
+      <p className="mt-2 font-semibold">— {current.name}, {current.detail}</p>
+    </section>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
@@ -103,13 +145,8 @@ export default function Home() {
 </section>
 
 
-      <section className="bg-white p-8 rounded-xl shadow-md mb-20 text-center max-w-3xl mx-auto">
-        <h3 className="text-2xl font-semibold text-[var(--accent)] mb-4">Student Success</h3>
-          <p className="text-lg text-neutral-700 italic">
-            &quot;After just a few months with Jane, I was confidently performing in front of my friends and family!&quot;
-          </p>
-        <p className="mt-2 font-semibold">— Alex, beginner piano student</p>
-      </section>
+<StudentSuccessRotator />
+
 
 
       {/* PRICING + CONTACT CONTAINER */}
