@@ -1,10 +1,7 @@
-//components/checkoutform.tsx
- 
 "use client";
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-//import Link from "next/link";
 
 interface FormData {
   firstName: string;
@@ -53,17 +50,9 @@ export default function CheckoutForm() {
     specialRequests: "",
   });
 
-  const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
 
   const formatCardNumber = (value: string) =>
     value.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim();
@@ -71,9 +60,8 @@ export default function CheckoutForm() {
   const formatExpiryDate = (value: string) =>
     value.replace(/\D/g, "").replace(/(\d{2})(\d{0,2})/, "$1/$2").trim();
 
-  const validateForm = (): boolean => {
+  const validateForm = () => {
     const newErrors: FormErrors = {};
-
     const requiredFields: (keyof FormData)[] = [
       "firstName", "lastName", "email", "phone",
       "cardNumber", "expiryDate", "cvv", "cardName",
@@ -102,13 +90,11 @@ export default function CheckoutForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsProcessing(true);
-
     try {
       await new Promise((res) => setTimeout(res, 2000));
       router.push("/checkout/success");
@@ -120,80 +106,73 @@ export default function CheckoutForm() {
     }
   };
 
+  const InputField = ({
+    label,
+    name,
+    type = "text",
+    maxLength,
+    formatter,
+  }: {
+    label: string;
+    name: keyof FormData;
+    type?: string;
+    maxLength?: number;
+    formatter?: (val: string) => string;
+  }) => (
+    <div className="flex flex-col">
+      <label className="mb-1 font-medium">{label}</label>
+      <input
+        name={name}
+        type={type}
+        value={formData[name]}
+        maxLength={maxLength}
+        className="border rounded p-2"
+        onChange={(e) => {
+          const value = formatter ? formatter(e.target.value) : e.target.value;
+          setFormData((prev) => ({ ...prev, [name]: value }));
+          if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+        }}
+      />
+      {errors[name] && <p className="text-sm text-red-600 mt-1">{errors[name]}</p>}
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6 p-4">
-      <h1 className="text-2xl font-bold">Checkout - {packageName}</h1>
-      <p>Price: {packagePrice}</p>
-
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-2xl mx-auto p-6 space-y-6 bg-white rounded shadow"
+    >
       <div>
-        <label>First Name</label>
-        <input name="firstName" value={formData.firstName} onChange={handleInputChange} />
-        {errors.firstName && <p className="text-red-600">{errors.firstName}</p>}
+        <h1 className="text-2xl font-bold">Checkout - {packageName}</h1>
+        <p className="text-gray-600">Price: {packagePrice}</p>
       </div>
 
-      <div>
-        <label>Last Name</label>
-        <input name="lastName" value={formData.lastName} onChange={handleInputChange} />
-        {errors.lastName && <p className="text-red-600">{errors.lastName}</p>}
-      </div>
-
-      <div>
-        <label>Email</label>
-        <input name="email" type="email" value={formData.email} onChange={handleInputChange} />
-        {errors.email && <p className="text-red-600">{errors.email}</p>}
-      </div>
-
-      <div>
-        <label>Card Number</label>
-        <input
-          name="cardNumber"
-          value={formData.cardNumber}
-          maxLength={19}
-          onChange={(e) => {
-            const formatted = formatCardNumber(e.target.value);
-            setFormData((prev) => ({ ...prev, cardNumber: formatted }));
-          }}
-        />
-        {errors.cardNumber && <p className="text-red-600">{errors.cardNumber}</p>}
-      </div>
-
-      <div>
-        <label>Expiry Date</label>
-        <input
-          name="expiryDate"
-          value={formData.expiryDate}
-          maxLength={5}
-          onChange={(e) => {
-            const formatted = formatExpiryDate(e.target.value);
-            setFormData((prev) => ({ ...prev, expiryDate: formatted }));
-          }}
-        />
-        {errors.expiryDate && <p className="text-red-600">{errors.expiryDate}</p>}
-      </div>
-
-      <div>
-        <label>CVV</label>
-        <input
-          name="cvv"
-          maxLength={4}
-          value={formData.cvv}
-          onChange={(e) => {
-            const digits = e.target.value.replace(/\D/g, "");
-            setFormData((prev) => ({ ...prev, cvv: digits }));
-          }}
-        />
-        {errors.cvv && <p className="text-red-600">{errors.cvv}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InputField label="First Name" name="firstName" />
+        <InputField label="Last Name" name="lastName" />
+        <InputField label="Email" name="email" type="email" />
+        <InputField label="Phone" name="phone" />
+        <InputField label="Card Number" name="cardNumber" maxLength={19} formatter={formatCardNumber} />
+        <InputField label="Name on Card" name="cardName" />
+        <InputField label="Expiry Date" name="expiryDate" maxLength={5} formatter={formatExpiryDate} />
+        <InputField label="CVV" name="cvv" maxLength={4} formatter={(val) => val.replace(/\D/g, "")} />
+        <InputField label="Address" name="address" />
+        <InputField label="City" name="city" />
+        <InputField label="State" name="state" />
+        <InputField label="Zip Code" name="zipCode" />
       </div>
 
       <button
         type="submit"
         disabled={isProcessing}
-        className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50"
+        className="w-full bg-indigo-600 text-white font-semibold py-3 rounded hover:bg-indigo-700 transition disabled:opacity-50"
       >
-        {isProcessing ? "Processing..." : `Complete Purchase - $${(parseFloat(packagePrice.replace("$", "")) + 2.99).toFixed(2)}`}
+        {isProcessing
+          ? "Processing..."
+          : `Complete Purchase - $${(parseFloat(packagePrice.replace("$", "")) + 2.99).toFixed(2)}`}
       </button>
 
-      {errors.submit && <p className="text-red-600 mt-2">{errors.submit}</p>}
+      {errors.submit && <p className="text-red-600 text-sm text-center">{errors.submit}</p>}
     </form>
   );
 }
