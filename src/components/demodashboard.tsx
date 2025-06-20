@@ -742,11 +742,11 @@ export default function DemoDashboard() {
                         </li>
                       ))}
                     </ul>
-                  <button 
-                    className="w-full py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Purchase
-                  </button>
+                    <Link href="/checkout/">
+                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
+                        Purchase
+                      </button>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -765,11 +765,11 @@ export default function DemoDashboard() {
                     <p className="text-slate-600 text-xs sm:text-sm mb-2">{item.desc}</p>
                     <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
                     <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
-                    <button 
-                      className="w-full py-3 rounded-lg font-medium transition-colors"
-                    >
-                      Purchase
-                    </button>
+                    <Link href="/checkout/">
+                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
+                        Purchase
+                      </button>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -804,11 +804,11 @@ export default function DemoDashboard() {
                         </li>
                       ))}
                     </ul>
-                  <button 
-                    className="w-full py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Purchase
-                  </button>
+                    <Link href="/checkout/">
+                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
+                        Purchase
+                      </button>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -842,11 +842,11 @@ export default function DemoDashboard() {
                     <p className="text-slate-600 text-xs sm:text-sm mb-2">{program.desc}</p>
                     <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
                     <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
-                  <button 
-                    className="w-full py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Purchase
-                  </button>
+                    <Link href="/checkout/">
+                      <button className="w-full py-3 rounded-lg font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
+                        Purchase
+                      </button>
+                    </Link>
                   </div>
                 ))}
               </div>
