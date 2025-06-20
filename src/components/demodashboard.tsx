@@ -3,7 +3,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
 
+const router = useRouter();
+
+const handlePurchase = (packageName, price) => {
+  router.push(`/checkout?package=${encodeURIComponent(packageName)}&price=${encodeURIComponent(price)}`);
+};
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
@@ -741,9 +747,12 @@ export default function DemoDashboard() {
                         </li>
                       ))}
                     </ul>
-                    <button className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${pkg.popular ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
-                      Purchase
-                    </button>
+                  <button 
+                    onClick={() => handlePurchase(pkg.name, pkg.price)}
+                    className="w-full py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Purchase
+                  </button>
                   </div>
                 ))}
               </div>
@@ -762,7 +771,10 @@ export default function DemoDashboard() {
                     <p className="text-slate-600 text-xs sm:text-sm mb-2">{item.desc}</p>
                     <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
                     <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
-                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm sm:text-base">
+                    <button 
+                      onClick={() => handlePurchase(pkg.name, pkg.price)}
+                      className="w-full py-3 rounded-lg font-medium transition-colors"
+                    >
                       Purchase
                     </button>
                   </div>
@@ -799,9 +811,12 @@ export default function DemoDashboard() {
                         </li>
                       ))}
                     </ul>
-                    <button className="w-full py-2 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm sm:text-base">
-                      Start Plan
-                    </button>
+                  <button 
+                    onClick={() => handlePurchase(pkg.name, pkg.price)}
+                    className="w-full py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Purchase
+                  </button>
                   </div>
                 ))}
               </div>
@@ -835,9 +850,12 @@ export default function DemoDashboard() {
                     <p className="text-slate-600 text-xs sm:text-sm mb-2">{program.desc}</p>
                     <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
                     <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
-                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm sm:text-base">
-                      Enroll Now
-                    </button>
+                  <button 
+                    onClick={() => handlePurchase(pkg.name, pkg.price)}
+                    className="w-full py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Purchase
+                  </button>
                   </div>
                 ))}
               </div>
