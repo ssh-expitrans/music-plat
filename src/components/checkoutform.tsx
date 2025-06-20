@@ -106,38 +106,43 @@ export default function CheckoutForm() {
     }
   };
 
-  const InputField = ({
-    label,
-    name,
-    type = "text",
-    maxLength,
-    formatter,
-  }: {
-    label: string;
-    name: keyof FormData;
-    type?: string;
-    maxLength?: number;
-    formatter?: (val: string) => string;
-  }) => (
+  type InputFieldProps = {
+  label: string;
+  name: keyof FormData;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  type?: string;
+  maxLength?: number;
+};
+
+
+  function InputField({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  type = "text",
+  maxLength,
+}: InputFieldProps) {
+  return (
     <div className="flex flex-col">
-      <label className="mb-1 font-medium">{label}</label>
+      <label htmlFor={name} className="mb-1 font-medium">{label}</label>
       <input
+        id={name}
         name={name}
         type={type}
-        value={formData[name]}
+        value={value}
         maxLength={maxLength}
+        onChange={(e) => onChange(e.target.value)}
         className="border rounded p-2"
-        onChange={(e) => {
-          let value = e.target.value;
-          if (formatter) value = formatter(value);
-          setFormData((prev) => ({ ...prev, [name]: value }));
-          if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
-        }}
-
       />
-      {errors[name] && <p className="text-sm text-red-600 mt-1">{errors[name]}</p>}
+      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
     </div>
   );
+}
+
 
   return (
     <form
@@ -150,18 +155,139 @@ export default function CheckoutForm() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <InputField label="First Name" name="firstName" />
-        <InputField label="Last Name" name="lastName" />
-        <InputField label="Email" name="email" type="email" />
-        <InputField label="Phone" name="phone" />
-        <InputField label="Card Number" name="cardNumber" maxLength={19} formatter={formatCardNumber} />
-        <InputField label="Name on Card" name="cardName" />
-        <InputField label="Expiry Date" name="expiryDate" maxLength={5} formatter={formatExpiryDate} />
-        <InputField label="CVV" name="cvv" maxLength={4} formatter={(val) => val.replace(/\D/g, "")} />
-        <InputField label="Address" name="address" />
-        <InputField label="City" name="city" />
-        <InputField label="State" name="state" />
-        <InputField label="Zip Code" name="zipCode" />
+        <InputField
+          label="First Name"
+          name="firstName"
+          value={formData.firstName}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, firstName: value }))
+          }
+          error={errors.firstName}
+        />
+
+        <InputField
+          label="Last Name"
+          name="lastName"
+          value={formData.lastName}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, lastName: value }))
+          }
+          error={errors.lastName}
+        />
+
+        <InputField
+          label="Email"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, email: value }))
+          }
+          error={errors.email}
+        />
+
+        <InputField
+          label="Phone"
+          name="phone"
+          value={formData.phone}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, phone: value }))
+          }
+          error={errors.phone}
+        />
+
+        <InputField
+          label="Card Number"
+          name="cardNumber"
+          value={formData.cardNumber}
+          maxLength={19}
+          onChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              cardNumber: formatCardNumber(value),
+            }))
+          }
+          error={errors.cardNumber}
+        />
+
+        <InputField
+          label="Name on Card"
+          name="cardName"
+          value={formData.cardName}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, cardName: value }))
+          }
+          error={errors.cardName}
+        />
+
+        <InputField
+          label="Expiry Date"
+          name="expiryDate"
+          value={formData.expiryDate}
+          maxLength={5}
+          onChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              expiryDate: formatExpiryDate(value),
+            }))
+          }
+          error={errors.expiryDate}
+        />
+
+        <InputField
+          label="CVV"
+          name="cvv"
+          value={formData.cvv}
+          maxLength={4}
+          onChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              cvv: value.replace(/\D/g, ""),
+            }))
+          }
+          error={errors.cvv}
+        />
+
+        <InputField
+          label="Address"
+          name="address"
+          value={formData.address}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, address: value }))
+          }
+          error={errors.address}
+        />
+
+        <InputField
+          label="City"
+          name="city"
+          value={formData.city}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, city: value }))
+          }
+          error={errors.city}
+        />
+
+        <InputField
+          label="State"
+          name="state"
+          value={formData.state}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, state: value }))
+          }
+          error={errors.state}
+        />
+
+        <InputField
+          label="Zip Code"
+          name="zipCode"
+          value={formData.zipCode}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, zipCode: value }))
+          }
+          error={errors.zipCode}
+        />
+
       </div>
 
       <button
