@@ -692,13 +692,13 @@ export default function DemoDashboard() {
   </div>
 )}
 
-        {activeTab === "Buy" && (
-          <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
-            <h2 className="flex items-center mb-6">Piano Lesson Packages</h2>
+{activeTab === "Buy" && (
+          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
+            <h2 className="flex items-center mb-4 sm:mb-6 text-xl sm:text-2xl">Piano Lesson Packages</h2>
             
-            <div className="mb-12">
-              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Individual Lessons</h3>
-              <div className="grid gap-6 md:grid-cols-4">
+            <div className="mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Individual Lessons</h3>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { 
                     name: "Single Lesson", 
@@ -729,24 +729,24 @@ export default function DemoDashboard() {
                     features: ["$26.25 per lesson", "3-month validity", "Best value"]
                   },
                 ].map((pkg) => (
-                  <div key={pkg.name} className={`border rounded-xl p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
+                  <div key={pkg.name} className={`border rounded-xl p-4 sm:p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
                     {pkg.popular && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                        <span className="bg-indigo-600 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium">Most Popular</span>
                       </div>
                     )}
-                    <h4 className="text-xl font-bold text-slate-800 mb-2">{pkg.name}</h4>
-                    <p className="text-slate-600 mb-3">{pkg.desc}</p>
-                    <p className="text-3xl font-bold text-indigo-600 mb-4">{pkg.price}</p>
-                    <ul className="text-sm text-slate-600 mb-6 space-y-2">
+                    <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">{pkg.name}</h4>
+                    <p className="text-sm sm:text-base text-slate-600 mb-3">{pkg.desc}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-4">{pkg.price}</p>
+                    <ul className="text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6 space-y-1 sm:space-y-2">
                       {pkg.features.map((feature, idx) => (
                         <li key={idx} className="flex items-center">
-                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-3"></span>
-                          {feature}
+                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 sm:mr-3 flex-shrink-0"></span>
+                          <span className="leading-tight">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                    <button className={`w-full py-3 rounded-lg font-medium transition-colors ${pkg.popular ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                    <button className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${pkg.popular ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
                       Purchase
                     </button>
                   </div>
@@ -754,20 +754,20 @@ export default function DemoDashboard() {
               </div>
             </div>
 
-            <div className="mb-12">
-              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Extended Lessons</h3>
-              <div className="grid gap-6 md:grid-cols-3">
+            <div className="mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Extended Lessons</h3>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {[
                   { name: "45-Minute Single", price: "$40", desc: "Extended individual session", duration: "45 minutes" },
                   { name: "45-Minute 6-Pack", price: "$225", desc: "Save $15 on extended lessons", duration: "6 x 45-minute sessions" },
                   { name: "60-Minute Single", price: "$50", desc: "Full hour private lesson", duration: "60 minutes" },
                 ].map((item) => (
-                  <div key={item.name} className="border border-slate-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-all">
-                    <h4 className="text-lg font-semibold text-slate-800 mb-2">{item.name}</h4>
-                    <p className="text-slate-600 text-sm mb-2">{item.desc}</p>
+                  <div key={item.name} className="border border-slate-200 rounded-lg p-4 sm:p-5 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{item.name}</h4>
+                    <p className="text-slate-600 text-xs sm:text-sm mb-2">{item.desc}</p>
                     <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
-                    <p className="text-xl font-bold text-indigo-600 mb-4">{item.price}</p>
-                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                    <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
+                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm sm:text-base">
                       Purchase
                     </button>
                   </div>
@@ -775,9 +775,9 @@ export default function DemoDashboard() {
               </div>
             </div>
 
-            <div className="mb-12">
-              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Monthly Unlimited</h3>
-              <div className="grid gap-6 md:grid-cols-2">
+            <div className="mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Monthly Unlimited</h3>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
                 {[
                   { 
                     name: "Unlimited Standard", 
@@ -792,19 +792,19 @@ export default function DemoDashboard() {
                     features: ["Mix of 30, 45, 60-minute sessions", "Priority booking", "Sheet music library access", "Recital preparation included"]
                   },
                 ].map((membership) => (
-                  <div key={membership.name} className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-all">
-                    <h4 className="text-xl font-bold text-slate-800 mb-2">{membership.name}</h4>
-                    <p className="text-slate-600 mb-3">{membership.desc}</p>
-                    <p className="text-2xl font-bold text-indigo-600 mb-4">{membership.price}</p>
-                    <ul className="text-sm text-slate-600 mb-6 space-y-2">
+                  <div key={membership.name} className="border border-slate-200 rounded-xl p-4 sm:p-6 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">{membership.name}</h4>
+                    <p className="text-sm sm:text-base text-slate-600 mb-3">{membership.desc}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-indigo-600 mb-4">{membership.price}</p>
+                    <ul className="text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6 space-y-1 sm:space-y-2">
                       {membership.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center">
-                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-3"></span>
-                          {feature}
+                        <li key={idx} className="flex items-start">
+                          <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 sm:mr-3 flex-shrink-0 mt-1.5"></span>
+                          <span className="leading-tight">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                    <button className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                    <button className="w-full py-2 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm sm:text-base">
                       Start Plan
                     </button>
                   </div>
@@ -813,8 +813,8 @@ export default function DemoDashboard() {
             </div>
 
             <div>
-              <h3 className="text-2xl font-semibold mb-6 text-slate-700">Special Programs</h3>
-              <div className="grid gap-6 md:grid-cols-3">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Special Programs</h3>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {[
                   { 
                     name: "Recital Prep Package", 
@@ -835,12 +835,12 @@ export default function DemoDashboard() {
                     duration: "6 x 30-minute sessions"
                   },
                 ].map((program) => (
-                  <div key={program.name} className="border border-slate-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-all">
-                    <h4 className="text-lg font-semibold text-slate-800 mb-2">{program.name}</h4>
-                    <p className="text-slate-600 text-sm mb-2">{program.desc}</p>
+                  <div key={program.name} className="border border-slate-200 rounded-lg p-4 sm:p-5 bg-white shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{program.name}</h4>
+                    <p className="text-slate-600 text-xs sm:text-sm mb-2">{program.desc}</p>
                     <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
-                    <p className="text-xl font-bold text-indigo-600 mb-4">{program.price}</p>
-                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                    <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
+                    <button className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm sm:text-base">
                       Enroll Now
                     </button>
                   </div>
@@ -850,7 +850,7 @@ export default function DemoDashboard() {
           </div>
         )}
 
-       {activeTab === "Upcoming" && (
+    {activeTab === "Upcoming" && (
   <div className="max-w-6xl mx-auto animate-fadeIn">
     {/* Header Section */}
     <div className="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-8 rounded-3xl shadow-2xl text-white overflow-hidden mb-8">
