@@ -128,10 +128,12 @@ export default function CheckoutForm() {
         maxLength={maxLength}
         className="border rounded p-2"
         onChange={(e) => {
-          const value = formatter ? formatter(e.target.value) : e.target.value;
+          let value = e.target.value;
+          if (formatter) value = formatter(value);
           setFormData((prev) => ({ ...prev, [name]: value }));
           if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
         }}
+
       />
       {errors[name] && <p className="text-sm text-red-600 mt-1">{errors[name]}</p>}
     </div>
