@@ -730,11 +730,6 @@ export default function DemoDashboard() {
                   },
                 ].map((pkg) => (
                   <div key={pkg.name} className={`border rounded-xl p-4 sm:p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
-                    {pkg.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-indigo-600 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium">Most Popular</span>
-                      </div>
-                    )}
                     <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">{pkg.name}</h4>
                     <p className="text-sm sm:text-base text-slate-600 mb-3">{pkg.desc}</p>
                     <p className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-4">{pkg.price}</p>
