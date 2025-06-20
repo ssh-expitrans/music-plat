@@ -63,7 +63,7 @@ export default function CheckoutSuccessPage() {
                 <div className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</div>
                 <div>
                   <p className="font-medium text-slate-800">Confirmation Email</p>
-                  <p className="text-sm text-slate-600">You'll receive a confirmation email with your receipt and package details within the next few minutes.</p>
+                  <p className="text-sm text-slate-600">You&apos;ll receive a confirmation email with your receipt and package details within the next few minutes.</p>
                 </div>
               </div>
               <div className="flex items-start">

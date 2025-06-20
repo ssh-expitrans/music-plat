@@ -3,13 +3,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from 'next/navigation';
+//import { useRouter } from 'next/navigation';
 
-const router = useRouter();
-
-const handlePurchase = (packageName, price) => {
-  router.push(`/checkout?package=${encodeURIComponent(packageName)}&price=${encodeURIComponent(price)}`);
-};
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
@@ -748,7 +743,6 @@ export default function DemoDashboard() {
                       ))}
                     </ul>
                   <button 
-                    onClick={() => handlePurchase(pkg.name, pkg.price)}
                     className="w-full py-3 rounded-lg font-medium transition-colors"
                   >
                     Purchase
@@ -772,7 +766,6 @@ export default function DemoDashboard() {
                     <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
                     <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
                     <button 
-                      onClick={() => handlePurchase(pkg.name, pkg.price)}
                       className="w-full py-3 rounded-lg font-medium transition-colors"
                     >
                       Purchase
@@ -812,7 +805,6 @@ export default function DemoDashboard() {
                       ))}
                     </ul>
                   <button 
-                    onClick={() => handlePurchase(pkg.name, pkg.price)}
                     className="w-full py-3 rounded-lg font-medium transition-colors"
                   >
                     Purchase
@@ -851,7 +843,6 @@ export default function DemoDashboard() {
                     <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
                     <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
                   <button 
-                    onClick={() => handlePurchase(pkg.name, pkg.price)}
                     className="w-full py-3 rounded-lg font-medium transition-colors"
                   >
                     Purchase
