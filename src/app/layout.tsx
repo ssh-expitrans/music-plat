@@ -1,12 +1,14 @@
 import { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/context/AuthContext"; // ✅ Import your provider
+
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: 'Buzz Music',
   description: 'Cool app description',
   icons: {
-    icon: '/favicon.png', 
+    icon: '/favicon.png',
   },
 };
 
@@ -27,10 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider> {/* ✅ Wrap everything inside here */}
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
