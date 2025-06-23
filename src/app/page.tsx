@@ -67,9 +67,9 @@ export default function Home() {
 
         {/* Right side: buttons */}
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <Link href="/signup">
+          <Link href="/login">
             <button className="btn-accent px-7 py-3 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 font-semibold w-full sm:w-auto">
-              Sign Up
+              Log In
             </button>
           </Link>
           <button

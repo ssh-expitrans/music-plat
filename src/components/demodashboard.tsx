@@ -277,14 +277,14 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
     setCurrentWeekStart(getCurrentWeekSunday());
   };
 
+  // Format week range without year
   const formatWeekRange = (weekStart: Date) => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
-    
     if (weekStart.getMonth() === weekEnd.getMonth()) {
-      return `${weekStart.toLocaleDateString(undefined, { month: 'long' })} ${weekStart.getDate()}-${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
+      return `${weekStart.toLocaleDateString(undefined, { month: 'long' })} ${weekStart.getDate()}-${weekEnd.getDate()}`;
     } else {
-      return `${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${weekStart.getFullYear()}`;
+      return `${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
     }
   };
 
@@ -316,12 +316,12 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
         <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
 
-      <nav className="hidden md:flex relative z-10 w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-6 flex-col space-y-3 shadow-2xl">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            🎵 MusicLearn
-          </h1>
-          <p className="text-sm text-gray-600 mt-1">Student Portal</p>
+      <nav className="hidden md:flex relative z-10 w-44 lg:w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-4 lg:p-6 flex-col space-y-3 shadow-2xl">
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full text-2xl text-white shadow-lg">
+            🎵
+          </div>
+          <p className="text-sm text-gray-700 font-semibold">Student Portal</p>
         </div>
         
         {tabs.map((tab, index) => (
@@ -351,6 +351,28 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               </div>
             )}
+          </button>
+        ))}
+      </nav>
+
+      {/* Bottom Navigation Bar for Mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-20 flex md:hidden bg-white/90 border-t border-gray-200 shadow-2xl">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => {
+              setActiveTab(tab);
+              if (tab !== "Book") setSelectedSlots([]);
+            }}
+            className={`flex-1 flex flex-col items-center justify-center py-2 transition-all duration-200 ${
+              activeTab === tab
+                ? "text-indigo-600 font-bold bg-gradient-to-t from-indigo-50 to-white"
+                : "text-gray-500 hover:text-indigo-500"
+            }`}
+            aria-label={tab}
+          >
+            <span className="text-xl mb-0.5">{getTabIcon(tab)}</span>
+            <span className="text-xs leading-tight">{tab}</span>
           </button>
         ))}
       </nav>
@@ -582,51 +604,44 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
     </div>
 
     {/* Week Navigation - Mobile Optimized */}
-    <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-purple-200 shadow-lg space-y-4 sm:space-y-0">
-      <div className="flex space-x-2 sm:space-x-0 sm:block order-2 sm:order-1">
+    <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-purple-200 shadow-lg space-y-4 sm:space-y-0 md:gap-8">
+      <div className="flex space-x-2 sm:space-x-0 sm:block order-2 sm:order-1 md:space-x-4">
         <button
           onClick={goToPreviousWeek}
-          className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base"
+          className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg"
         >
-          <span className="group-hover:animate-bounce inline-block mr-1 sm:mr-2 text-lg sm:text-xl">⬅️</span>
-          <span className="hidden sm:inline">Previous Week</span>
-          <span className="sm:hidden">Prev</span>
+          <span className="group-hover:animate-bounce inline-block mr-1 sm:mr-2 text-lg sm:text-xl md:text-2xl">⬅️</span>
         </button>
-        
         <button
           onClick={goToNextWeek}
-          className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base sm:hidden"
+          className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg sm:hidden"
         >
-          <span className="sm:hidden">Next</span>
-          <span className="group-hover:animate-bounce inline-block ml-1 text-lg">➡️</span>
+          <span className="group-hover:animate-bounce inline-block ml-1 text-lg md:text-2xl">➡️</span>
         </button>
       </div>
-      
-      <div className="text-center order-1 sm:order-2">
-        <h3 className="text-lg sm:text-2xl font-bold text-purple-800 mb-1">
+      <div className="text-center order-1 sm:order-2 min-w-[160px] md:min-w-[220px]">
+        <h3 className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-800 mb-1">
           {formatWeekRange(currentWeekStart)}
         </h3>
         {!isCurrentWeek() && (
           <button
             onClick={goToCurrentWeek}
-            className="text-xs sm:text-sm text-purple-600 hover:text-purple-800 font-medium"
+            className="text-xs sm:text-sm md:text-base text-purple-600 hover:text-purple-800 font-medium"
           >
             Go to Current Week
           </button>
         )}
         {isCurrentWeek() && (
-          <span className="text-xs sm:text-sm text-purple-600 font-medium bg-purple-100 px-2 sm:px-3 py-1 rounded-full">
+          <span className="text-xs sm:text-sm md:text-base text-purple-600 font-medium bg-purple-100 px-2 sm:px-3 md:px-4 py-1 rounded-full">
             📍 Current Week
           </span>
         )}
       </div>
-      
       <button
         onClick={goToNextWeek}
-        className="group flex items-center px-6 py-3 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 hidden sm:flex order-3"
+        className="group flex items-center px-6 py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 hidden sm:flex order-3 text-base md:text-lg"
       >
-        Next Week
-        <span className="group-hover:animate-bounce inline-block ml-2 text-xl">➡️</span>
+        <span className="group-hover:animate-bounce inline-block ml-2 text-xl md:text-2xl">➡️</span>
       </button>
     </div>
 
@@ -818,7 +833,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
     </div>
 
     {/* Desktop View - Grid Layout */}
-    <div className="hidden sm:grid grid-cols-2 lg:grid-cols-7 gap-6">
+    <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 md:gap-8">
       {currentWeek.map((day, dayIndex) => {
         const dayOfWeek = day.getDay();
         const isToday = day.toDateString() === new Date().toDateString();
@@ -1129,10 +1144,10 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
             features: ["$26.25 per lesson", "3-month validity", "Best value"]
           },
         ].map((pkg) => (
-          <div key={pkg.id} className={`border rounded-xl p-4 sm:p-6 bg-white shadow-sm relative transition-all hover:shadow-md ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
+          <div key={pkg.id} className={`rounded-2xl bg-white/80 shadow-xl border border-white/30 p-5 sm:p-7 flex flex-col relative transition-all hover:shadow-2xl ${pkg.popular ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'}`}>
             {pkg.popular && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 md:-top-4 md:left-4 md:translate-x-0">
+                <span className="bg-indigo-600 text-white px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap shadow-md">
                   Most Popular
                 </span>
               </div>
@@ -1148,8 +1163,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
                 </li>
               ))}
             </ul>
-            
-            <div className="space-y-3">
+            <div className="space-y-3 mt-auto">
               <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={() => updateQuantity(pkg.id, Math.max(0, (quantities[pkg.id] || 0) - 1))}
@@ -1215,7 +1229,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
             <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{item.name}</h4>
             <p className="text-slate-600 text-xs sm:text-sm mb-2">{item.desc}</p>
             <p className="text-xs text-slate-500 mb-3">{item.duration}</p>
-            <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
+            <p className="text-lg sm:text-3xl font-bold text-indigo-600 mb-3 sm:mb-4">{item.price}</p>
             
             <div className="space-y-3">
               <div className="flex items-center justify-center gap-3">
@@ -1349,7 +1363,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
             <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">{program.name}</h4>
             <p className="text-slate-600 text-xs sm:text-sm mb-2">{program.desc}</p>
             <p className="text-xs text-slate-500 mb-3">{program.duration}</p>
-            <p className="text-lg sm:text-xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
+            <p className="text-lg sm:text-3xl font-bold text-indigo-600 mb-3 sm:mb-4">{program.price}</p>
             
             <div className="space-y-3">
               <div className="flex items-center justify-center gap-3">
@@ -1383,7 +1397,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
   </div>
 )}
 
-    {activeTab === "Upcoming" && (
+{activeTab === "Upcoming" && (
   <div className="max-w-6xl mx-auto animate-fadeIn">
     {/* Header Section */}
     <div className="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-8 rounded-3xl shadow-2xl text-white overflow-hidden mb-8">
@@ -1542,79 +1556,33 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
 )}
 
 {activeTab === "Account" && (
-  <div className="max-w-4xl mx-auto animate-fadeIn">
-    {/* Header Section */}
-    <div className="relative bg-gradient-to-r from-slate-700 via-gray-700 to-zinc-700 p-8 rounded-3xl shadow-2xl text-white overflow-hidden mb-8">
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-700/90 to-gray-700/90"></div>
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
-      
-      <div className="relative z-10 text-center">
-        <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-lg">
-          👤
-        </div>
-        <h2 className="text-4xl font-bold mb-4 animate-slideInUp">
-          Account Management
-        </h2>
-        <p className="text-xl text-slate-200 animate-slideInUp animation-delay-200">
-          Access your personalized dashboard
+  <div className="max-w-2xl mx-auto animate-fadeIn px-4 sm:px-6 lg:px-8">
+    <div className="my-12 sm:my-16 pb-24 sm:pb-32">
+      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl shadow-xl px-6 py-8 text-center">
+        <h2 className="text-xl sm:text-2xl font-bold text-purple-800 mb-3">Demo Dashboard</h2>
+        <p className="text-gray-700 text-base sm:text-lg mb-2">
+          This is a demo dashboard. No real personal or payment data is stored, and no bookings or purchases are processed. You can explore the dashboard features, view example lessons, and try out the booking and homework sections. All actions are for demonstration only.
         </p>
-      </div>
-    </div>
-
-    {/* Demo Notice */}
-    <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/30 text-center mb-8">
-      <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg animate-bounce">
-        🎭
-      </div>
-      <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4">
-        Demo Dashboard
-      </h3>
-      <p className="text-gray-600 text-lg mb-6 max-w-2xl mx-auto">
-        You&apos;re currently viewing a demonstration of our piano lesson booking system. 
-        Sign in to access your personalized dashboard with real lesson data and account settings.
-      </p>
-      
-      {/* Feature Preview Cards */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        {[
-          { icon: "📊", title: "Progress Tracking", desc: "Monitor your musical journey" },
-          { icon: "🎯", title: "Goal Setting", desc: "Set and achieve milestones" },
-          { icon: "💳", title: "Payment History", desc: "Manage billing and payments" }
-        ].map((feature, index) => (
-          <div 
-            key={index}
-            className="p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fadeInUp"
-            style={{ animationDelay: `${index * 200}ms` }}
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <span className="text-green-600 text-lg">🔒</span>
+          <span className="text-gray-700 font-medium text-sm sm:text-base">Your data is secure</span>
+        </div>
+        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+          <button
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all"
+            onClick={() => window.open('/signup', '_blank')}
           >
-            <div className="text-3xl mb-3">{feature.icon}</div>
-            <h4 className="font-bold text-gray-800 mb-2">{feature.title}</h4>
-            <p className="text-gray-600 text-sm">{feature.desc}</p>
-          </div>
-        ))}
+            Create an Account
+          </button>
+          <button
+            className="px-6 py-3 rounded-xl bg-white border border-indigo-300 text-indigo-700 font-semibold shadow hover:bg-indigo-50 transition-all"
+            onClick={() => window.open('/login', '_blank')}
+          >
+            Log In
+          </button>
+        </div>
       </div>
-
-      {/* Action Buttons */}
-  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-      {/* Log In Button */}
-      <Link href="/login">
-        <button className="group px-10 py-4 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-2xl hover:from-slate-800 hover:to-gray-800 transition-all duration-300 font-bold shadow-2xl hover:shadow-slate-500/25 transform hover:scale-105">
-          <span className="group-hover:animate-bounce inline-block mr-3">🚀</span>
-          Log In to Your Account
-        </button>
-      </Link>
-
-      {/* Sign Up Button */}
-      <Link href="/signup">
-        <button className="group px-8 py-4 bg-white text-slate-700 border-2 border-slate-300 rounded-2xl hover:bg-slate-50 hover:border-slate-400 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
-          <span className="group-hover:animate-bounce inline-block mr-3">✨</span>
-          Create New Account
-        </button>
-      </Link>
     </div>
-
-    </div>
-
     {/* Additional Info */}
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200 text-center">
       <div className="flex items-center justify-center gap-2 text-blue-700 font-medium">
@@ -1624,6 +1592,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
     </div>
   </div>
 )}
+
       </main>
 
       {/* Bottom Mobile Nav 
