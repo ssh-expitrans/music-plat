@@ -67,6 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password);
+    console.log('Signed in user:', result.user);
+
     // User profile will be loaded by the auth state listener
   };
 

@@ -26,23 +26,27 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+try {
+  if (isSignUp) {
+    await signUp(email, password, {
+      firstName,
+      lastName,
+      role,
+      ...(role === 'student' && teacherId && { teacherId }),
+    });
+  } else {
+    await signIn(email, password);
+  }
+} catch (error) {
+  if (error instanceof Error) {
+    setError(error.message);
+  } else {
+    setError('An unexpected error occurred.');
+  }
+} finally {
+  setIsLoading(false);
+}
 
-    try {
-      if (isSignUp) {
-        await signUp(email, password, {
-          firstName,
-          lastName,
-          role,
-          ...(role === 'student' && teacherId && { teacherId })
-        });
-      } else {
-        await signIn(email, password);
-      }
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   // Demo login buttons
