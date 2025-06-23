@@ -1,65 +1,58 @@
-//login/page.tsx 
+// components/Login.tsx
+"use client";
 
-'use client';
-
-import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../lib/firebase";
-import Cookies from "js-cookie";
+import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Login() {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  
+  // Sign up form fields
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
+  const [teacherId, setTeacherId] = useState('');
+
+  const { signIn, signUp } = useAuth();
   const router = useRouter();
 
-  async function handleResetPassword() {
-    const email = prompt("Enter your email to reset password:");
-    if (!email) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
     try {
-      await sendPasswordResetEmail(auth, email.trim());
-      alert("Password reset email sent! Please check your inbox.");
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to send reset email.");
-    }
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setLoading(true);
-
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get("email")?.toString().trim() || "";
-    const password = formData.get("password")?.toString() || "";
-
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      if (!user.emailVerified) {
-        setError("Please verify your email before logging in.");
-        await auth.signOut();
-        setLoading(false);
-        return;
+      if (isSignUp) {
+        await signUp(email, password, {
+          firstName,
+          lastName,
+          role,
+          ...(role === 'student' && teacherId && { teacherId })
+        });
+      } else {
+        await signIn(email, password);
       }
-
-      const idToken = await user.getIdToken();
-      Cookies.set("token", idToken, { expires: 1 });
-      router.push("/demodashboard/studentdash");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
-      setLoading(false);
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
+
+  // Demo login buttons
+  const handleDemoLogin = (demoRole: 'student' | 'teacher') => {
+    if (demoRole === 'student') {
+      router.push('/demodashboard/studentdash');
+    } else {
+      router.push('/demodashboard/teacherdash');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-serif flex flex-col">
@@ -74,7 +67,37 @@ export default function Login() {
       {/* FORM CONTAINER */}
       <main className="flex-grow flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-xl p-10 max-w-md w-full space-y-6">
-          <h1 className="text-4xl font-bold text-center text-[var(--accent)]">Login</h1>
+          <h1 className="text-4xl font-bold text-center text-[var(--accent)]">
+            {isSignUp ? 'Create Account' : 'Login'}
+          </h1>
+
+          {/* Demo Buttons */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-neutral-600 mb-3 text-center font-medium">Try the demo:</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleDemoLogin('student')}
+                className="flex-1 bg-[var(--accent)] hover:bg-indigo-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+              >
+                Student Demo
+              </button>
+              <button
+                onClick={() => handleDemoLogin('teacher')}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+              >
+                Teacher Demo
+              </button>
+            </div>
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-neutral-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-neutral-500">Or continue with real account</span>
+            </div>
+          </div>
 
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded-md text-sm text-center font-medium">
@@ -82,61 +105,118 @@ export default function Login() {
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Role
+                  </label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as 'student' | 'teacher')}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    disabled={isLoading}
+                  >
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                  </select>
+                </div>
+
+                {role === 'student' && (
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      Teacher ID (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={teacherId}
+                      onChange={(e) => setTeacherId(e.target.value)}
+                      placeholder="Enter your teacher's ID"
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      disabled={isLoading}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Email
               </label>
               <input
-                id="email"
-                name="email"
                 type="email"
-                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                disabled={loading}
+                disabled={isLoading}
+                required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Password
               </label>
               <input
-                id="password"
-                name="password"
                 type="password"
-                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                disabled={loading}
+                disabled={isLoading}
+                required
               />
-            </div>
-
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={handleResetPassword}
-                className="text-sm text-[var(--accent)] hover:underline font-medium"
-              >
-                Forgot password?
-              </button>
             </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className={`w-full py-3 rounded-lg font-semibold text-white bg-[var(--accent)] hover:bg-indigo-700 transition ${
-                loading ? "opacity-60 cursor-not-allowed" : ""
+                isLoading ? "opacity-60 cursor-not-allowed" : ""
               }`}
             >
-              {loading ? "Logging in..." : "Login"}
+              {isLoading ? (isSignUp ? 'Creating Account...' : 'Logging in...') : (isSignUp ? 'Create Account' : 'Login')}
             </button>
           </form>
 
           <p className="text-center text-sm text-neutral-600">
-            Don’t have an account?{" "}
-            <Link href="/signup" className="text-[var(--accent)] hover:underline font-medium">
-              Sign up here
-            </Link>
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{" "}
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-[var(--accent)] hover:underline font-medium"
+            >
+              {isSignUp ? 'Sign in here' : 'Sign up here'}
+            </button>
             .
           </p>
         </div>
@@ -144,7 +224,7 @@ export default function Login() {
 
       {/* FOOTER */}
       <footer className="py-6 text-center text-neutral-500 text-sm border-t border-neutral-300 mt-10">
-        © 2025 Buzz Financial
+        © 2025 Music Learning Platform
       </footer>
     </div>
   );
