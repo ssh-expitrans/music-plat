@@ -61,7 +61,7 @@ export default function About() {
         <p className="text-lg mb-4 text-neutral-700">
           Ready to get started? Book your first lesson today or reach out with any questions.
         </p>
-        <Link href="/signup">
+        <Link href="/login">
           <button className="bg-[var(--accent)] text-white px-8 py-3 rounded-lg shadow-md hover:bg-indigo-700 transition-colors font-semibold">
             Sign Up for Lessons
           </button>
