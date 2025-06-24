@@ -17,6 +17,8 @@ export default function Login() {
   const [lastName, setLastName] = useState('');
   const [dob, setDob] = useState('');
   const [skillLevel, setSkillLevel] = useState<'beginner' | 'intermediate' | 'advanced' | ''>('');
+  // Add role selection for sign up and login
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
 
   const { signIn, signUp } = useAuth();
   const router = useRouter();
@@ -39,14 +41,24 @@ export default function Login() {
           firstName,
           lastName,
           dob,
-          skillLevel,
+          skillLevel: role === 'student' ? skillLevel : undefined,
+          role,
         });
-        router.push('/demodashboard/studentdash/real');
+        if (role === 'teacher') {
+          router.push('/demodashboard/teacherdash/real');
+        } else {
+          router.push('/demodashboard/studentdash/real');
+        }
       } else {
         await signIn(email, password);
-        setTimeout(() => {
+        // After login, fetch user profile to determine role
+        // (Assume AuthContext sets user profile in localStorage or context)
+        // For demo, just route based on selected role
+        if (role === 'teacher') {
+          router.push('/demodashboard/teacherdash/real');
+        } else {
           router.push('/demodashboard/studentdash/real');
-        }, 500);
+        }
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -120,7 +132,21 @@ export default function Login() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignUp && (
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Account Type</label>
+              <select
+                value={role}
+                onChange={e => setRole(e.target.value as 'student' | 'teacher')}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                disabled={isLoading}
+                required
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+              </select>
+            </div>
+
+            {isSignUp && role === 'student' && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -180,6 +206,39 @@ export default function Login() {
                     <option value="advanced">Advanced</option>
                   </select>
                 </div>
+              </>
+            )}
+            {isSignUp && role === 'teacher' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                </div>
+                {/* Teachers do not need DOB or skill level for now */}
               </>
             )}
 

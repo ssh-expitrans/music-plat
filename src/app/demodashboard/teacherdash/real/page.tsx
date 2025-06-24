@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -11,9 +11,10 @@ import {
   query,
   where,
   DocumentData,
+  Timestamp,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { addDoc } from "firebase/firestore";
+import { addDoc, deleteDoc } from "firebase/firestore";
 
 const tabs = [
   "Students",
@@ -55,12 +56,31 @@ export default function TeacherDashReal() {
   const router = useRouter();
 
   // Move all useState hooks to the top-level, before any early returns
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [contactInfo, setContactInfo] = useState({
     email: "",
     phone: "",
     address: "",
   });
+  const [lessonSlots, setLessonSlots] = useState<any[]>([]);
+  const [slotForm, setSlotForm] = useState({
+    startDate: "",
+    endDate: "",
+    time: "",
+    duration: 30, // in minutes
+    daysOfWeek: [] as number[], // 0=Sun, 1=Mon, ...
+    maxStudents: 8,
+  });
+  const [slotLoading, setSlotLoading] = useState(false);
+  const [slotError, setSlotError] = useState("");
+  const [slotSuccess, setSlotSuccess] = useState("");
+
+  const [slotToDelete, setSlotToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const slotSuccessTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -88,6 +108,11 @@ export default function TeacherDashReal() {
           query(collection(db, "notes"), where("teacherId", "==", firebaseUser.uid))
         );
         setNotes(notesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        // Fetch lesson slots for this teacher
+        const slotsSnap = await getDocs(
+          query(collection(db, "lessonSlots"), where("teacherId", "==", firebaseUser.uid))
+        );
+        setLessonSlots(slotsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch {
         setError("Failed to load dashboard data.");
       }
@@ -105,6 +130,17 @@ export default function TeacherDashReal() {
       });
     }
   }, [profile]);
+
+  // Auto-hide slotSuccess after 3 seconds
+  useEffect(() => {
+    if (slotSuccess) {
+      if (slotSuccessTimeout.current) clearTimeout(slotSuccessTimeout.current);
+      slotSuccessTimeout.current = setTimeout(() => setSlotSuccess("") , 3000);
+    }
+    return () => {
+      if (slotSuccessTimeout.current) clearTimeout(slotSuccessTimeout.current);
+    };
+  }, [slotSuccess]);
 
   if (loading)
     return (
@@ -142,15 +178,107 @@ export default function TeacherDashReal() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const calendarDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
 
-  function toggleBlockDate(dateStr: string) {
-    setBlockedDates((prev) =>
-      prev.includes(dateStr) ? prev.filter((d) => d !== dateStr) : [...prev, dateStr]
-    );
-  }
-
   function handleContactChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setContactInfo((prev) => ({ ...prev, [name]: value }));
+  }
+
+  // Helper: generate 15-min increment times ("14:00", "14:15", ...)
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const h = Math.floor(i / 4);
+    const m = (i % 4) * 15;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  });
+
+  // Helper: weekday names
+  const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Bulk slot creation handler
+  async function handleAddSlot(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) {
+      setSlotError("You must be logged in as a teacher to add a slot.");
+      return;
+    }
+    setSlotLoading(true);
+    setSlotError("");
+    setSlotSuccess("");
+    try {
+      const { startDate, endDate, time, duration, daysOfWeek, maxStudents } = slotForm;
+      if (!startDate || !endDate || !time || daysOfWeek.length === 0) {
+        setSlotError("Please fill all fields and select at least one day.");
+        setSlotLoading(false);
+        return;
+      }
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const slotsToAdd = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        if (daysOfWeek.includes(d.getDay())) {
+          slotsToAdd.push({
+            date: d.toISOString().split("T")[0],
+            time,
+            duration,
+            maxStudents,
+            teacherId: user.uid,
+            bookedStudentIds: [],
+            createdAt: Timestamp.now(),
+          });
+        }
+      }
+      // Add all slots in parallel
+      await Promise.all(slotsToAdd.map(slot => addDoc(collection(db, "lessonSlots"), slot)));
+      setSlotSuccess(`${slotsToAdd.length} slot(s) added!`);
+      setSlotForm({ startDate: "", endDate: "", time: "", duration: 30, daysOfWeek: [], maxStudents: 8 });
+      // Optionally, refresh slots list
+      const slotsSnap = await getDocs(
+        query(collection(db, "lessonSlots"), where("teacherId", "==", user.uid))
+      );
+      setLessonSlots(slotsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    } catch (e: any) {
+      setSlotError(e.message || "Failed to add slot(s).");
+    } finally {
+      setSlotLoading(false);
+    }
+  }
+
+  async function handleDeleteSlot(slotId: string) {
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      await deleteDoc(doc(db, "lessonSlots", slotId));
+      setLessonSlots((prev) => prev.filter((s) => s.id !== slotId));
+      setSlotToDelete(null);
+    } catch (e: any) {
+      setDeleteError(e.message || "Failed to delete slot.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  async function handleBulkDelete() {
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      await Promise.all(selectedSessions.map(id => deleteDoc(doc(db, "lessonSlots", id))));
+      setLessonSlots((prev) => prev.filter((s) => !selectedSessions.includes(s.id)));
+      setSelectedSessions([]);
+      setBulkDeleteConfirm(false);
+    } catch (e: any) {
+      setDeleteError(e.message || "Failed to delete sessions.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  // Helper: format session display
+  function formatSession(slot: any) {
+    const dateObj = new Date(slot.date + 'T' + slot.time);
+    const day = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+    const month = dateObj.toLocaleDateString(undefined, { month: 'short' });
+    const dayNum = dateObj.getDate();
+    const time = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    return `${day}, ${month} ${dayNum}, ${time} (${slot.duration} min) • Max: ${slot.maxStudents} • Booked: ${slot.bookedStudentIds?.length || 0}`;
   }
 
   // UI rendering (structure and styles adapted from demo dashboard)
@@ -330,12 +458,154 @@ export default function TeacherDashReal() {
             {activeTab === "Calendar" && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  📅 Calendar Management
+                  📅 Session Calendar
                 </h2>
-                <p className="text-purple-200">Click days to block them out. Blocked days appear in red.</p>
+                <div className="glass-effect p-6 rounded-2xl border border-white/20 mb-8">
+                  <h3 className="text-xl font-bold text-white mb-4">Add Session(s)</h3>
+                  <form onSubmit={handleAddSlot} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <div>
+                      <label className="block text-purple-200 mb-1 font-medium">Start Date</label>
+                      <input type="date" value={slotForm.startDate} min={today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, startDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
+                    </div>
+                    <div>
+                      <label className="block text-purple-200 mb-1 font-medium">End Date</label>
+                      <input type="date" value={slotForm.endDate} min={slotForm.startDate || today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, endDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
+                    </div>
+                    <div>
+                      <label className="block text-purple-200 mb-1 font-medium">Days of Week</label>
+                      <div className="flex gap-1 flex-wrap">
+                        {weekdayNames.map((day, idx) => (
+                          <button
+                            type="button"
+                            key={day}
+                            className={`px-2 py-1 rounded-lg border text-sm font-semibold ${slotForm.daysOfWeek.includes(idx) ? "bg-purple-500 text-white" : "bg-slate-800 text-purple-200 border-white/20"}`}
+                            onClick={() => setSlotForm(f => ({ ...f, daysOfWeek: f.daysOfWeek.includes(idx) ? f.daysOfWeek.filter(d => d !== idx) : [...f.daysOfWeek, idx] }))}
+                          >
+                            {day}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-purple-200 mb-1 font-medium">Time</label>
+                      <select value={slotForm.time} onChange={e => setSlotForm(f => ({ ...f, time: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required>
+                        <option value="">Select time</option>
+                        {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-purple-200 mb-1 font-medium">Duration (min)</label>
+                      <select value={slotForm.duration} onChange={e => setSlotForm(f => ({ ...f, duration: Number(e.target.value) }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white">
+                        {[15, 30, 45, 60, 90].map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-purple-200 mb-1 font-medium">Max Students</label>
+                      <input type="number" min={1} max={20} value={slotForm.maxStudents} onChange={e => setSlotForm(f => ({ ...f, maxStudents: Number(e.target.value) }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
+                    </div>
+                    <button type="submit" disabled={slotLoading} className="md:col-span-5 mt-2 py-2 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition disabled:opacity-60">
+                      {slotLoading ? "Adding..." : "Add Session(s)"}
+                    </button>
+                  </form>
+                  {slotError && <div className="text-red-400 font-medium mt-2">{slotError}</div>}
+                  {slotSuccess && <div className="text-green-400 font-medium mt-2">{slotSuccess}</div>}
+                </div>
                 <div className="glass-effect p-6 rounded-2xl border border-white/20">
+                  <h3 className="text-xl font-bold text-white mb-4">Sessions</h3>
+                  {lessonSlots.length === 0 ? (
+                    <p className="text-purple-200">No sessions yet.</p>
+                  ) : (
+                    <>
+                      {selectedSessions.length > 0 && (
+                        <div className="mb-2 flex items-center gap-2">
+                          <button
+                            className="text-red-500 hover:text-red-700 text-2xl px-3 py-1 rounded-xl bg-white/10 border border-red-400 font-bold flex items-center gap-2"
+                            onClick={() => setBulkDeleteConfirm(true)}
+                            disabled={deleteLoading}
+                          >
+                            🗑️ Delete Selected ({selectedSessions.length})
+                          </button>
+                        </div>
+                      )}
+                      <ul className="space-y-2">
+                        {lessonSlots.map(slot => (
+                          <li key={slot.id} className={`flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group ${selectedSessions.includes(slot.id) ? 'ring-2 ring-red-400' : ''}`}>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedSessions.includes(slot.id)}
+                                onChange={e => setSelectedSessions(sel => e.target.checked ? [...sel, slot.id] : sel.filter(id => id !== slot.id))}
+                                className="accent-purple-500 w-5 h-5"
+                              />
+                              <span>{formatSession(slot)}</span>
+                            </div>
+                            <button
+                              className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors text-xl opacity-80 group-hover:opacity-100"
+                              title="Delete session"
+                              onClick={() => setSlotToDelete(slot.id)}
+                            >
+                              🗑️
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      {/* Bulk delete confirmation dialog */}
+                      {bulkDeleteConfirm && (
+                        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+                          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full text-center">
+                            <h4 className="text-xl font-bold mb-4 text-slate-900">Are you sure you want to delete {selectedSessions.length} session(s)?</h4>
+                            <div className="flex justify-center gap-4 mt-4">
+                              <button
+                                className="px-4 py-2 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-700 transition"
+                                onClick={handleBulkDelete}
+                                disabled={deleteLoading}
+                              >
+                                {deleteLoading ? "Deleting..." : "Yes, Delete"}
+                              </button>
+                              <button
+                                className="px-4 py-2 rounded-xl bg-slate-200 text-slate-900 font-semibold hover:bg-slate-300 transition"
+                                onClick={() => setBulkDeleteConfirm(false)}
+                                disabled={deleteLoading}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                            {deleteError && <div className="text-red-500 mt-2">{deleteError}</div>}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {/* Delete confirmation dialog */}
+                  {slotToDelete && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+                      <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full text-center">
+                        <h4 className="text-xl font-bold mb-4 text-slate-900">Are you sure you want to delete this session?</h4>
+                        <div className="flex justify-center gap-4 mt-4">
+                          <button
+                            className="px-4 py-2 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-700 transition"
+                            onClick={() => handleDeleteSlot(slotToDelete)}
+                            disabled={deleteLoading}
+                          >
+                            {deleteLoading ? "Deleting..." : "Yes, Delete"}
+                          </button>
+                          <button
+                            className="px-4 py-2 rounded-xl bg-slate-200 text-slate-900 font-semibold hover:bg-slate-300 transition"
+                            onClick={() => setSlotToDelete(null)}
+                            disabled={deleteLoading}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        {deleteError && <div className="text-red-500 mt-2">{deleteError}</div>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Calendar grid showing only sessions */}
+                <div className="glass-effect p-6 rounded-2xl border border-white/20 mt-8">
                   <div className="grid grid-cols-7 gap-2 text-center mb-4">
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
                       <div key={day} className="text-lg font-bold text-purple-300 p-2">
                         {day}
                       </div>
@@ -349,20 +619,28 @@ export default function TeacherDashReal() {
                       ))}
                     {calendarDates.map((date) => {
                       const dateStr = date.toISOString().split("T")[0];
-                      const isBlocked = blockedDates.includes(dateStr);
+                      // Only show sessions visually, no block logic
                       const isToday = dateStr === today.toISOString().split("T")[0];
+                      const isPast = date.getTime() < today.setHours(0,0,0,0);
+                      const sessionsOnDay = lessonSlots.filter(slot => slot.date === dateStr);
                       return (
-                        <button
+                        <div
                           key={dateStr}
-                          onClick={() => toggleBlockDate(dateStr)}
-                          className={`p-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-110 ${
-                            isBlocked
-                              ? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg"
-                              : "glass-effect text-white hover:bg-white/20 border border-white/20"
-                          } ${isToday ? "ring-2 ring-yellow-400 ring-offset-2 ring-offset-transparent" : ""}`}
+                          className={`p-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 relative min-h-[48px] flex flex-col items-center justify-start ${
+                            isToday ? "ring-2 ring-yellow-400 ring-offset-2 ring-offset-transparent" : ""
+                          } ${isPast ? "opacity-40" : ""}`}
                         >
-                          {date.getDate()}
-                        </button>
+                          <div className="text-white text-lg mb-1">{date.getDate()}</div>
+                          {sessionsOnDay.length > 0 && (
+                            <div className="flex flex-col gap-1 w-full">
+                              {sessionsOnDay.map(slot => (
+                                <div key={slot.id} className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white text-xs rounded px-1 py-0.5 shadow-md truncate" title={formatSession(slot)}>
+                                  {slot.time} ({slot.duration}m)
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
