@@ -7,9 +7,6 @@ import { doc, getDoc, collection, getDocs, query, where, DocumentData } from "fi
 import { useRouter } from "next/navigation";
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
-const timeSlots = [
-  "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"
-];
 
 const getTabIcon = (tab: string) => {
   switch (tab) {
@@ -52,7 +49,7 @@ export default function StudentDashReal() {
         const bookingSnap = await getDocs(query(collection(db, "bookings"), where("studentId", "==", firebaseUser.uid)));
         console.log("Bookings docs count:", bookingSnap.size);
         setBookings(bookingSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (e: any) {
+      } catch (e) {
         console.error("Dashboard Firestore error:", e);
         setError("Failed to load dashboard data.");
       }
@@ -166,7 +163,7 @@ export default function StudentDashReal() {
                     "Name": profile.firstName + ' ' + profile.lastName,
                     "Email": profile.email,
                     "Role": profile.role,
-                  }).map(([key, value], index) => (
+                  }).map(([key, value]) => (
                     <div key={key} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300 space-y-1 sm:space-y-0">
                       <span className="font-semibold text-gray-700 text-sm sm:text-base">{key}:</span>
                       <span className="text-gray-800 font-medium text-sm sm:text-base break-words">{value}</span>
@@ -215,7 +212,7 @@ export default function StudentDashReal() {
                 {homework.length === 0 ? (
                   <p className="text-gray-500">No homework assignments yet.</p>
                 ) : (
-                  homework.map((assignment, index) => (
+                  homework.map((assignment) => (
                     <div key={assignment.id} className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-orange-50 to-red-50 border-orange-500">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                         <div className="flex-1">
@@ -258,7 +255,7 @@ export default function StudentDashReal() {
               bookings
                 .filter(b => new Date(b.date + ' ' + b.time) > new Date())
                 .sort((a, b) => new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime())
-                .map((lesson, idx) => (
+                .map((lesson) => (
                   <div key={lesson.id} className="group bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-slideInUp mb-6">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                       <div className="flex items-center space-x-6">
