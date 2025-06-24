@@ -165,16 +165,32 @@ export default function StudentDashReal() {
                   </h3>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
-                  {profile && Object.entries({
-                    "Name": profile.firstName + ' ' + profile.lastName,
-                    "Email": profile.email,
-                    "Role": profile.role,
-                  }).map(([key, value]) => (
-                    <div key={key} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300 space-y-1 sm:space-y-0">
-                      <span className="font-semibold text-gray-700 text-sm sm:text-base">{key}:</span>
-                      <span className="text-gray-800 font-medium text-sm sm:text-base break-words">{value}</span>
-                    </div>
-                  ))}
+                  {profile && (() => {
+                    // Calculate age from DOB
+                    let age = '';
+                    if (profile.dob) {
+                      const dobDate = new Date(profile.dob);
+                      const today = new Date();
+                      let years = today.getFullYear() - dobDate.getFullYear();
+                      const m = today.getMonth() - dobDate.getMonth();
+                      if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+                        years--;
+                      }
+                      age = years > 0 ? `${years}` : '';
+                    }
+                    const info = {
+                      "Name": (profile.firstName + ' ' + profile.lastName).trim(),
+                      "Email": profile.email,
+                      "Date of Birth": profile.dob ? `${profile.dob}${age ? ` (Age: ${age})` : ''}` : '',
+                      "Skill Level": profile.skillLevel || '',
+                    };
+                    return Object.entries(info).map(([key, value]) => (
+                      <div key={key} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300 space-y-1 sm:space-y-0">
+                        <span className="font-semibold text-gray-700 text-sm sm:text-base">{key}:</span>
+                        <span className="text-gray-800 font-medium text-sm sm:text-base break-words">{value}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
               {/* Progress (if available) */}
@@ -242,8 +258,17 @@ export default function StudentDashReal() {
         {activeTab === "Book" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
             <h2 className="text-2xl font-bold mb-6 text-purple-700">Book Lessons</h2>
-            <p className="mb-4 text-gray-600">Your upcoming and available lesson slots will appear here soon.</p>
-            {/* Implement booking logic here using bookings and timeSlots */}
+            <p className="mb-4 text-gray-600">Select a date to view or book available lesson slots.</p>
+            {/* Simple Calendar UI */}
+            <div className="flex flex-col items-center">
+              <div className="w-full max-w-md">
+                <CalendarUI />
+              </div>
+              <div className="mt-6 text-gray-500 text-center">
+                {/* Placeholder for available slots */}
+                <p>No available slots for the selected date yet.</p>
+              </div>
+            </div>
           </div>
         )}
         {activeTab === "Buy" && (
@@ -309,6 +334,77 @@ export default function StudentDashReal() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+// Add CalendarUI component
+function CalendarUI() {
+  const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Get days in month
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const weeks: (number | null)[][] = [];
+  let week: (number | null)[] = Array(firstDay).fill(null);
+  for (let day = 1; day <= daysInMonth; day++) {
+    week.push(day);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
+    }
+  }
+  if (week.length) weeks.push([...week, ...Array(7 - week.length).fill(null)]);
+
+  const handlePrev = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+  const handleNext = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow border p-4">
+      <div className="flex items-center justify-between mb-2">
+        <button onClick={handlePrev} className="px-2 py-1 rounded hover:bg-gray-100">◀</button>
+        <span className="font-semibold text-lg">{new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+        <button onClick={handleNext} className="px-2 py-1 rounded hover:bg-gray-100">▶</button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-500 mb-1">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
+      </div>
+      {weeks.map((week, i) => (
+        <div key={i} className="grid grid-cols-7 gap-1 mb-1">
+          {week.map((day, j) => (
+            <button
+              key={j}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-150
+                ${day === null ? 'bg-transparent cursor-default' :
+                  (selectedDate === `${currentYear}-${currentMonth + 1}-${day}` ? 'bg-indigo-500 text-white' : 'hover:bg-indigo-100')}`}
+              disabled={day === null}
+              onClick={() => day && setSelectedDate(`${currentYear}-${currentMonth + 1}-${day}`)}
+            >
+              {day || ''}
+            </button>
+          ))}
+        </div>
+      ))}
+      {selectedDate && (
+        <div className="mt-2 text-indigo-700 text-sm text-center">Selected: {selectedDate}</div>
+      )}
     </div>
   );
 }

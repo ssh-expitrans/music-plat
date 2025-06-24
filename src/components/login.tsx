@@ -12,11 +12,11 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  
   // Sign up form fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState<'student' | 'teacher'>('student');
+  const [dob, setDob] = useState('');
+  const [skillLevel, setSkillLevel] = useState<'beginner' | 'intermediate' | 'advanced' | ''>('');
 
   const { signIn, signUp } = useAuth();
   const router = useRouter();
@@ -30,27 +30,14 @@ export default function Login() {
         await signUp(email, password, {
           firstName,
           lastName,
-          role,
+          dob,
+          skillLevel,
         });
-        // After sign up, redirect based on role
-        if (role === 'teacher') {
-          router.push('/demodashboard/teacherdash/real');
-        } else {
-          router.push('/demodashboard/studentdash/real');
-        }
+        router.push('/demodashboard/studentdash/real');
       } else {
         await signIn(email, password);
-        // After login, redirect based on role
-        // Fetch user profile to determine role
-        // (Assume signIn sets user in context, so we can check after)
-        // Wait a tick for context to update
         setTimeout(() => {
-          const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-          if (userProfile.role === 'teacher') {
-            router.push('/demodashboard/teacherdash/real');
-          } else {
-            router.push('/demodashboard/studentdash/real');
-          }
+          router.push('/demodashboard/studentdash/real');
         }, 500);
       }
     } catch (error) {
@@ -155,19 +142,34 @@ export default function Login() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Role
+                    Date of Birth
                   </label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as 'student' | 'teacher')}
+                  <input
+                    type="date"
+                    value={dob}
+                    onChange={(e) => setDob(e.target.value)}
                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                     disabled={isLoading}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Skill Level
+                  </label>
+                  <select
+                    value={skillLevel}
+                    onChange={(e) => setSkillLevel(e.target.value as 'beginner' | 'intermediate' | 'advanced' | '')}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    disabled={isLoading}
+                    required
                   >
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
+                    <option value="">Select skill level</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
                   </select>
                 </div>
               </>

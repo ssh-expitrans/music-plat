@@ -28,7 +28,7 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: Partial<UserProfile>) => Promise<void>;
+  signUp: (email: string, password: string, userData: Partial<UserProfile> & { dob?: string; skillLevel?: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -84,7 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // User profile will be loaded by the auth state listener
   };
 
-  const signUp = async (email: string, password: string, userData: Partial<UserProfile>) => {
+  const signUp = async (email: string, password: string, userData: Partial<UserProfile> & { dob?: string; skillLevel?: string }) => {
+    // Only allow student sign up
     const result = await createUserWithEmailAndPassword(auth, email, password);
 
     // Optionally set displayName in Firebase Auth
@@ -98,20 +99,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // Create user profile in Firestore
-    const userProfile: UserProfile = {
+    // Create user profile in Firestore (student only, with DOB and skillLevel)
+    const userProfile = {
       uid: result.user.uid,
       email: result.user.email!,
-      role: userData.role || 'student',
+      role: 'student',
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
+      dob: userData.dob || '',
+      skillLevel: userData.skillLevel || '',
       createdAt: new Date(),
-      ...(userData.teacherId && { teacherId: userData.teacherId })
     };
 
     try {
       await setDoc(doc(db, 'users', result.user.uid), userProfile);
-      setUserProfile(userProfile);
+      setUserProfile(userProfile as UserProfile);
     } catch (e) {
       console.error("Error writing user profile to Firestore:", e);
       throw e;
