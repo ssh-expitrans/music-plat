@@ -85,7 +85,7 @@ export default function TeacherDashReal() {
           query(collection(db, "notes"), where("teacherId", "==", firebaseUser.uid))
         );
         setNotes(notesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      } catch (e) {
+      } catch (_e) {
         setError("Failed to load dashboard data.");
       }
       setLoading(false);
@@ -114,6 +114,14 @@ export default function TeacherDashReal() {
   if (error) return <p className="text-red-500">{error}</p>;
   if (!user) return null;
 
+  // Move all useState hooks to the top-level, before any early returns
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [contactInfo, setContactInfo] = useState({
+    email: profile?.email || "",
+    phone: profile?.phone || "",
+    address: profile?.address || "",
+  });
+
   // Helper: sort students by name
   const sortedStudents = [...students].sort((a, b) => (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName));
 
@@ -128,19 +136,13 @@ export default function TeacherDashReal() {
   const month = today.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const calendarDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+
   function toggleBlockDate(dateStr: string) {
     setBlockedDates((prev) =>
       prev.includes(dateStr) ? prev.filter((d) => d !== dateStr) : [...prev, dateStr]
     );
   }
 
-  // Settings state
-  const [contactInfo, setContactInfo] = useState({
-    email: profile?.email || "",
-    phone: profile?.phone || "",
-    address: profile?.address || "",
-  });
   function handleContactChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setContactInfo((prev) => ({ ...prev, [name]: value }));

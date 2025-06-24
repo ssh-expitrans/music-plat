@@ -39,7 +39,7 @@ export default function StudentDashReal() {
       try {
         // Fetch user profile
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        let userData = userDoc.exists() ? userDoc.data() : null;
+        const userData = userDoc.exists() ? userDoc.data() : null;
         // Defensive: If firstName/lastName are missing but displayName exists, use it
         if (userData && (!userData.firstName || !userData.lastName) && firebaseUser.displayName) {
           const [first, ...rest] = firebaseUser.displayName.split(" ");
