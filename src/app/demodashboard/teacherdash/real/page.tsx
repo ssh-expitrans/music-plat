@@ -49,7 +49,6 @@ export default function TeacherDashReal() {
   const [profile, setProfile] = useState<DocumentData | null>(null);
   const [students, setStudents] = useState<DocumentData[]>([]);
   const [bookings, setBookings] = useState<DocumentData[]>([]);
-  const [homework, setHomework] = useState<DocumentData[]>([]);
   const [notes, setNotes] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,11 +83,6 @@ export default function TeacherDashReal() {
           query(collection(db, "bookings"), where("teacherId", "==", firebaseUser.uid))
         );
         setBookings(bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-        // Fetch homework assigned by this teacher
-        const homeworkSnap = await getDocs(
-          query(collection(db, "homework"), where("teacherId", "==", firebaseUser.uid))
-        );
-        setHomework(homeworkSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         // Fetch notes for this teacher
         const notesSnap = await getDocs(
           query(collection(db, "notes"), where("teacherId", "==", firebaseUser.uid))
@@ -291,7 +285,18 @@ export default function TeacherDashReal() {
             )}
             {/* Homework Tab */}
             {activeTab === "Homework" && (
-              <TeacherHomeworkTab students={sortedStudents} teacherId={user.uid} onAssign={() => setActiveTab("Students")}/>
+              <TeacherHomeworkTab
+                students={sortedStudents.map(s => ({
+                  id: s.id,
+                  firstName: s.firstName,
+                  lastName: s.lastName,
+                  dob: s.dob,
+                  skillLevel: s.skillLevel,
+                  progress: s.progress,
+                }))}
+                teacherId={user.uid}
+                onAssign={() => setActiveTab("Students")}
+              />
             )}
             {/* Notes Tab */}
             {activeTab === "Notes" && (
@@ -451,8 +456,18 @@ export default function TeacherDashReal() {
   );
 }
 
+// Define Student interface for type safety
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dob?: string;
+  skillLevel?: string;
+  progress?: number;
+}
+
 // Add TeacherHomeworkTab component at the bottom
-function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: any[]; teacherId: string; onAssign: () => void }) {
+function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Student[]; teacherId: string; onAssign: () => void }) {
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -481,8 +496,12 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: any[]
       setDueDate("");
       setSelectedStudent("");
       onAssign();
-    } catch (e: any) {
-      setError(e.message || "Failed to assign homework.");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("Failed to assign homework.");
+      }
     } finally {
       setLoading(false);
     }
