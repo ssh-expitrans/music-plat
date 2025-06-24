@@ -7,7 +7,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  updateProfile // <-- Add this import
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -85,7 +86,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, userData: Partial<UserProfile>) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    
+
+    // Optionally set displayName in Firebase Auth
+    if (userData.firstName || userData.lastName) {
+      try {
+        await updateProfile(result.user, {
+          displayName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+        });
+      } catch (e) {
+        console.error("Error updating Firebase displayName:", e);
+      }
+    }
+
     // Create user profile in Firestore
     const userProfile: UserProfile = {
       uid: result.user.uid,
@@ -97,8 +109,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...(userData.teacherId && { teacherId: userData.teacherId })
     };
 
-    await setDoc(doc(db, 'users', result.user.uid), userProfile);
-    setUserProfile(userProfile);
+    try {
+      await setDoc(doc(db, 'users', result.user.uid), userProfile);
+      setUserProfile(userProfile);
+    } catch (e) {
+      console.error("Error writing user profile to Firestore:", e);
+      throw e;
+    }
   };
 
   const logout = async () => {
