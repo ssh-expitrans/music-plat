@@ -359,9 +359,7 @@ export default function TeacherDashReal() {
               >
                 <span className="text-xl mr-2">{getTabIcon(tab)}</span>
                 {tab}
-                {activeTab === tab && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-yellow-400 rounded-full animate-pulse-gentle"></div>
-                )}
+                {/* Removed orange dot indicator for selected tab */}
               </button>
             ))}
           </div>
@@ -462,29 +460,17 @@ export default function TeacherDashReal() {
             {/* Notes Tab */}
             {activeTab === "Notes" && (
               <div className="space-y-6">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  📝 Student Notes
-                </h2>
-                {notes.length === 0 ? (
-                  <p className="text-purple-200">No notes yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {notes.map((note) => (
-                      <div key={note.id} className="glass-effect p-6 rounded-2xl border border-white/20">
-                        <div className="flex items-start gap-4">
-                          <div className="w-3 h-3 rounded-full mt-2 bg-yellow-500 shadow-lg"></div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-bold text-white mb-1">{note.studentName || "Student"}</h3>
-                            <p className="text-purple-200">{note.text || note.note}</p>
-                          </div>
-                          <button className="text-purple-300 hover:text-white transition-colors duration-200">
-                            ✏️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <TeacherNotesTab
+                  students={sortedStudents.map(s => ({
+                    id: s.id,
+                    firstName: s.firstName,
+                    lastName: s.lastName,
+                    dob: s.dob,
+                    skillLevel: s.skillLevel,
+                    progress: s.progress,
+                  }))}
+                  teacherId={user.uid}
+                />
               </div>
             )}
             {/* Calendar Tab */}
@@ -985,6 +971,154 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
                   </div>
                   <div className="text-white/90 text-base whitespace-pre-line">
                     {hw.description}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Add TeacherNotesTab component at the bottom
+function TeacherNotesTab({ students, teacherId }: { students: Student[]; teacherId: string }) {
+  const [selectedStudent, setSelectedStudent] = useState<string>("");
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+  const [notesList, setNotesList] = useState<any[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+
+  // Fetch all notes for this teacher
+  useEffect(() => {
+    let ignore = false;
+    async function fetchNotes() {
+      setListLoading(true);
+      try {
+        const q = query(collection(db, "notes"), where("teacherId", "==", teacherId));
+        const snap = await getDocs(q);
+        if (!ignore) {
+          setNotesList(
+            snap.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                text: data.text || data.note || '',
+                studentId: data.studentId || '',
+                teacherId: data.teacherId || '',
+                createdAt: data.createdAt ? data.createdAt.toDate?.() || new Date(data.createdAt) : null,
+              };
+            }).sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0))
+          );
+        }
+      } catch {
+        if (!ignore) setNotesList([]);
+      }
+      setListLoading(false);
+    }
+    fetchNotes();
+    return () => { ignore = true; };
+  }, [teacherId, success]);
+
+  const handleSendNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      await addDoc(collection(db, "notes"), {
+        text: note,
+        studentId: selectedStudent,
+        teacherId,
+        createdAt: Timestamp.now(),
+      });
+      setSuccess("Note sent!");
+      setNote("");
+      setSelectedStudent("");
+    } catch (e: unknown) {
+      if (e instanceof Error) setError(e.message);
+      else setError("Failed to send note.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  function getStudentName(id: string) {
+    const s = students.find(stu => stu.id === id);
+    return s ? `${s.firstName} ${s.lastName}` : "Unknown Student";
+  }
+
+  return (
+    <div className="space-y-10">
+      <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+        📝 Send Lesson Note
+      </h2>
+      <form onSubmit={handleSendNote} className="space-y-4 max-w-lg mx-auto glass-effect p-6 rounded-2xl border border-white/20">
+        <div>
+          <label className="block text-purple-200 mb-2 font-medium">Student</label>
+          <select
+            value={selectedStudent}
+            onChange={e => setSelectedStudent(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white text-slate-900 border border-white/20 focus:ring-2 focus:ring-purple-500"
+            required
+            style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+          >
+            <option value="" className="text-slate-500 bg-white">Select student</option>
+            {students.map(s => (
+              <option key={s.id} value={s.id} className="text-slate-900 bg-white">{s.firstName} {s.lastName}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-purple-200 mb-2 font-medium">Note</label>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
+            rows={3}
+            required
+            placeholder="Write your lesson note here..."
+          />
+        </div>
+        {error && <div className="text-red-400 font-medium">{error}</div>}
+        {success && <div className="text-green-400 font-medium">{success}</div>}
+        <button
+          type="submit"
+          className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition"
+          disabled={loading}
+        >
+          {loading ? "Sending..." : "Send Note"}
+        </button>
+      </form>
+      <div className="max-w-2xl mx-auto">
+        <h3 className="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+          <span>🗂️</span> Sent Notes
+        </h3>
+        {listLoading ? (
+          <div className="text-purple-200">Loading notes...</div>
+        ) : notesList.length === 0 ? (
+          <div className="text-purple-200">No notes sent yet.</div>
+        ) : (
+          <div className="space-y-4">
+            {notesList.map(n => (
+              <div key={n.id} className="glass-effect rounded-2xl p-5 border border-white/20 shadow-lg flex flex-col gap-2">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-lg text-white font-bold">
+                      {getStudentName(n.studentId).split(" ").map(nm => nm[0]).join("")}
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-white">{getStudentName(n.studentId)}</div>
+                      <div className="text-purple-200 text-xs">{n.createdAt ? n.createdAt.toLocaleString() : ""}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <div className="text-white/90 text-base whitespace-pre-line">
+                    {n.text}
                   </div>
                 </div>
               </div>
