@@ -14,7 +14,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { addDoc, deleteDoc } from "firebase/firestore";
+import { addDoc, deleteDoc, updateDoc } from "firebase/firestore";
 
 const tabs = [
   "Students",
@@ -205,18 +205,25 @@ export default function TeacherDashReal() {
     setSlotSuccess("");
     try {
       const { startDate, endDate, time, duration, daysOfWeek, maxStudents } = slotForm;
-      if (!startDate || !endDate || !time || daysOfWeek.length === 0) {
+      if (!startDate || !time || daysOfWeek.length === 0) {
         setSlotError("Please fill all fields and select at least one day.");
         setSlotLoading(false);
         return;
       }
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const slotsToAdd = [];
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        if (daysOfWeek.includes(d.getDay())) {
+      let slotsToAdd = [];
+      // If endDate is empty, treat as single-slot creation
+      if (!endDate) {
+        const singleDate = parseLocalDate(startDate);
+        if (daysOfWeek.includes(singleDate.getDay())) {
+          // Check for overlap
+          const overlap = lessonSlots.some(slot => slot.date === startDate && slot.time === time);
+          if (overlap) {
+            setSlotError(`Overlap detected: You already have a slot on ${singleDate.toLocaleDateString()} at ${time}.`);
+            setSlotLoading(false);
+            return;
+          }
           slotsToAdd.push({
-            date: d.toISOString().split("T")[0],
+            date: startDate, // keep as YYYY-MM-DD
             time,
             duration,
             maxStudents,
@@ -224,7 +231,41 @@ export default function TeacherDashReal() {
             bookedStudentIds: [],
             createdAt: Timestamp.now(),
           });
+        } else {
+          setSlotError("Selected weekday does not match the chosen date.");
+          setSlotLoading(false);
+          return;
         }
+      } else {
+        // Bulk creation between start and end date
+        const start = parseLocalDate(startDate);
+        const end = parseLocalDate(endDate);
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const dayCopy = new Date(d);
+          if (daysOfWeek.includes(dayCopy.getDay())) {
+            const dateStr = dayCopy.toISOString().split("T")[0];
+            const overlap = lessonSlots.some(slot => slot.date === dateStr && slot.time === time);
+            if (overlap) {
+              setSlotError(`Overlap detected: You already have a slot on ${dayCopy.toLocaleDateString()} at ${time}.`);
+              setSlotLoading(false);
+              return;
+            }
+            slotsToAdd.push({
+              date: dateStr,
+              time,
+              duration,
+              maxStudents,
+              teacherId: user.uid,
+              bookedStudentIds: [],
+              createdAt: Timestamp.now(),
+            });
+          }
+        }
+      }
+      if (slotsToAdd.length === 0) {
+        setSlotError("No valid slots to add (possible overlap or no days selected).");
+        setSlotLoading(false);
+        return;
       }
       // Add all slots in parallel
       await Promise.all(slotsToAdd.map(slot => addDoc(collection(db, "lessonSlots"), slot)));
@@ -273,7 +314,10 @@ export default function TeacherDashReal() {
 
   // Helper: format session display
   function formatSession(slot: any) {
-    const dateObj = new Date(slot.date + 'T' + slot.time);
+    const dateObj = parseLocalDate(slot.date);
+    // Use local date for day/month
+    const [hour, minute] = slot.time.split(":");
+    dateObj.setHours(Number(hour), Number(minute));
     const day = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
     const month = dateObj.toLocaleDateString(undefined, { month: 'short' });
     const dayNum = dateObj.getDate();
@@ -390,41 +434,30 @@ export default function TeacherDashReal() {
             {activeTab === "Upcoming" && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  ⏰ Upcoming Lessons
+                  ⏰ Upcoming Lessons (Week View)
                 </h2>
-                {upcomingLessons.length === 0 ? (
-                  <p className="text-purple-200">No upcoming lessons scheduled.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {upcomingLessons.map((lesson) => (
-                      <div key={lesson.id} className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 rounded-2xl text-white shadow-xl">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-xl font-bold">{lesson.studentName || "Student"}</h3>
-                            <p className="text-white/80">{lesson.date} at {lesson.time}</p>
-                          </div>
-                          <div className="text-3xl animate-pulse-gentle">🎵</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <WeekViewCalendar
+                  lessonSlots={lessonSlots}
+                  students={students}
+                />
               </div>
             )}
             {/* Homework Tab */}
             {activeTab === "Homework" && (
-              <TeacherHomeworkTab
-                students={sortedStudents.map(s => ({
-                  id: s.id,
-                  firstName: s.firstName,
-                  lastName: s.lastName,
-                  dob: s.dob,
-                  skillLevel: s.skillLevel,
-                  progress: s.progress,
-                }))}
-                teacherId={user.uid}
-                onAssign={() => setActiveTab("Students")}
-              />
+              <div className="space-y-6">
+                <TeacherHomeworkTab
+                  students={sortedStudents.map(s => ({
+                    id: s.id,
+                    firstName: s.firstName,
+                    lastName: s.lastName,
+                    dob: s.dob,
+                    skillLevel: s.skillLevel,
+                    progress: s.progress,
+                  }))}
+                  teacherId={user.uid}
+                  onAssign={() => setActiveTab("Students")}
+                />
+              </div>
             )}
             {/* Notes Tab */}
             {activeTab === "Notes" && (
@@ -458,7 +491,7 @@ export default function TeacherDashReal() {
             {activeTab === "Calendar" && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  📅 Session Calendar
+                  📅 Session Calendar
                 </h2>
                 <div className="glass-effect p-6 rounded-2xl border border-white/20 mb-8">
                   <h3 className="text-xl font-bold text-white mb-4">Add Session(s)</h3>
@@ -468,8 +501,8 @@ export default function TeacherDashReal() {
                       <input type="date" value={slotForm.startDate} min={today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, startDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
                     </div>
                     <div>
-                      <label className="block text-purple-200 mb-1 font-medium">End Date</label>
-                      <input type="date" value={slotForm.endDate} min={slotForm.startDate || today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, endDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
+                      <label className="block text-purple-200 mb-1 font-medium">End Date <span className="text-purple-300 text-xs">(optional for single slot)</span></label>
+                      <input type="date" value={slotForm.endDate} min={slotForm.startDate || today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, endDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" />
                     </div>
                     <div>
                       <label className="block text-purple-200 mb-1 font-medium">Days of Week</label>
@@ -619,9 +652,10 @@ export default function TeacherDashReal() {
                       ))}
                     {calendarDates.map((date) => {
                       const dateStr = date.toISOString().split("T")[0];
+                      const localDate = parseLocalDate(dateStr);
                       // Only show sessions visually, no block logic
                       const isToday = dateStr === today.toISOString().split("T")[0];
-                      const isPast = date.getTime() < today.setHours(0,0,0,0);
+                      const isPast = localDate.getTime() < today.setHours(0,0,0,0);
                       const sessionsOnDay = lessonSlots.filter(slot => slot.date === dateStr);
                       return (
                         <div
@@ -630,7 +664,7 @@ export default function TeacherDashReal() {
                             isToday ? "ring-2 ring-yellow-400 ring-offset-2 ring-offset-transparent" : ""
                           } ${isPast ? "opacity-40" : ""}`}
                         >
-                          <div className="text-white text-lg mb-1">{date.getDate()}</div>
+                          <div className="text-white text-lg mb-1">{localDate.getDate()}</div>
                           {sessionsOnDay.length > 0 && (
                             <div className="flex flex-col gap-1 w-full">
                               {sessionsOnDay.map(slot => (
@@ -744,6 +778,18 @@ interface Student {
   progress?: number;
 }
 
+// Define Homework interface for type safety
+interface Homework {
+  id: string;
+  title: string;
+  description: string;
+  assignedDate: string;
+  dueDate: string;
+  studentId: string;
+  teacherId: string;
+  done: boolean;
+}
+
 // Add TeacherHomeworkTab component at the bottom
 function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Student[]; teacherId: string; onAssign: () => void }) {
   const [selectedStudent, setSelectedStudent] = useState<string>("");
@@ -753,6 +799,50 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [homeworkList, setHomeworkList] = useState<Homework[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+
+  // Fetch all homework assigned by this teacher
+  useEffect(() => {
+    let ignore = false;
+    async function fetchHomework() {
+      setListLoading(true);
+      try {
+        const q = query(collection(db, "homework"), where("teacherId", "==", teacherId));
+        const snap = await getDocs(q);
+        if (!ignore) {
+          setHomeworkList(
+            snap.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                title: data.title || '',
+                description: data.description || '',
+                assignedDate: data.assignedDate || '',
+                dueDate: data.dueDate || '',
+                studentId: data.studentId || '',
+                teacherId: data.teacherId || '',
+                done: typeof data.done === 'boolean' ? data.done : false,
+              };
+            }).sort((a, b) => (b.assignedDate || '').localeCompare(a.assignedDate || ''))
+          );
+        }
+      } catch {
+        if (!ignore) setHomeworkList([]);
+      }
+      setListLoading(false);
+    }
+    fetchHomework();
+    return () => { ignore = true; };
+  }, [teacherId, success]);
+
+  // Mark homework as done/undone
+  async function toggleDone(hwId: string, current: boolean) {
+    try {
+      await updateDoc(doc(db, "homework", hwId), { done: !current });
+      setHomeworkList(list => list.map(hw => hw.id === hwId ? { ...hw, done: !current } : hw));
+    } catch {}
+  }
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -767,6 +857,7 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
         dueDate,
         studentId: selectedStudent,
         teacherId,
+        done: false,
       });
       setSuccess("Homework assigned!");
       setTitle("");
@@ -785,23 +876,30 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
     }
   };
 
+  // Helper to get student name by id
+  function getStudentName(id: string) {
+    const s = students.find(stu => stu.id === id);
+    return s ? `${s.firstName} ${s.lastName}` : "Unknown Student";
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
         📚 Assign Homework
       </h2>
-      <form onSubmit={handleAssign} className="space-y-4 max-w-lg mx-auto">
+      <form onSubmit={handleAssign} className="space-y-4 max-w-lg mx-auto glass-effect p-6 rounded-2xl border border-white/20">
         <div>
           <label className="block text-purple-200 mb-2 font-medium">Student</label>
           <select
             value={selectedStudent}
             onChange={e => setSelectedStudent(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
+            className="w-full p-3 rounded-xl bg-white text-slate-900 border border-white/20 focus:ring-2 focus:ring-purple-500"
             required
+            style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
           >
-            <option value="">Select student</option>
+            <option value="" className="text-slate-500 bg-white">Select student</option>
             {students.map(s => (
-              <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>
+              <option key={s.id} value={s.id} className="text-slate-900 bg-white">{s.firstName} {s.lastName}</option>
             ))}
           </select>
         </div>
@@ -845,6 +943,135 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
           {loading ? "Assigning..." : "Assign Homework"}
         </button>
       </form>
+      <div className="max-w-2xl mx-auto">
+        <h3 className="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+          <span>🗂️</span> Assigned Homework
+        </h3>
+        {listLoading ? (
+          <div className="text-purple-200">Loading homework...</div>
+        ) : homeworkList.length === 0 ? (
+          <div className="text-purple-200">No homework assigned yet.</div>
+        ) : (
+          <div className="space-y-4">
+            {homeworkList.map(hw => (
+              <div key={hw.id} className="glass-effect rounded-2xl p-5 border border-white/20 shadow-lg flex flex-col gap-2">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-lg text-white font-bold">
+                      {getStudentName(hw.studentId).split(" ").map(n => n[0]).join("")}
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-white">{getStudentName(hw.studentId)}</div>
+                      <div className="text-purple-200 text-xs">Assigned: {hw.assignedDate}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 md:mt-0">
+                    <span className="text-xs font-semibold px-2 py-1 rounded bg-gradient-to-r from-yellow-400 to-orange-400 text-slate-900">
+                      Due: {hw.dueDate}
+                    </span>
+                    <button
+                      className={`ml-2 px-3 py-1 rounded-xl text-xs font-bold transition-colors duration-200 ${hw.done ? 'bg-green-500 text-white' : 'bg-slate-700 text-white'}`}
+                      onClick={() => toggleDone(hw.id, hw.done)}
+                      type="button"
+                      title={hw.done ? 'Mark as not done' : 'Mark as done'}
+                    >
+                      {hw.done ? 'Done' : 'Not Done'}
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <div className="text-xl font-bold text-gradient bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent mb-1">
+                    {hw.title}
+                  </div>
+                  <div className="text-white/90 text-base whitespace-pre-line">
+                    {hw.description}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
+}
+
+function WeekViewCalendar({ lessonSlots, students }: { lessonSlots: any[]; students: any[] }) {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay() + weekOffset * 7);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    return d;
+  });
+  // Group slots by date
+  const slotsByDate: { [date: string]: any[] } = {};
+  lessonSlots.forEach(slot => {
+    // Always use slot.date as key (YYYY-MM-DD)
+    if (!slotsByDate[slot.date]) slotsByDate[slot.date] = [];
+    slotsByDate[slot.date].push(slot);
+  });
+  // Helper to get student names for a slot
+  function getStudentNames(slot: any) {
+    if (!slot.bookedStudentIds || slot.bookedStudentIds.length === 0) return 'None';
+    return slot.bookedStudentIds.map((id: string) => {
+      const s = students.find((stu: any) => stu.id === id);
+      return s ? `${s.firstName} ${s.lastName}` : 'Unknown';
+    }).join(', ');
+  }
+  return (
+    <div className="">
+      <div className="flex justify-between items-center mb-4">
+        <button
+          className="px-3 py-1 rounded-xl bg-slate-700 text-white font-bold hover:bg-slate-600"
+          onClick={() => setWeekOffset(w => w - 1)}
+        >
+          ← Previous
+        </button>
+        <div className="text-xl font-bold text-white">
+          {days[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {days[6].toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+        </div>
+        <button
+          className="px-3 py-1 rounded-xl bg-slate-700 text-white font-bold hover:bg-slate-600"
+          onClick={() => setWeekOffset(w => w + 1)}
+        >
+          Next →
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-4">
+        {days.map(day => {
+          const dateStr = day.toISOString().split('T')[0];
+          const slots = slotsByDate[dateStr] || [];
+          return (
+            <div key={dateStr} className="bg-white/10 rounded-2xl p-2 min-h-[120px] flex flex-col">
+              <div className="text-center text-purple-200 font-bold mb-2">
+                {day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+              </div>
+              {slots.length === 0 ? (
+                <div className="text-purple-300 text-xs text-center">No sessions</div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {slots.sort((a, b) => a.time.localeCompare(b.time)).map(slot => (
+                    <div key={slot.id} className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-2 text-white shadow-md">
+                      <div className="font-bold text-sm">{slot.time} ({slot.duration} min)</div>
+                      <div className="text-xs">Max: {slot.maxStudents} | Booked: {slot.bookedStudentIds?.length || 0}</div>
+                      <div className="text-xs">Students: {getStudentNames(slot)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Helper to parse date string as local date (not UTC)
+function parseLocalDate(dateStr: string) {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
