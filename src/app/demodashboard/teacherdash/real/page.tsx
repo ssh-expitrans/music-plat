@@ -85,7 +85,7 @@ export default function TeacherDashReal() {
           query(collection(db, "notes"), where("teacherId", "==", firebaseUser.uid))
         );
         setNotes(notesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      } catch (_e) {
+      } catch {
         setError("Failed to load dashboard data.");
       }
       setLoading(false);
