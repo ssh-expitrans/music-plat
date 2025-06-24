@@ -54,10 +54,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
           setUserProfile({ uid: user.uid, ...userDoc.data() } as UserProfile);
+          // If user is on login/signup page, redirect to dashboard
+          if (typeof window !== 'undefined' && (window.location.pathname === '/login' || window.location.pathname === '/signup')) {
+            window.location.href = '/demodashboard/studentdash/real';
+          }
         }
       } else {
         setUser(null);
         setUserProfile(null);
+        // If not logged in and on a protected page, redirect to login
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/demodashboard/studentdash/real')) {
+          window.location.href = '/login';
+        }
       }
       setLoading(false);
     });
@@ -68,7 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password);
     console.log('Signed in user:', result.user);
-
+    // Redirect immediately after successful login
+    if (typeof window !== 'undefined') {
+      window.location.href = '/demodashboard/studentdash/real';
+    }
     // User profile will be loaded by the auth state listener
   };
 
