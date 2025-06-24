@@ -13,6 +13,7 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { addDoc } from "firebase/firestore";
 
 const tabs = [
   "Students",
@@ -219,7 +220,15 @@ export default function TeacherDashReal() {
                           <div className="flex-1">
                             <h3 className="text-xl font-bold text-white mb-1">{student.firstName} {student.lastName}</h3>
                             <p className="text-purple-200 text-sm mb-3">
-                              🎯 {student.level || "-"} | 🎂 {student.ageRange || "-"} years
+                              🎯 {student.skillLevel || "-"} | 🎂 {(() => {
+                                if (!student.dob) return "-";
+                                const dobDate = new Date(student.dob);
+                                const today = new Date();
+                                let years = today.getFullYear() - dobDate.getFullYear();
+                                const m = today.getMonth() - dobDate.getMonth();
+                                if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) years--;
+                                return years > 0 ? years : "-";
+                              })()} years
                             </p>
                             <div className="mb-4">
                               <div className="flex justify-between text-sm text-purple-200 mb-1">
@@ -234,11 +243,17 @@ export default function TeacherDashReal() {
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-lg">
-                                📚 Homework
+                              <button
+                                className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-lg"
+                                onClick={() => setActiveTab("Homework")}
+                              >
+                                📚 Assign Homework
                               </button>
-                              <button className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-lg">
-                                📝 Note
+                              <button
+                                className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-lg"
+                                onClick={() => setActiveTab("Notes")}
+                              >
+                                📝 Add Note
                               </button>
                             </div>
                           </div>
@@ -276,31 +291,7 @@ export default function TeacherDashReal() {
             )}
             {/* Homework Tab */}
             {activeTab === "Homework" && (
-              <div className="space-y-6">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  📚 Homework Assignments
-                </h2>
-                {homework.length === 0 ? (
-                  <p className="text-purple-200">No homework assigned yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {homework.map((hw) => (
-                      <div key={hw.id} className="glass-effect p-6 rounded-2xl border border-white/20">
-                        <div className="flex items-center gap-4">
-                          <div className="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 shadow-lg"></div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-bold text-white">{hw.studentName || "Student"}</h3>
-                            <p className="text-purple-200">{hw.title || hw.description}</p>
-                          </div>
-                          <div className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg">
-                            {hw.status || "Pending"}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <TeacherHomeworkTab students={sortedStudents} teacherId={user.uid} onAssign={() => setActiveTab("Students")}/>
             )}
             {/* Notes Tab */}
             {activeTab === "Notes" && (
@@ -456,6 +447,107 @@ export default function TeacherDashReal() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Add TeacherHomeworkTab component at the bottom
+function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: any[]; teacherId: string; onAssign: () => void }) {
+  const [selectedStudent, setSelectedStudent] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+
+  const handleAssign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      await addDoc(collection(db, "homework"), {
+        title,
+        description,
+        assignedDate: new Date().toISOString().split("T")[0],
+        dueDate,
+        studentId: selectedStudent,
+        teacherId,
+      });
+      setSuccess("Homework assigned!");
+      setTitle("");
+      setDescription("");
+      setDueDate("");
+      setSelectedStudent("");
+      onAssign();
+    } catch (e: any) {
+      setError(e.message || "Failed to assign homework.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+        📚 Assign Homework
+      </h2>
+      <form onSubmit={handleAssign} className="space-y-4 max-w-lg mx-auto">
+        <div>
+          <label className="block text-purple-200 mb-2 font-medium">Student</label>
+          <select
+            value={selectedStudent}
+            onChange={e => setSelectedStudent(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
+            required
+          >
+            <option value="">Select student</option>
+            {students.map(s => (
+              <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-purple-200 mb-2 font-medium">Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-purple-200 mb-2 font-medium">Description</label>
+          <textarea
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
+            rows={3}
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-purple-200 mb-2 font-medium">Due Date</label>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={e => setDueDate(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
+            required
+          />
+        </div>
+        {error && <div className="text-red-400 font-medium">{error}</div>}
+        {success && <div className="text-green-400 font-medium">{success}</div>}
+        <button
+          type="submit"
+          className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition"
+          disabled={loading}
+        >
+          {loading ? "Assigning..." : "Assign Homework"}
+        </button>
+      </form>
     </div>
   );
 }

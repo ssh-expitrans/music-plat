@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-//import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"];
 
@@ -106,6 +106,7 @@ function getCurrentWeekSunday() {
 
 // SINGLE MERGED COMPONENT - Remove the duplicate!
 export default function DemoDashboard() {
+  const router = useRouter();
   // All state in one place
   const [activeTab, setActiveTab] = useState("Home");
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
@@ -1570,7 +1571,7 @@ const toggleHomeworkCompletion = (assignmentId: number) => {
         <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
           <button
             className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all"
-            onClick={() => window.open('/signup', '_blank')}
+            onClick={() => router.push('/login?mode=signup')}
           >
             Create an Account
           </button>
