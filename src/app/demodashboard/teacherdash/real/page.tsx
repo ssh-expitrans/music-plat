@@ -54,6 +54,14 @@ export default function TeacherDashReal() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // Move all useState hooks to the top-level, before any early returns
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [contactInfo, setContactInfo] = useState({
+    email: "",
+    phone: "",
+    address: "",
+  });
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
@@ -93,6 +101,16 @@ export default function TeacherDashReal() {
     return () => unsubscribe();
   }, [router]);
 
+  useEffect(() => {
+    if (profile) {
+      setContactInfo({
+        email: profile.email || "",
+        phone: profile.phone || "",
+        address: profile.address || "",
+      });
+    }
+  }, [profile]);
+
   if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -113,14 +131,6 @@ export default function TeacherDashReal() {
     );
   if (error) return <p className="text-red-500">{error}</p>;
   if (!user) return null;
-
-  // Move all useState hooks to the top-level, before any early returns
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
-  const [contactInfo, setContactInfo] = useState({
-    email: profile?.email || "",
-    phone: profile?.phone || "",
-    address: profile?.address || "",
-  });
 
   // Helper: sort students by name
   const sortedStudents = [...students].sort((a, b) => (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName));
