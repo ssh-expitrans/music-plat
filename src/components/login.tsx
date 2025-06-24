@@ -17,7 +17,6 @@ export default function Login() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState<'student' | 'teacher'>('student');
-  const [teacherId, setTeacherId] = useState('');
 
   const { signIn, signUp } = useAuth();
   const router = useRouter();
@@ -26,27 +25,43 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-try {
-  if (isSignUp) {
-    await signUp(email, password, {
-      firstName,
-      lastName,
-      role,
-      ...(role === 'student' && teacherId && { teacherId }),
-    });
-  } else {
-    await signIn(email, password);
-  }
-} catch (error) {
-  if (error instanceof Error) {
-    setError(error.message);
-  } else {
-    setError('An unexpected error occurred.');
-  }
-} finally {
-  setIsLoading(false);
-}
-
+    try {
+      if (isSignUp) {
+        await signUp(email, password, {
+          firstName,
+          lastName,
+          role,
+        });
+        // After sign up, redirect based on role
+        if (role === 'teacher') {
+          router.push('/demodashboard/teacherdash/real');
+        } else {
+          router.push('/demodashboard/studentdash/real');
+        }
+      } else {
+        await signIn(email, password);
+        // After login, redirect based on role
+        // Fetch user profile to determine role
+        // (Assume signIn sets user in context, so we can check after)
+        // Wait a tick for context to update
+        setTimeout(() => {
+          const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+          if (userProfile.role === 'teacher') {
+            router.push('/demodashboard/teacherdash/real');
+          } else {
+            router.push('/demodashboard/studentdash/real');
+          }
+        }, 500);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unexpected error occurred.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Demo login buttons
@@ -155,22 +170,6 @@ try {
                     <option value="teacher">Teacher</option>
                   </select>
                 </div>
-
-                {role === 'student' && (
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
-                      Teacher ID (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={teacherId}
-                      onChange={(e) => setTeacherId(e.target.value)}
-                      placeholder="Enter your teacher's ID"
-                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                      disabled={isLoading}
-                    />
-                  </div>
-                )}
               </>
             )}
 

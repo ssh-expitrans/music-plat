@@ -39,8 +39,14 @@ export default function StudentDashReal() {
       try {
         // Fetch user profile
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        console.log("User profile doc:", userDoc.exists(), userDoc.data());
-        setProfile(userDoc.exists() ? userDoc.data() : null);
+        let userData = userDoc.exists() ? userDoc.data() : null;
+        // Defensive: If firstName/lastName are missing but displayName exists, use it
+        if (userData && (!userData.firstName || !userData.lastName) && firebaseUser.displayName) {
+          const [first, ...rest] = firebaseUser.displayName.split(" ");
+          userData.firstName = userData.firstName || first;
+          userData.lastName = userData.lastName || rest.join(" ");
+        }
+        setProfile(userData);
         // Fetch homework assignments
         const hwSnap = await getDocs(query(collection(db, "homework"), where("studentId", "==", firebaseUser.uid)));
         console.log("Homework docs count:", hwSnap.size);
@@ -133,7 +139,7 @@ export default function StudentDashReal() {
             <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-2xl text-white overflow-hidden">
               <div className="relative z-10">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 animate-slideInLeft leading-tight">
-                  Welcome Back, {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : user.email}! 🎉
+                  Welcome Back, {profile && (profile.firstName || profile.lastName) ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() : user.email}! 🎉
                 </h2>
                 {nextLesson && (
                   <div className="animate-slideInLeft animation-delay-200">
