@@ -22,8 +22,6 @@ interface LessonSlot {
   id?: string;
   date: string;
   time: string;
-  duration: number;
-  maxStudents: number;
   teacherId: string;
   bookedStudentIds: string[];
   createdAt: Timestamp;
@@ -100,9 +98,7 @@ export default function TeacherDashReal() {
     startDate: "",
     endDate: "",
     time: "",
-    duration: 30,
     daysOfWeek: [] as number[],
-    maxStudents: 1, // Default to 1
   });
   const [contactInfo, setContactInfo] = useState({
     email: "",
@@ -120,24 +116,16 @@ export default function TeacherDashReal() {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [deleteError, setDeleteError] = useState(""); // For student deletion errors
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  // --- Add state for selected session ---
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const slotSuccessTimeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
-  // Add state and sorting logic for session list (Calendar tab)
+  // Add state and sorting logic for available times list (Calendar tab)
   const [sessionSort, setSessionSort] = useState("date");
   const sortedSessions = [...lessonSlots].sort((a: LessonSlot, b: LessonSlot) => {
     if (sessionSort === "date") {
       return (a.date + ' ' + a.time).localeCompare(b.date + ' ' + b.time);
-    } else if (sessionSort === "level") {
-      const aStudent = students.find((s: Student) => s.id === (a.bookedStudentIds?.[0] || ""));
-      const bStudent = students.find((s: Student) => s.id === (b.bookedStudentIds?.[0] || ""));
-      return (aStudent?.skillLevel || "").localeCompare(bStudent?.skillLevel || "");
-    } else if (sessionSort === "name") {
-      const aStudent = students.find((s: Student) => s.id === (a.bookedStudentIds?.[0] || ""));
-      const bStudent = students.find((s: Student) => s.id === (b.bookedStudentIds?.[0] || ""));
-      return ((aStudent?.firstName || "") + (aStudent?.lastName || "")).localeCompare((bStudent?.firstName || "") + (bStudent?.lastName || ""));
-    } else if (sessionSort === "length") {
-      return a.duration - b.duration;
     }
     return 0;
   });
@@ -260,17 +248,16 @@ setLessonSlots(
     }
   }
 
-  // Helper: format session display
-  function formatSession(slot: LessonSlot) {
+  // Helper: format availability display
+  function formatAvailability(slot: LessonSlot) {
     const dateObj = parseLocalDate(slot.date);
-    // Use local date for day/month
     const [hour, minute] = slot.time.split(":");
     dateObj.setHours(Number(hour), Number(minute));
     const day = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
     const month = dateObj.toLocaleDateString(undefined, { month: 'short' });
     const dayNum = dateObj.getDate();
     const time = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-    return `${day}, ${month} ${dayNum}, ${time} (${slot.duration} min) • Max: ${slot.maxStudents} • Booked: ${slot.bookedStudentIds?.length || 0}`;
+    return `${day}, ${month} ${dayNum}, ${time}`;
   }
 
   // Helper to get student info for a slot
@@ -302,9 +289,8 @@ setLessonSlots(
     setContactInfo((prev) => ({ ...prev, [name]: value }));
   }
 
-  // Bulk slot creation handler
+  // --- Bulk slot creation handler (simplified for individual classes, no duration/max students) ---
   async function handleAddSlot(e: React.FormEvent) {
-    const slotsToAdd: LessonSlot[] = [];
     e.preventDefault();
     if (!user) {
       setSlotError("You must be logged in as a teacher to add a slot.");
@@ -314,17 +300,17 @@ setLessonSlots(
     setSlotError("");
     setSlotSuccess("");
     try {
-      const { startDate, endDate, time, duration, daysOfWeek, maxStudents } = slotForm;
+      const { startDate, endDate, time, daysOfWeek } = slotForm;
       if (!startDate || !time || daysOfWeek.length === 0) {
         setSlotError("Please fill all fields and select at least one day.");
         setSlotLoading(false);
         return;
       }
+      const slotsToAdd: LessonSlot[] = [];
       // If endDate is empty, treat as single-slot creation
       if (!endDate) {
         const singleDate = parseLocalDate(startDate);
         if (daysOfWeek.includes(singleDate.getDay())) {
-          // Check for overlap
           const overlap = lessonSlots.some(slot => slot.date === startDate && slot.time === time);
           if (overlap) {
             setSlotError(`Overlap detected: You already have a slot on ${singleDate.toLocaleDateString()} at ${time}.`);
@@ -332,14 +318,12 @@ setLessonSlots(
             return;
           }
           slotsToAdd.push({
-            date: startDate, // keep as YYYY-MM-DD
+            date: startDate,
             time,
-            duration,
-            maxStudents,
             teacherId: user.uid,
             bookedStudentIds: [],
             createdAt: Timestamp.now(),
-          });
+          } as LessonSlot);
         } else {
           setSlotError("Selected weekday does not match the chosen date.");
           setSlotLoading(false);
@@ -362,12 +346,10 @@ setLessonSlots(
             slotsToAdd.push({
               date: dateStr,
               time,
-              duration,
-              maxStudents,
               teacherId: user.uid,
               bookedStudentIds: [],
               createdAt: Timestamp.now(),
-            });
+            } as LessonSlot);
           }
         }
       }
@@ -376,11 +358,11 @@ setLessonSlots(
         setSlotLoading(false);
         return;
       }
-      // Add all slots in parallel
+      // Add all slots in parallel (no student profile update)
       await Promise.all(slotsToAdd.map(slot => addDoc(collection(db, "lessonSlots"), slot)));
       setSlotSuccess(`${slotsToAdd.length} slot(s) added!`);
-      setSlotForm({ startDate: "", endDate: "", time: "", duration: 30, daysOfWeek: [], maxStudents: 1 });
-      // Optionally, refresh slots list
+      setSlotForm({ startDate: "", endDate: "", time: "", daysOfWeek: [] });
+      // Refresh slots list
       const slotsSnap = await getDocs(
         query(collection(db, "lessonSlots"), where("teacherId", "==", user.uid))
       );
@@ -623,7 +605,7 @@ setLessonSlots(
             {activeTab === "Upcoming" && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  ⏰ Upcoming Lessons (Week View)
+                  ⏰ Upcoming Lessons
                 </h2>
                 {/* Removed WeekViewCalendar component as it's no longer used */}
               </div>
@@ -668,18 +650,18 @@ setLessonSlots(
             {activeTab === "Calendar" && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  ️📅 Session List
+                  ️📅 Available Times
                 </h2>
-                {/* Add Session(s) Form */}
+                {/* Add Availability Form */}
                 <div className="glass-effect p-6 rounded-2xl border border-white/20 mb-8">
-                  <h3 className="text-xl font-bold text-white mb-4">Add Session(s)</h3>
+                  <h3 className="text-xl font-bold text-white mb-4">Add Availability</h3>
                   <form onSubmit={handleAddSlot} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     <div>
                       <label className="block text-purple-200 mb-1 font-medium">Start Date</label>
                       <input type="date" value={slotForm.startDate} min={today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, startDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
                     </div>
                     <div>
-                      <label className="block text-purple-200 mb-1 font-medium">End Date <span className="text-purple-300 text-xs">(optional for single slot)</span></label>
+                      <label className="block text-purple-200 mb-1 font-medium">End Date <span className="text-purple-300 text-xs">(optional for single date)</span></label>
                       <input type="date" value={slotForm.endDate} min={slotForm.startDate || today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, endDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" />
                     </div>
                     <div>
@@ -704,18 +686,8 @@ setLessonSlots(
                         {timeOptions.map((t: string) => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-purple-200 mb-1 font-medium">Duration (min)</label>
-                      <select value={slotForm.duration} onChange={e => setSlotForm(f => ({ ...f, duration: Number(e.target.value) }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white">
-                        {[15, 30, 45, 60, 90].map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-purple-200 mb-1 font-medium">Max Students</label>
-                      <input type="number" min={1} max={20} value={slotForm.maxStudents} onChange={e => setSlotForm(f => ({ ...f, maxStudents: Number(e.target.value) }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
-                    </div>
                     <button type="submit" disabled={slotLoading} className="md:col-span-5 mt-2 py-2 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition disabled:opacity-60">
-                      {slotLoading ? "Adding..." : "Add Session(s)"}
+                      {slotLoading ? "Adding..." : "Add Availability"}
                     </button>
                   </form>
                   {slotError && <div className="text-red-400 font-medium mt-2">{slotError}</div>}
@@ -730,24 +702,41 @@ setLessonSlots(
                     className="p-2 rounded bg-slate-800 border border-white/20 text-white"
                   >
                     <option value="date">Date</option>
-                    <option value="length">Length</option>
                   </select>
                 </div>
-                {/* Session List */}
+                {/* Availability List with selection and delete */}
                 <div className="glass-effect p-6 rounded-2xl border border-white/20">
-                  <h3 className="text-xl font-bold text-white mb-4">Sessions</h3>
+                  <h3 className="text-xl font-bold text-white mb-4">Available Times</h3>
                   {lessonSlots.length === 0 ? (
-                    <p className="text-purple-200">No sessions yet.</p>
+                    <p className="text-purple-200">No available times yet.</p>
                   ) : (
                     <ul className="space-y-2">
                       {sortedSessions.map(slot => (
-                        <li key={slot.id} className="flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group">
+                        <li key={slot.id} className={`flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group border-2 transition-all duration-200 ${selectedSessionId === slot.id ? 'border-pink-400' : 'border-transparent'}`}
+                            onClick={() => setSelectedSessionId(slot.id ?? null)}
+                            style={{ cursor: 'pointer' }}
+                        >
                           <div>
-                            <div className="font-bold text-lg">{formatSession(slot)}</div>
+                            <div className="font-bold text-lg">{formatAvailability(slot)}</div>
                             <div className="text-purple-200 text-sm">
                               {getStudentInfo(slot)}
                             </div>
                           </div>
+                          {selectedSessionId === slot.id && (
+                            <button
+                              className="ml-4 mt-4 md:mt-0 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:scale-105 transition-all duration-200"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!slot.id) return;
+                                await deleteDoc(doc(db, "lessonSlots", slot.id));
+                                setLessonSlots(slots => slots.filter(s => s.id !== slot.id));
+                                setSelectedSessionId(null);
+                              }}
+                              type="button"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -1040,7 +1029,6 @@ function TeacherHomeworkTab({ students, teacherId, selectedStudentId, clearSelec
       setDescription("");
       setDueDate("");
       setSelectedStudent("");
-      // Do NOT call onAssign(); stay on Homework tab
     } catch (e: unknown) {
       if (e instanceof Error) {
         setError(e.message);
@@ -1064,127 +1052,49 @@ function TeacherHomeworkTab({ students, teacherId, selectedStudentId, clearSelec
     // eslint-disable-next-line
   }, [selectedStudentId]);
 
+  // Render JSX for the Homework tab
   return (
-    <div className="space-y-10">
-      <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-        📚 Assign Homework
-      </h2>
-      <form onSubmit={e => { e.preventDefault(); handleAssign(); }} className="space-y-4 max-w-lg mx-auto glass-effect p-6 rounded-2xl border border-white/20">
-        <div>
-          <label className="block text-purple-200 mb-2 font-medium">Student</label>
-          <select
-            value={selectedStudent}
-            onChange={e => setSelectedStudent(e.target.value)}
-            className="w-full p-3 rounded-xl bg-slate-800 border border-white/20 text-white focus:ring-2 focus:ring-purple-500"
-            required
-            style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-          >
-            <option value="" className="text-slate-400 bg-slate-800">Select student</option>
-            {students.map(s => (
-              <option key={s.id} value={s.id} className="text-white bg-slate-800">{s.firstName} {s.lastName}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-purple-200 mb-2 font-medium">Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-purple-200 mb-2 font-medium">Description</label>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
-            rows={3}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-purple-200 mb-2 font-medium">Due Date</label>
-          <input
-            type="date"
-            value={dueDate}
-            min={todayStr}
-            onChange={e => setDueDate(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white"
-            required
-          />
-        </div>
-        {error && <div className="text-red-400 font-medium mt-2">{error}</div>}
-        {success && <div className="text-green-400 font-medium mt-2">{success}</div>}
-        <button
-          type="submit"
-          className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition"
-          disabled={loading}
-        >
-          {loading ? "Assigning..." : "Assign Homework"}
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white mb-4">Assign Homework</h2>
+      <form onSubmit={e => { e.preventDefault(); handleAssign(); }} className="flex flex-col md:flex-row gap-4 items-end">
+        <select value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)} className="p-2 rounded bg-slate-800 border border-white/20 text-white" required>
+          <option value="">Select Student</option>
+          {students.map(s => (
+            <option key={s.id} value={s.id}>{getStudentName(s.id)}</option>
+          ))}
+        </select>
+        <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" className="p-2 rounded bg-slate-800 border border-white/20 text-white" required />
+        <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Description" className="p-2 rounded bg-slate-800 border border-white/20 text-white" required />
+        <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} min={todayStr} className="p-2 rounded bg-slate-800 border border-white/20 text-white" required />
+        <button type="submit" disabled={loading} className="py-2 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition disabled:opacity-60">
+          {loading ? "Assigning..." : "Assign"}
         </button>
       </form>
-      <div className="max-w-2xl mx-auto">
-        <h3 className="text-2xl font-bold mb-4 text-white flex items-center gap-2">
-          <span>🗂️</span> Assigned Homework
-        </h3>
+      {error && <div className="text-red-400 font-medium mt-2">{error}</div>}
+      {success && <div className="text-green-400 font-medium mt-2">{success}</div>}
+      <div className="mt-8">
+        <h3 className="text-xl font-bold text-white mb-4">Assigned Homework</h3>
         {listLoading ? (
-          <div className="text-purple-200">Loading homework...</div>
+          <div className="text-purple-200">Loading...</div>
         ) : homeworkList.length === 0 ? (
           <div className="text-purple-200">No homework assigned yet.</div>
         ) : (
-          <div className="space-y-4">
+          <ul className="space-y-2">
             {homeworkList.map(hw => (
-              <div key={hw.id} className="glass-effect rounded-2xl p-5 border border-white/20 shadow-lg flex flex-col gap-2 relative group">
-                <button
-                  className="absolute top-3 right-3 opacity-70 hover:opacity-100 text-lg text-red-400 hover:text-red-600 transition p-1 rounded-full bg-slate-900/70 group-hover:bg-slate-900/90"
-                  title="Delete homework"
-                  onClick={() => handleDeleteHomework(hw.id)}
-                  type="button"
-                  aria-label="Delete homework"
-                >
-                  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' className='w-5 h-5'><path d='M7.5 8a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 1 1 0v5a.5.5 0 0 1-1 0v-5zm4-3A2.5 2.5 0 0 0 11.5 3h-3A2.5 2.5 0 0 0 6 5.5V6H3.5a.5.5 0 0 0 0 1h.54l.82 9.04A2.5 2.5 0 0 0 7.36 18h5.28a2.5 2.5 0 0 0 2.5-2.46L16.96 7h.54a.5.5 0 0 0 0-1H14v-.5zM7 5.5A1.5 1.5 0 0 1 8.5 4h3A1.5 1.5 0 0 1 13 5.5V6H7v-.5zm7.44 10.04A1.5 1.5 0 0 1 12.64 17H7.36a1.5 1.5 0 0 1-1.5-1.46L5.04 7h9.92l-.52 8.54z'/></svg>
-                </button>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-lg text-white font-bold">
-                      {getStudentName(hw.studentId).split(" ").map(n => n[0]).join("")}
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold text-white">{getStudentName(hw.studentId)}</div>
-                      <div className="text-purple-200 text-xs">Assigned: {hw.assignedDate}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2 md:mt-0">
-                    <span className="text-xs font-semibold px-2 py-1 rounded bg-gradient-to-r from-yellow-400 to-orange-400 text-slate-900">
-                      Due: {hw.dueDate}
-                    </span>
-                    <span className="text-xs font-semibold px-2 py-1 rounded bg-gradient-to-r from-purple-400 to-pink-400 text-white">
-                      {getDaysLeft(hw.dueDate)}
-                    </span>
-                    <button
-                      className={`ml-2 px-3 py-1 rounded-xl text-xs font-bold transition-colors duration-200 ${hw.done ? 'bg-green-500 text-white' : 'bg-slate-700 text-white'}`}
-                      onClick={() => toggleDone(hw.id, hw.done)}
-                      type="button"
-                      title={hw.done ? 'Mark as not done' : 'Mark as done'}
-                    >
-                      {hw.done ? 'Done' : 'Not Done'}
-                    </button>
-                  </div>
+              <li key={hw.id} className="flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group border-2 border-transparent">
+                <div>
+                  <div className="font-bold text-lg">{hw.title}</div>
+                  <div className="text-purple-200 text-sm">{hw.description}</div>
+                  <div className="text-purple-200 text-xs">Due: {hw.dueDate} ({getDaysLeft(hw.dueDate)})</div>
+                  <div className="text-purple-200 text-xs">Student: {getStudentName(hw.studentId)}</div>
                 </div>
-                <div className="mt-2">
-                  <div className="text-xl font-bold text-gradient bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent mb-1">
-                    {hw.title}
-                  </div>
-                  <div className="text-white/90 text-base whitespace-pre-line">
-                    {hw.description}
-                  </div>
+                <div className="flex gap-2 mt-2 md:mt-0">
+                  <button onClick={() => toggleDone(hw.id, hw.done)} className={`px-4 py-2 rounded-xl font-medium shadow-lg ${hw.done ? 'bg-green-500' : 'bg-slate-700'} text-white`}>{hw.done ? 'Mark Undone' : 'Mark Done'}</button>
+                  <button onClick={() => handleDeleteHomework(hw.id)} className="px-4 py-2 rounded-xl font-medium shadow-lg bg-gradient-to-r from-red-500 to-pink-500 text-white">Delete</button>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </div>
