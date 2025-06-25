@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, getDocs, query, where, DocumentData } from "firebase/firestore";
@@ -27,6 +27,9 @@ export default function StudentDashReal() {
   const [bookings, setBookings] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const currentWeek = useMemo(() => getWeekDates(currentWeekStart), [currentWeekStart]);
   const router = useRouter();
 
   useEffect(() => {
@@ -88,6 +91,182 @@ export default function StudentDashReal() {
   const nextLesson = bookings
     .filter(b => new Date(b.date + ' ' + b.time) > new Date())
     .sort((a, b) => new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime())[0];
+
+  // --- Book Tab Helper Functions ---
+  const timeSlots = [
+    "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"
+  ];
+  function getCurrentWeekSunday() {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - dayOfWeek);
+    sunday.setHours(0,0,0,0);
+    return sunday;
+  }
+  function getWeekDates(sundayDate: Date) {
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sundayDate);
+      d.setDate(sundayDate.getDate() + i);
+      week.push(d);
+    }
+    return week;
+  }
+  function formatWeekRange(weekStart: Date) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    if (weekStart.getMonth() === weekEnd.getMonth()) {
+      return `${weekStart.toLocaleDateString(undefined, { month: 'long' })} ${weekStart.getDate()}-${weekEnd.getDate()}`;
+    } else {
+      return `${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+    }
+  }
+  function isCurrentWeek(currentWeekStart: Date) {
+    const today = getCurrentWeekSunday();
+    return currentWeekStart.getTime() === today.getTime();
+  }
+
+  // --- Book Tab UI Components (scoped inside main component) ---
+  function BookWeekNav() {
+    return (
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-purple-200 shadow-lg space-y-4 sm:space-y-0 md:gap-8">
+        <div className="flex space-x-2 sm:space-x-0 sm:block order-2 sm:order-1 md:space-x-4">
+          <button
+            onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000))}
+            className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg"
+          >
+            <span className="group-hover:animate-bounce inline-block mr-1 sm:mr-2 text-lg sm:text-xl md:text-2xl">⬅️</span>
+          </button>
+          <button
+            onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000))}
+            className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg sm:hidden"
+          >
+            <span className="group-hover:animate-bounce inline-block ml-1 text-lg md:text-2xl">➡️</span>
+          </button>
+        </div>
+        <div className="text-center order-1 sm:order-2 min-w-[160px] md:min-w-[220px]">
+          <h3 className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-800 mb-1">
+            {formatWeekRange(currentWeekStart)}
+          </h3>
+          {!isCurrentWeek(currentWeekStart) && (
+            <button
+              onClick={() => setCurrentWeekStart(getCurrentWeekSunday())}
+              className="text-xs sm:text-sm md:text-base text-purple-600 hover:text-purple-800 font-medium"
+            >
+              Go to Current Week
+            </button>
+          )}
+          {isCurrentWeek(currentWeekStart) && (
+            <span className="text-xs sm:text-sm md:text-base text-purple-600 font-medium bg-purple-100 px-2 sm:px-3 md:px-4 py-1 rounded-full">
+              📍 Current Week
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000))}
+          className="group flex items-center px-6 py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 hidden sm:flex order-3 text-base md:text-lg"
+        >
+          <span className="group-hover:animate-bounce inline-block ml-2 text-xl md:text-2xl">➡️</span>
+        </button>
+      </div>
+    );
+  }
+
+  function BookSelectionSummary() {
+    if (selectedSlots.length === 0) return null;
+    return (
+      <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg animate-slideInDown">
+        <div className="flex items-center mb-3 sm:mb-4">
+          <span className="text-xl sm:text-2xl mr-2 sm:mr-3">✨</span>
+          <h3 className="font-bold text-amber-800 text-lg sm:text-xl">
+            Selected Sessions ({selectedSlots.length})
+          </h3>
+        </div>
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          {selectedSlots.map((slotKey) => {
+            const [dayStr, time] = slotKey.split("-");
+            return (
+              <span key={slotKey} className="px-3 py-1 bg-white rounded-full border border-amber-300 text-amber-800 text-xs font-semibold">
+                {dayStr} @ {time}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function BookSlotGrid() {
+    function handleSlotClick(day: Date, time: string) {
+      const slotKey = `${day.toDateString()}-${time}`;
+      setSelectedSlots(prev => prev.includes(slotKey) ? prev.filter(s => s !== slotKey) : [...prev, slotKey]);
+    }
+    function isSlotSelected(day: Date, time: string) {
+      return selectedSlots.includes(`${day.toDateString()}-${time}`);
+    }
+    return (
+      <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 md:gap-8">
+        {currentWeek.map((day, dayIndex) => {
+          const dayOfWeek = day.getDay();
+          const isToday = day.toDateString() === new Date().toDateString();
+          // Weekends (Sunday or Saturday) show disabled slots
+          if (dayOfWeek === 0 || dayOfWeek === 6) {
+            return (
+              <div key={dayIndex} className="flex flex-col items-center p-4 bg-gray-100 rounded-2xl border border-gray-200 opacity-60">
+                <span className="font-bold text-gray-400 mb-2">{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                <span className="text-xs text-gray-400">No lessons</span>
+              </div>
+            );
+          }
+          return (
+            <div key={dayIndex} className="flex flex-col items-center p-4 bg-white rounded-2xl border border-purple-100 shadow">
+              <span className={`font-bold mb-2 ${isToday ? 'text-purple-700' : 'text-gray-700'}`}>{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}{isToday && ' (Today)'}</span>
+              <div className="flex flex-col gap-2 w-full">
+                {timeSlots.map((time) => (
+                  <button
+                    key={time}
+                    onClick={() => handleSlotClick(day, time)}
+                    className={`w-full px-2 py-1 rounded-lg font-semibold text-sm transition-all duration-200 border-2 ${isSlotSelected(day, time) ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-purple-500 shadow-lg' : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50 hover:border-purple-400'}`}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function BookNowSection() {
+    if (selectedSlots.length === 0) return null;
+    return (
+      <div className="mt-8 sm:mt-10 text-center animate-slideInUp">
+        <p className="mb-4 sm:mb-6 text-gray-700 font-semibold text-lg sm:text-xl">
+          {selectedSlots.length === 1 
+            ? `🎯 You have selected 1 session`
+            : `🎯 You have selected ${selectedSlots.length} sessions`
+          }
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-6">
+          <button
+            onClick={() => setSelectedSlots([])}
+            className="group px-6 py-3 sm:px-8 sm:py-4 bg-gray-200 text-gray-700 rounded-2xl hover:bg-gray-300 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm sm:text-base"
+          >
+            Clear All
+          </button>
+          <button
+            onClick={() => alert('Booking not implemented yet!')}
+            className="group px-8 py-3 sm:px-10 sm:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 active:scale-95 text-sm sm:text-base"
+          >
+            Book {selectedSlots.length === 1 ? 'Session' : 'Sessions'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
@@ -257,79 +436,217 @@ export default function StudentDashReal() {
         )}
         {activeTab === "Book" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-8 rounded-3xl shadow-2xl border border-white/30 max-w-full mx-auto animate-fadeIn">
-            <h2 className="text-2xl font-bold mb-6 text-purple-700">Book Lessons</h2>
-            <p className="mb-4 text-gray-600">Select a date to view or book available lesson slots.</p>
-            {/* Simple Calendar UI */}
-            <div className="flex flex-col items-center">
-              <div className="w-full max-w-md">
-                <CalendarUI />
+            <div className="flex flex-col sm:flex-row items-center mb-6 sm:mb-8">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl mb-4 sm:mb-0 sm:mr-6 shadow-lg">
+                📅
               </div>
-              <div className="mt-6 text-gray-500 text-center">
-                {/* Placeholder for available slots */}
-                <p>No available slots for the selected date yet.</p>
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  Book Lessons
+                </h2>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Select your preferred time slots</p>
               </div>
             </div>
+
+            {/* Week Navigation */}
+            <BookWeekNav currentWeekStart={currentWeekStart} setCurrentWeekStart={setCurrentWeekStart} isCurrentWeek={isCurrentWeek(currentWeekStart)} />
+
+            {/* Selection Summary */}
+            <BookSelectionSummary selectedSlots={selectedSlots} />
+
+            {/* Desktop View - Grid Layout */}
+            <BookSlotGrid currentWeek={currentWeek} selectedSlots={selectedSlots} setSelectedSlots={setSelectedSlots} />
+
+            {/* Book Now Section */}
+            <BookNowSection selectedSlots={selectedSlots} setSelectedSlots={setSelectedSlots} />
           </div>
         )}
         {activeTab === "Buy" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
-            <h2 className="text-2xl font-bold mb-6 text-indigo-700">Buy Packages</h2>
-            <p className="mb-4 text-gray-600">Purchase lesson packages and memberships here. (Coming soon!)</p>
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl">Piano Lesson Packages</h2>
+              {/* Cart summary placeholder (UI only) */}
+              <div className="hidden sm:flex items-center gap-3 bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm">
+                <span>🛒</span>
+                <span>Cart: 0 items</span>
+                <span className="ml-2 font-bold">$0.00</span>
+              </div>
+            </div>
+
+            {/* Cart UI (not functional yet) */}
+            <div className="mb-8 bg-slate-50 rounded-xl p-6 border border-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                  <span>🛒</span>
+                  <span>Your Cart</span>
+                </div>
+                <button className="text-xs text-indigo-600 font-bold hover:underline" disabled>Clear All</button>
+              </div>
+              <p className="text-slate-500">Your cart is empty</p>
+            </div>
+
+            {/* Individual Lessons */}
+            <div className="mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Individual Lessons</h3>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="bg-white rounded-2xl shadow border border-slate-200 p-5 flex flex-col items-start">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🎹</span>
+                      <span className="font-bold text-lg">30-min Lesson</span>
+                    </div>
+                    <div className="text-slate-600 text-sm mb-2">One-on-one piano lesson with a certified teacher.</div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-indigo-700 font-bold text-xl">$30</span>
+                      <span className="text-xs text-slate-400">per lesson</span>
+                    </div>
+                    <button className="mt-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200" disabled>Add to Cart</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Extended Lessons */}
+            <div className="mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Extended Lessons</h3>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="bg-white rounded-2xl shadow border border-slate-200 p-5 flex flex-col items-start">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🎶</span>
+                      <span className="font-bold text-lg">1-hour Lesson</span>
+                    </div>
+                    <div className="text-slate-600 text-sm mb-2">In-depth piano lesson covering advanced topics.</div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-indigo-700 font-bold text-xl">$50</span>
+                      <span className="text-xs text-slate-400">per lesson</span>
+                    </div>
+                    <button className="mt-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200" disabled>Add to Cart</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Packages Section (if applicable) */}
+            <div className="mb-8 sm:mb-12">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Lesson Packages</h3>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="bg-white rounded-2xl shadow border border-slate-200 p-5 flex flex-col">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-2xl">📦</span>
+                        <span className="font-bold text-lg">Starter Package</span>
+                      </div>
+                      <div className="text-slate-600 text-sm mb-4">
+                        5 individual lessons + 2 free trial group classes.
+                      </div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="text-indigo-700 font-bold text-xl">$120</span>
+                        <span className="text-xs text-slate-400">one-time</span>
+                      </div>
+                    </div>
+                    <button className="mt-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200" disabled>Add to Cart</button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
         {activeTab === "Upcoming" && (
-          <div className="max-w-6xl mx-auto animate-fadeIn">
-            <h2 className="text-3xl font-bold mb-8 text-emerald-700">Upcoming Lessons</h2>
-            {bookings.length === 0 ? (
-              <p className="text-gray-500">No upcoming lessons scheduled.</p>
-            ) : (
-              bookings
-                .filter(b => new Date(b.date + ' ' + b.time) > new Date())
-                .sort((a, b) => new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime())
-                .map((lesson) => (
-                  <div key={lesson.id} className="group bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-slideInUp mb-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                      <div className="flex items-center space-x-6">
-                        <div className="relative">
-                          <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex flex-col items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <span className="text-xs font-medium">{new Date(lesson.date).toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}</span>
-                            <span className="text-xl font-bold">{new Date(lesson.date).getDate()}</span>
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">{lesson.time}</h3>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3">
-                            <span className="flex items-center text-gray-700 font-semibold"><span className="mr-2 text-xl">🎹</span>Piano</span>
-                          </div>
-                        </div>
+          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
+            <div className="flex items-center mb-4 sm:mb-6">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl mr-4 shadow-lg">
+                ⏰
+              </div>
+              <div>
+                <h2 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  Upcoming Events
+                </h2>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Your scheduled lessons and events</p>
+              </div>
+            </div>
+
+            {/* Events List (mockup data) */}
+            <div className="space-y-4">
+              {[1,2,3].map(i => (
+                <div key={i} className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                    <div className="flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                        <h4 className="text-lg sm:text-xl font-bold text-gray-800">Piano Recital</h4>
+                        <span className="text-xs sm:text-sm text-purple-600 font-semibold bg-purple-100 rounded-full px-3 py-1">
+                          Group Class
+                        </span>
+                      </div>
+                      <p className="text-gray-700 text-sm sm:text-base mb-3 leading-relaxed">
+                        Join us for a group piano recital to showcase your skills!
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2 text-xs sm:text-sm text-gray-600">
+                        <span><strong>Date:</strong> March 15, 2023</span>
+                        <span><strong>Time:</strong> 5:00 PM - 7:00 PM</span>
+                        <span><strong>Location:</strong> Music Hall A</span>
                       </div>
                     </div>
+                    <div className="shrink-0">
+                      <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
+                        View Details
+                      </button>
+                    </div>
                   </div>
-                ))
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
         {activeTab === "Account" && (
-          <div className="max-w-2xl mx-auto animate-fadeIn px-4 sm:px-6 lg:px-8">
-            <div className="my-12 sm:my-16 pb-24 sm:pb-32">
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl shadow-xl px-6 py-8 text-center">
-                <h2 className="text-xl sm:text-2xl font-bold text-purple-800 mb-3">Account</h2>
-                <p className="text-gray-700 text-base sm:text-lg mb-2">Welcome, {profile?.firstName}!</p>
-                <p className="text-gray-700 text-base sm:text-lg mb-2">Email: {profile?.email}</p>
-                <p className="text-gray-700 text-base sm:text-lg mb-2">Role: {profile?.role}</p>
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  <span className="text-green-600 text-lg">🔒</span>
-                  <span className="text-gray-700 font-medium text-sm sm:text-base">Your data is secure</span>
-                </div>
+          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
+            <div className="flex items-center mb-4 sm:mb-6">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl mr-4 shadow-lg">
+                👤
+              </div>
+              <div>
+                <h2 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  My Account
+                </h2>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage your profile and settings</p>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200 text-center">
-              <div className="flex items-center justify-center gap-2 text-blue-700 font-medium">
-                <span className="text-xl">🔒</span>
-                <span>Your data is secure and private</span>
+
+            {/* Account Settings Form (simplified) */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-700 mb-2" htmlFor="firstName">First Name</label>
+                  <input className="px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:outline-none" type="text" id="firstName" defaultValue={profile?.firstName || ''} />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-700 mb-2" htmlFor="lastName">Last Name</label>
+                  <input className="px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:outline-none" type="text" id="lastName" defaultValue={profile?.lastName || ''} />
+                </div>
               </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-semibold text-gray-700 mb-2" htmlFor="email">Email</label>
+                <input className="px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:outline-none" type="email" id="email" defaultValue={profile?.email || ''} disabled />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-semibold text-gray-700 mb-2" htmlFor="dob">Date of Birth</label>
+                <input className="px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:outline-none" type="date" id="dob" defaultValue={profile?.dob || ''} />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-semibold text-gray-700 mb-2" htmlFor="skillLevel">Skill Level</label>
+                <select className="px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:outline-none" id="skillLevel" defaultValue={profile?.skillLevel || ''}>
+                  <option value="">Select your skill level</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-6">
+              <button className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
+                Save Changes
+              </button>
             </div>
           </div>
         )}
@@ -338,73 +655,181 @@ export default function StudentDashReal() {
   );
 }
 
-// Add CalendarUI component
-function CalendarUI() {
+// --- Book Tab Helper Components ---
+const timeSlots = [
+  "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"
+];
+
+function getCurrentWeekSunday() {
   const today = new Date();
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const dayOfWeek = today.getDay();
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - dayOfWeek);
+  sunday.setHours(0,0,0,0);
+  return sunday;
+}
 
-  // Get days in month
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const weeks: (number | null)[][] = [];
-  let week: (number | null)[] = Array(firstDay).fill(null);
-  for (let day = 1; day <= daysInMonth; day++) {
-    week.push(day);
-    if (week.length === 7) {
-      weeks.push(week);
-      week = [];
-    }
+function getWeekDates(sundayDate: Date) {
+  const week = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sundayDate);
+    d.setDate(sundayDate.getDate() + i);
+    week.push(d);
   }
-  if (week.length) weeks.push([...week, ...Array(7 - week.length).fill(null)]);
+  return week;
+}
 
-  const handlePrev = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(currentYear - 1);
-    } else {
-      setCurrentMonth(currentMonth - 1);
-    }
-  };
-  const handleNext = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear(currentYear + 1);
-    } else {
-      setCurrentMonth(currentMonth + 1);
-    }
-  };
+function formatWeekRange(weekStart: Date) {
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  if (weekStart.getMonth() === weekEnd.getMonth()) {
+    return `${weekStart.toLocaleDateString(undefined, { month: 'long' })} ${weekStart.getDate()}-${weekEnd.getDate()}`;
+  } else {
+    return `${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+  }
+}
 
+function isCurrentWeek(currentWeekStart: Date) {
+  const today = getCurrentWeekSunday();
+  return currentWeekStart.getTime() === today.getTime();
+}
+
+function BookWeekNav({ currentWeekStart, setCurrentWeekStart, isCurrentWeek }: { currentWeekStart: Date, setCurrentWeekStart: (d: Date) => void, isCurrentWeek: boolean }) {
   return (
-    <div className="bg-white rounded-xl shadow border p-4">
-      <div className="flex items-center justify-between mb-2">
-        <button onClick={handlePrev} className="px-2 py-1 rounded hover:bg-gray-100">◀</button>
-        <span className="font-semibold text-lg">{new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-        <button onClick={handleNext} className="px-2 py-1 rounded hover:bg-gray-100">▶</button>
+    <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-purple-200 shadow-lg space-y-4 sm:space-y-0 md:gap-8">
+      <div className="flex space-x-2 sm:space-x-0 sm:block order-2 sm:order-1 md:space-x-4">
+        <button
+          onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000))}
+          className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg"
+        >
+          <span className="group-hover:animate-bounce inline-block mr-1 sm:mr-2 text-lg sm:text-xl md:text-2xl">⬅️</span>
+        </button>
+        <button
+          onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000))}
+          className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg sm:hidden"
+        >
+          <span className="group-hover:animate-bounce inline-block ml-1 text-lg md:text-2xl">➡️</span>
+        </button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-500 mb-1">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
+      <div className="text-center order-1 sm:order-2 min-w-[160px] md:min-w-[220px]">
+        <h3 className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-800 mb-1">
+          {formatWeekRange(currentWeekStart)}
+        </h3>
+        {!isCurrentWeek && (
+          <button
+            onClick={() => setCurrentWeekStart(getCurrentWeekSunday())}
+            className="text-xs sm:text-sm md:text-base text-purple-600 hover:text-purple-800 font-medium"
+          >
+            Go to Current Week
+          </button>
+        )}
+        {isCurrentWeek && (
+          <span className="text-xs sm:text-sm md:text-base text-purple-600 font-medium bg-purple-100 px-2 sm:px-3 md:px-4 py-1 rounded-full">
+            📍 Current Week
+          </span>
+        )}
       </div>
-      {weeks.map((week, i) => (
-        <div key={i} className="grid grid-cols-7 gap-1 mb-1">
-          {week.map((day, j) => (
-            <button
-              key={j}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-150
-                ${day === null ? 'bg-transparent cursor-default' :
-                  (selectedDate === `${currentYear}-${currentMonth + 1}-${day}` ? 'bg-indigo-500 text-white' : 'hover:bg-indigo-100')}`}
-              disabled={day === null}
-              onClick={() => day && setSelectedDate(`${currentYear}-${currentMonth + 1}-${day}`)}
-            >
-              {day || ''}
-            </button>
-          ))}
-        </div>
-      ))}
-      {selectedDate && (
-        <div className="mt-2 text-indigo-700 text-sm text-center">Selected: {selectedDate}</div>
-      )}
+      <button
+        onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000))}
+        className="group flex items-center px-6 py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 hidden sm:flex order-3 text-base md:text-lg"
+      >
+        <span className="group-hover:animate-bounce inline-block ml-2 text-xl md:text-2xl">➡️</span>
+      </button>
+    </div>
+  );
+}
+
+function BookSelectionSummary({ selectedSlots }: { selectedSlots: string[] }) {
+  if (selectedSlots.length === 0) return null;
+  return (
+    <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg animate-slideInDown">
+      <div className="flex items-center mb-3 sm:mb-4">
+        <span className="text-xl sm:text-2xl mr-2 sm:mr-3">✨</span>
+        <h3 className="font-bold text-amber-800 text-lg sm:text-xl">
+          Selected Sessions ({selectedSlots.length})
+        </h3>
+      </div>
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        {selectedSlots.map((slotKey) => {
+          const [dayStr, time] = slotKey.split("-");
+          return (
+            <span key={slotKey} className="px-3 py-1 bg-white rounded-full border border-amber-300 text-amber-800 text-xs font-semibold">
+              {dayStr} @ {time}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function BookSlotGrid({ currentWeek, selectedSlots, setSelectedSlots }: { currentWeek: Date[], selectedSlots: string[], setSelectedSlots: (s: string[]) => void }) {
+  function handleSlotClick(day: Date, time: string) {
+    const slotKey = `${day.toDateString()}-${time}`;
+    setSelectedSlots(prev => prev.includes(slotKey) ? prev.filter(s => s !== slotKey) : [...prev, slotKey]);
+  }
+  function isSlotSelected(day: Date, time: string) {
+    return selectedSlots.includes(`${day.toDateString()}-${time}`);
+  }
+  return (
+    <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 md:gap-8">
+      {currentWeek.map((day, dayIndex) => {
+        const dayOfWeek = day.getDay();
+        const isToday = day.toDateString() === new Date().toDateString();
+        // Weekends (Sunday or Saturday) show disabled slots
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          return (
+            <div key={dayIndex} className="flex flex-col items-center p-4 bg-gray-100 rounded-2xl border border-gray-200 opacity-60">
+              <span className="font-bold text-gray-400 mb-2">{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+              <span className="text-xs text-gray-400">No lessons</span>
+            </div>
+          );
+        }
+        return (
+          <div key={dayIndex} className="flex flex-col items-center p-4 bg-white rounded-2xl border border-purple-100 shadow">
+            <span className={`font-bold mb-2 ${isToday ? 'text-purple-700' : 'text-gray-700'}`}>{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}{isToday && ' (Today)'}</span>
+            <div className="flex flex-col gap-2 w-full">
+              {timeSlots.map((time) => (
+                <button
+                  key={time}
+                  onClick={() => handleSlotClick(day, time)}
+                  className={`w-full px-2 py-1 rounded-lg font-semibold text-sm transition-all duration-200 border-2 ${isSlotSelected(day, time) ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-purple-500 shadow-lg' : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50 hover:border-purple-400'}`}
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function BookNowSection({ selectedSlots, setSelectedSlots }: { selectedSlots: string[], setSelectedSlots: (s: string[]) => void }) {
+  if (selectedSlots.length === 0) return null;
+  return (
+    <div className="mt-8 sm:mt-10 text-center animate-slideInUp">
+      <p className="mb-4 sm:mb-6 text-gray-700 font-semibold text-lg sm:text-xl">
+        {selectedSlots.length === 1 
+          ? `🎯 You have selected 1 session`
+          : `🎯 You have selected ${selectedSlots.length} sessions`
+        }
+      </p>
+      <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-6">
+        <button
+          onClick={() => setSelectedSlots([])}
+          className="group px-6 py-3 sm:px-8 sm:py-4 bg-gray-200 text-gray-700 rounded-2xl hover:bg-gray-300 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm sm:text-base"
+        >
+          Clear All
+        </button>
+        <button
+          onClick={() => alert('Booking not implemented yet!')}
+          className="group px-8 py-3 sm:px-10 sm:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 active:scale-95 text-sm sm:text-base"
+        >
+          Book {selectedSlots.length === 1 ? 'Session' : 'Sessions'}
+        </button>
+      </div>
     </div>
   );
 }
