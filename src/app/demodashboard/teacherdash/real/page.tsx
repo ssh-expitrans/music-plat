@@ -95,7 +95,6 @@ export default function TeacherDashReal() {
   const [slotLoading, setSlotLoading] = useState(false);
   const [slotError, setSlotError] = useState("");
   const [slotSuccess, setSlotSuccess] = useState("");
-  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [lessonSlots, setLessonSlots] = useState<LessonSlot[]>([]);
   const [slotForm, setSlotForm] = useState({
     startDate: "",
@@ -217,22 +216,35 @@ setLessonSlots(
   // Helper: sort students by name
   const sortedStudents = [...students].sort((a, b) => (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName));
 
-  // Helper: get upcoming lessons
-  const upcomingLessons = bookings
-    .filter((b) => new Date(b.date + " " + b.time) > new Date())
-    .sort((a, b) => new Date(a.date + " " + a.time).getTime() - new Date(b.date + " " + b.time).getTime());
+  // Helper: format session display
+  function formatSession(slot: LessonSlot) {
+    const dateObj = parseLocalDate(slot.date);
+    // Use local date for day/month
+    const [hour, minute] = slot.time.split(":");
+    dateObj.setHours(Number(hour), Number(minute));
+    const day = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+    const month = dateObj.toLocaleDateString(undefined, { month: 'short' });
+    const dayNum = dateObj.getDate();
+    const time = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    return `${day}, ${month} ${dayNum}, ${time} (${slot.duration} min) • Max: ${slot.maxStudents} • Booked: ${slot.bookedStudentIds?.length || 0}`;
+  }
+
+  // Helper to get student info for a slot
+  function getStudentInfo(slot: LessonSlot) {
+    if (!slot.bookedStudentIds || slot.bookedStudentIds.length === 0) return 'No students booked';
+    return slot.bookedStudentIds.map((id: string) => {
+      const s = students.find((stu: any) => stu.id === id);
+      if (!s) return 'Unknown';
+      return `${s.firstName} ${s.lastName} (${s.skillLevel || '-'})`;
+    }).join(', ');
+  }
 
   // Helper: get calendar dates
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const calendarDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
-
-  function handleContactChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    const { name, value } = e.target;
-    setContactInfo((prev) => ({ ...prev, [name]: value }));
-  }
+  // const calendarDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)); // unused
 
   // Helper: generate 15-min increment times ("14:00", "14:15", ...)
   const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
@@ -243,6 +255,12 @@ setLessonSlots(
 
   // Helper: weekday names
   const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Contact info change handler
+  function handleContactChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const { name, value } = e.target;
+    setContactInfo((prev) => ({ ...prev, [name]: value }));
+  }
 
   // Bulk slot creation handler
   async function handleAddSlot(e: React.FormEvent) {
@@ -326,39 +344,17 @@ setLessonSlots(
       const slotsSnap = await getDocs(
         query(collection(db, "lessonSlots"), where("teacherId", "==", user.uid))
       );
-setLessonSlots(
-  slotsSnap.docs.map((doc) => ({
-    id: doc.id ?? "",
-    ...(doc.data() as Omit<LessonSlot, "id">)
-  }))
-);    } catch (e: any) {
-      setSlotError(e.message || "Failed to add slot(s).");
+      setLessonSlots(
+        slotsSnap.docs.map((doc) => ({
+          id: doc.id ?? "",
+          ...(doc.data() as Omit<LessonSlot, "id">)
+        }))
+      );
+    } catch (e: unknown) {
+      setSlotError((e instanceof Error && e.message) || "Failed to add slot(s).");
     } finally {
       setSlotLoading(false);
     }
-  }
-
-  // Helper: format session display
-  function formatSession(slot: LessonSlot) {
-    const dateObj = parseLocalDate(slot.date);
-    // Use local date for day/month
-    const [hour, minute] = slot.time.split(":");
-    dateObj.setHours(Number(hour), Number(minute));
-    const day = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
-    const month = dateObj.toLocaleDateString(undefined, { month: 'short' });
-    const dayNum = dateObj.getDate();
-    const time = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-    return `${day}, ${month} ${dayNum}, ${time} (${slot.duration} min) • Max: ${slot.maxStudents} • Booked: ${slot.bookedStudentIds?.length || 0}`;
-  }
-
-  // Helper to get student info for a slot
-  function getStudentInfo(slot: LessonSlot) {
-    if (!slot.bookedStudentIds || slot.bookedStudentIds.length === 0) return 'No students booked';
-    return slot.bookedStudentIds.map((id: string) => {
-      const s = students.find((stu: any) => stu.id === id);
-      if (!s) return 'Unknown';
-      return `${s.firstName} ${s.lastName} (${s.skillLevel || '-'})`;
-    }).join(', ');
   }
 
   // UI rendering (structure and styles adapted from demo dashboard)
@@ -527,7 +523,7 @@ setLessonSlots(
                     <div>
                       <label className="block text-purple-200 mb-1 font-medium">Days of Week</label>
                       <div className="flex gap-1 flex-wrap">
-                        {weekdayNames.map((day, idx) => (
+                        {weekdayNames.map((day: string, idx: number) => (
                           <button
                             type="button"
                             key={day}
@@ -543,7 +539,7 @@ setLessonSlots(
                       <label className="block text-purple-200 mb-1 font-medium">Time</label>
                       <select value={slotForm.time} onChange={e => setSlotForm(f => ({ ...f, time: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required>
                         <option value="">Select time</option>
-                        {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                        {timeOptions.map((t: string) => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
                     <div>
