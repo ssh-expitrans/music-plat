@@ -91,7 +91,6 @@ export default function TeacherDashReal() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<DocumentData | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
-  const [bookings, setBookings] = useState<DocumentData[]>([]);
   const [slotLoading, setSlotLoading] = useState(false);
   const [slotError, setSlotError] = useState("");
   const [slotSuccess, setSlotSuccess] = useState("");
@@ -150,10 +149,6 @@ export default function TeacherDashReal() {
           id: doc.id,
           ...(doc.data() as Omit<Student, "id">)
         })));
-        const bookingsSnap = await getDocs(
-          query(collection(db, "bookings"), where("teacherId", "==", firebaseUser.uid))
-        );
-        setBookings(bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         // Fetch lesson slots for this teacher
         const slotsSnap = await getDocs(
           query(collection(db, "lessonSlots"), where("teacherId", "==", firebaseUser.uid))
@@ -233,7 +228,7 @@ setLessonSlots(
   function getStudentInfo(slot: LessonSlot) {
     if (!slot.bookedStudentIds || slot.bookedStudentIds.length === 0) return 'No students booked';
     return slot.bookedStudentIds.map((id: string) => {
-      const s = students.find((stu: any) => stu.id === id);
+      const s = students.find((stu: Student) => stu.id === id);
       if (!s) return 'Unknown';
       return `${s.firstName} ${s.lastName} (${s.skillLevel || '-'})`;
     }).join(', ');
@@ -243,7 +238,6 @@ setLessonSlots(
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
   // const calendarDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)); // unused
 
   // Helper: generate 15-min increment times ("14:00", "14:15", ...)
