@@ -12,9 +12,10 @@ import {
   where,
   DocumentData,
   Timestamp,
+  addDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { addDoc, deleteDoc, updateDoc } from "firebase/firestore";
 
 interface LessonSlot {
   id?: string;
@@ -91,37 +92,28 @@ export default function TeacherDashReal() {
   const [profile, setProfile] = useState<DocumentData | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [bookings, setBookings] = useState<DocumentData[]>([]);
-  const [notes, setNotes] = useState<DocumentData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  // Move all useState hooks to the top-level, before any early returns
-  const [contactInfo, setContactInfo] = useState({
-    email: "",
-    phone: "",
-    address: "",
-  });
+  const [slotLoading, setSlotLoading] = useState(false);
+  const [slotError, setSlotError] = useState("");
+  const [slotSuccess, setSlotSuccess] = useState("");
+  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [lessonSlots, setLessonSlots] = useState<LessonSlot[]>([]);
   const [slotForm, setSlotForm] = useState({
     startDate: "",
     endDate: "",
     time: "",
-    duration: 30, // in minutes
-    daysOfWeek: [] as number[], // 0=Sun, 1=Mon, ...
+    duration: 30,
+    daysOfWeek: [] as number[],
     maxStudents: 8,
   });
-  const [slotLoading, setSlotLoading] = useState(false);
-  const [slotError, setSlotError] = useState("");
-  const [slotSuccess, setSlotSuccess] = useState("");
-
-  const [slotToDelete, setSlotToDelete] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-
-  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
-  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [contactInfo, setContactInfo] = useState({
+    email: "",
+    phone: "",
+    address: "",
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const slotSuccessTimeout = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   // Add state and sorting logic for session list (Calendar tab)
   const [sessionSort, setSessionSort] = useState("date");
@@ -163,11 +155,6 @@ export default function TeacherDashReal() {
           query(collection(db, "bookings"), where("teacherId", "==", firebaseUser.uid))
         );
         setBookings(bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-        // Fetch notes for this teacher
-        const notesSnap = await getDocs(
-          query(collection(db, "notes"), where("teacherId", "==", firebaseUser.uid))
-        );
-        setNotes(notesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         // Fetch lesson slots for this teacher
         const slotsSnap = await getDocs(
           query(collection(db, "lessonSlots"), where("teacherId", "==", firebaseUser.uid))
@@ -275,7 +262,6 @@ setLessonSlots(
         setSlotLoading(false);
         return;
       }
-      let slotsToAdd = [];
       // If endDate is empty, treat as single-slot creation
       if (!endDate) {
         const singleDate = parseLocalDate(startDate);
@@ -349,39 +335,6 @@ setLessonSlots(
       setSlotError(e.message || "Failed to add slot(s).");
     } finally {
       setSlotLoading(false);
-    }
-  }
-
-  async function handleDeleteSlot(slotId: string) {
-    setDeleteLoading(true);
-    setDeleteError("");
-    try {
-      await deleteDoc(doc(db, "lessonSlots", slotId));
-      setLessonSlots((prev) => prev.filter((s) => s.id !== slotId));
-      setSlotToDelete(null);
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        setDeleteError(e.message || "Failed to delete slot.");
-      } else {
-        setDeleteError("Failed to delete slot.");
-      }
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
-
-  async function handleBulkDelete() {
-    setDeleteLoading(true);
-    setDeleteError("");
-    try {
-      await Promise.all(selectedSessions.map(id => deleteDoc(doc(db, "lessonSlots", id))));
-      setLessonSlots((prev) => prev.filter((s) => s.id && !selectedSessions.includes(s.id)));
-      setSelectedSessions([]);
-      setBulkDeleteConfirm(false);
-    } catch (e: any) {
-      setDeleteError(e.message || "Failed to delete sessions.");
-    } finally {
-      setDeleteLoading(false);
     }
   }
 
@@ -636,12 +589,6 @@ setLessonSlots(
                               {getStudentInfo(slot)}
                             </div>
                           </div>
-                          <button
-                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors text-xl opacity-80 group-hover:opacity-100"
-                            title="Delete session"
-                            onClick={() => setSlotToDelete(slot.id ?? null)}                          >
-                            🗑️
-                          </button>
                         </li>
                       ))}
                     </ul>
@@ -881,8 +828,8 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
             required
           />
         </div>
-        {error && <div className="text-red-400 font-medium">{error}</div>}
-        {success && <div className="text-green-400 font-medium">{success}</div>}
+        {error && <div className="text-red-400 font-medium mt-2">{error}</div>}
+        {success && <div className="text-green-400 font-medium mt-2">{success}</div>}
         <button
           type="submit"
           className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition"
