@@ -90,8 +90,7 @@ export default function StudentDashReal() {
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  // --- Cancel Booking Modal State ---
-  const [cancelModal, setCancelModal] = useState<{ open: boolean; booking: LessonSlot | null }>({ open: false, booking: null });
+
   // --- Memo and router ---
   const router = useRouter();
   const weekDates = useMemo(() => getWeekDates(currentWeekStart), [currentWeekStart]);
