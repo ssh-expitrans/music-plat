@@ -87,9 +87,6 @@ export default function StudentDashReal() {
   // --- Buy tab state ---
   const [selectedOption, setSelectedOption] = useState<number | null>(30);
   const [quantities, setQuantities] = useState<{ [length: number]: number }>({ 30: 1, 60: 1, 90: 1 });
-  const [cart] = useState<CartItem[]>([]);
-  // Remove setIsAdding if not used
-  const [isAdding] = useState(false);
   // --- Book Tab State ---
   const [availableSlots, setAvailableSlots] = useState<LessonSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
@@ -99,7 +96,7 @@ export default function StudentDashReal() {
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   // --- Cancel Booking Modal State ---
-  const [cancelModal, setCancelModal] = useState<{ open: boolean; booking: any | null }>({ open: false, booking: null });
+  const [cancelModal, setCancelModal] = useState<{ open: boolean; booking: LessonSlot | null }>({ open: false, booking: null });
   // --- Memo and router ---
   const router = useRouter();
   const weekDates = useMemo(() => getWeekDates(currentWeekStart), [currentWeekStart]);
@@ -446,7 +443,6 @@ export default function StudentDashReal() {
           >
             <div className="flex items-center space-x-3">
               <span className="text-lg">{getTabIcon(tab)}</span>
-              {/* eslint-disable-next-line react/jsx-no-undef */}
               <span className="hidden sm:inline">{tab}</span>
             </div>
             {activeTab === tab && (
@@ -661,235 +657,85 @@ export default function StudentDashReal() {
               </div>
             </div>
             {/* Checkout Section (moved above footer) */}
-            <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
-                  Your Booking Summary
-                </h3>
-                <div className="text-right mt-2 sm:mt-0">
-                  <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
-                  <span className="text-2xl font-bold text-indigo-700">
-                    ${quantities[30] * 30 + quantities[60] * 60 + quantities[90] * 90}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {Object.keys(quantities).map(length => {
-                  const qty = quantities[Number(length)];
-                  if (qty === 0) return null;
-                  const option = lessonOptions.find(opt => opt.length === Number(length));
-                  return (
-                    <div key={length} className="flex justify-between items-center text-sm sm:text-base p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{option?.icon}</span>
-                        <span className="font-semibold">{option?.length} min Lesson</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700">Qty: {qty}</span>
-                        <span className="text-indigo-700 font-bold">${option?.price}</span>
-                      </div>
+            {(() => {
+              // Calculate total price for Buy tab
+              const totalPrice = Object.keys(quantities).reduce((sum, length) => {
+                const qty = quantities[Number(length)];
+                const option = lessonOptions.find(opt => opt.length === Number(length));
+                return sum + (qty * (option?.price || 0));
+              }, 0);
+              return (
+                <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+                      Your Booking Summary
+                    </h3>
+                    <div className="text-right mt-2 sm:mt-0">
+                      <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
+                      <span className="text-2xl font-bold text-indigo-700">
+                        ${'{'}totalPrice.toFixed(2){'}'}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
+                  <div className="space-y-4">
+                    {Object.keys(quantities).map(length => {
+                      const qty = quantities[Number(length)];
+                      if (qty === 0) return null;
+                      const option = lessonOptions.find(opt => opt.length === Number(length));
+                      return (
+                        <div key={length} className="flex justify-between items-center text-sm sm:text-base p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{option?.icon}</span>
+                            <span className="font-semibold">{option?.length} min Lesson</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Qty: {qty}</span>
+                            <span className="text-indigo-700 font-bold">${option?.price}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
         {activeTab === "Upcoming" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-3xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-purple-700">Upcoming Lessons</h2>
             {bookings.length === 0 ? (
-              <p className="text-center text-gray-500 py-10">No upcoming lessons found. Book some lessons now!</p>
+              <p className="text-center text-gray-500 py-10">
+                You have no upcoming lessons. Book some lessons now!
+              </p>
             ) : (
               <div className="space-y-4">
-                {bookings.map(booking => {
-                  const bookingDate = new Date(booking.date + ' ' + booking.time);
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const isCancelable = bookingDate > today;
-                  return (
-                    <div key={booking.id} className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                        <div className="flex-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                            <h4 className="text-lg sm:text-xl font-bold text-gray-800">{`Lesson on ${bookingDate.toLocaleString()}`}</h4>
-                          </div>
-                          <p className="text-gray-700 text-sm sm:text-base mb-3 leading-relaxed">{`Length: ${booking.length || 30} minutes`}</p>
-                          <div className="flex flex-col sm:flex-row gap-2 text-xs sm:text-sm text-gray-600">
-                            <span><strong>Status:</strong> {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
-                          </div>
+                {bookings.map(booking => (
+                  <div key={booking.id} className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                          <h4 className="text-lg sm:text-xl font-bold text-gray-800">{`Lesson on ${new Date(booking.date + ' ' + booking.time).toLocaleString()}`}</h4>
                         </div>
-                        {isCancelable && (
-                          <button
-                            className="mt-2 sm:mt-0 px-4 py-2 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 border border-red-200 transition-all"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setCancelModal({ open: true, booking });
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        )}
+                        <p className="text-gray-700 text-sm sm:text-base mb-3 leading-relaxed">{`Duration: ${booking.length} minutes`}</p>
+                        <div className="flex flex-col sm:flex-row gap-2 text-xs sm:text-sm text-gray-600">
+                          <span><strong>Status:</strong> {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-            {/* Cancel Confirmation Modal */}
-            {cancelModal.open && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-                  <h3 className="text-xl font-bold mb-4 text-red-700">Cancel Lesson?</h3>
-                  <p className="mb-4 text-gray-700">Are you sure you want to cancel your lesson on <span className='font-semibold'>{cancelModal.booking && new Date(cancelModal.booking.date + ' ' + cancelModal.booking.time).toLocaleString()}</span>?</p>
-                  <div className="flex justify-center gap-4">
-                    <button
-                      onClick={() => setCancelModal({ open: false, booking: null })}
-                      className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
-                    >
-                      No, Keep
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (!cancelModal.booking) return;
-                        setBookings(prev => prev.filter(b => b.id !== cancelModal.booking.id));
-                        setAvailableSlots(prev => [...prev, {
-                          id: cancelModal.booking.id,
-                          date: cancelModal.booking.date,
-                          time: cancelModal.booking.time,
-                          length: cancelModal.booking.length,
-                          bookedStudentIds: [],
-                        }]);
-                        setCancelModal({ open: false, booking: null });
-                      }}
-                      className="px-6 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 shadow-lg"
-                    >
-                      Yes, Cancel
-                    </button>
                   </div>
-                </div>
+                ))}
               </div>
             )}
           </div>
         )}
         {activeTab === "Account" && (
-          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-3xl mx-auto">
+          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-purple-700">Account Settings</h2>
-            {/* Account details and settings form */}
-            <div className="space-y-4">
-              <div className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Profile Information</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="firstName">First Name</label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      value={profile?.firstName || ''}
-                      onChange={e => setProfile(prev => ({ ...prev, firstName: e.target.value }))}
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="lastName">Last Name</label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      value={profile?.lastName || ''}
-                      onChange={e => setProfile(prev => ({ ...prev, lastName: e.target.value }))}
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="email">Email</label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={profile?.email || ''}
-                      onChange={e => setProfile(prev => ({ ...prev, email: e.target.value }))}
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      disabled
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="dob">Date of Birth</label>
-                    <input
-                      type="date"
-                      id="dob"
-                      value={profile?.dob || ''}
-                      onChange={e => setProfile(prev => ({ ...prev, dob: e.target.value }))}
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="skillLevel">Skill Level</label>
-                    <select
-                      id="skillLevel"
-                      value={profile?.skillLevel || ''}
-                      onChange={e => setProfile(prev => ({ ...prev, skillLevel: e.target.value }))}
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    >
-                      <option value="">Select your skill level</option>
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="progress">Progress</label>
-                    <input
-                      type="number"
-                      id="progress"
-                      value={profile?.progress || 0}
-                      onChange={e => setProfile(prev => ({ ...prev, progress: Math.min(100, Math.max(0, Number(e.target.value))) }))}
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Change Password</h3>
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="currentPassword">Current Password</label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="newPassword">New Password</label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="confirmPassword">Confirm New Password</label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 sm:mt-8 flex justify-center">
-              <button
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-                onClick={() => { /* Save changes handler */ }}
-              >
-                <span>💾</span>
-                Save Changes
-              </button>
-            </div>
+            {/* Account details and settings form can go here */}
+            <p className="text-center text-gray-500 py-10">
+              Account settings feature is not yet implemented.
+            </p>
           </div>
         )}
       </main>
