@@ -899,6 +899,19 @@ setLessonSlots(
                   {rateError && <div className="text-red-400 font-medium mt-2">{rateError}</div>}
                   {rateSuccess && <div className="text-green-400 font-medium mt-2">{rateSuccess}</div>}
                 </div>
+                {/* Log Out Button */}
+                <div className="flex justify-end">
+                  <button
+                    className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:scale-105 transition-all duration-200"
+                    onClick={async () => {
+                      await auth.signOut();
+                      router.push("/");
+                    }}
+                    type="button"
+                  >
+                    🚪 Log Out
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -9,19 +9,19 @@ import React, { useState, useEffect } from "react";
 function StudentSuccessRotator() {
   const testimonials = [
     {
-      quote: "After just a few months with Jane, I was confidently performing in front of my friends and family!",
+      quote: "After just a few months with Jane, I was confidently performing on the piano for my friends and family!",
       name: "Alex",
       detail: "beginner piano student",
     },
     {
-      quote: "Jane's teaching method helped me finally understand music theory. She's amazing!",
+      quote: "Jane's teaching method helped me finally understand piano theory. She's amazing!",
       name: "Chris",
-      detail: "intermediate guitar student",
+      detail: "intermediate piano student",
     },
     {
-      quote: "I used to be terrified of recitals. Now I look forward to them!",
+      quote: "I used to be terrified of recitals. Now I look forward to playing piano on stage!",
       name: "Taylor",
-      detail: "vocal student",
+      detail: "piano student",
     },
   ];
 
@@ -153,9 +153,9 @@ export default function Home() {
       <section className="flex flex-col sm:flex-row sm:justify-center sm:gap-20 mb-24 max-w-6xl mx-auto px-4">
   {/* PRICING */}
   <div className="flex-1 max-w-md bg-white rounded-xl shadow-md p-8 mb-10 sm:mb-0 text-center">
-    <h2 className="text-2xl font-semibold mb-4 text-[var(--accent)]">Group Pricing</h2>
-    <p className="text-lg mb-2">Starting at <span className="font-bold">$50</span> per group session.</p>
-    <p className="italic text-neutral-600">Contact for individual class pricing.</p>
+    <h2 className="text-2xl font-semibold mb-4 text-[var(--accent)]">Pricing</h2>
+    <p className="text-lg mb-2">Starting at <span className="font-bold">$60</span> per hour session.</p>
+    <p className="italic text-neutral-600">Contact for any questions.</p>
   </div>
 
   {/* CONTACT */}
@@ -176,6 +176,8 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="mt-auto py-6 text-center text-neutral-500 text-base sm:text-sm border-t border-neutral-300">
         © 2025 Buzz Financial
+        <span className="mx-2">|</span>
+        <Link href="/demodashboard/teacherdash/teacherlogin" className="text-indigo-600 hover:underline">Teacher Dashboard</Link>
       </footer>
     </div>
   );

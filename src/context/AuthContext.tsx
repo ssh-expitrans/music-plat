@@ -77,9 +77,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password);
     console.log('Signed in user:', result.user);
-    // Redirect immediately after successful login
+    // Fetch user profile from Firestore to determine role
+    const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+    let role = 'student';
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      role = data.role || 'student';
+    }
+    // Redirect based on login form path
     if (typeof window !== 'undefined') {
-      window.location.href = '/demodashboard/studentdash/real';
+      const path = window.location.pathname;
+      if (path.startsWith('/demodashboard/teacherdash/teacherlogin')) {
+        window.location.href = '/demodashboard/teacherdash/real';
+      } else if (role === 'teacher') {
+        window.location.href = '/demodashboard/teacherdash/real';
+      } else {
+        window.location.href = '/demodashboard/studentdash/real';
+      }
     }
     // User profile will be loaded by the auth state listener
   };
