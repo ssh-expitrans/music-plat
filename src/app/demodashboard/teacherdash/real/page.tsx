@@ -839,8 +839,8 @@ setLessonSlots(
                     ) : (
                       <form
                         className="flex items-center gap-2"
-                        onSubmit={async (e) => {
-                          e.preventDefault();
+                        onSubmit={async (event) => {
+                          event.preventDefault();
                           setRateLoading(true);
                           setRateError("");
                           setRateSuccess("");
@@ -860,7 +860,7 @@ setLessonSlots(
                             setRate(newRate);
                             setRateSuccess("Rate updated!");
                             setRateEdit(false);
-                          } catch (e) {
+                          } catch {
                             setRateError("Failed to update rate.");
                           } finally {
                             setRateLoading(false);
