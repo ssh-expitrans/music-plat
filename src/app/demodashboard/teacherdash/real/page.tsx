@@ -236,9 +236,6 @@ setLessonSlots(
 
   // Helper: get calendar dates
   const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  // const calendarDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)); // unused
 
   // Helper: generate 15-min increment times ("14:00", "14:15", ...)
   const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
