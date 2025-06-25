@@ -93,6 +93,13 @@ export default function StudentDashReal() {
   // --- Book Tab State ---
   const [availableSlots, setAvailableSlots] = useState<LessonSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
+  // --- Booking Modal State (restored) ---
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  // --- Cancel Booking Modal State ---
+  const [cancelModal, setCancelModal] = useState<{ open: boolean; booking: any | null }>({ open: false, booking: null });
   // --- Memo and router ---
   const router = useRouter();
   const weekDates = useMemo(() => getWeekDates(currentWeekStart), [currentWeekStart]);
@@ -295,7 +302,10 @@ export default function StudentDashReal() {
                   return (
                     <button
                       key={slot.id}
-                      onClick={() => setSelectedSlots(prev => isSelected ? prev.filter(s => s !== slot.id) : [...prev, slot.id])}
+                      onClick={() => {
+                        setBookingSuccess(false);
+                        setSelectedSlots(prev => isSelected ? prev.filter(s => s !== slot.id) : [...prev, slot.id]);
+                      }}
                       className={`w-full px-2 py-2 mb-2 rounded-xl font-semibold border-2 transition-all duration-200 shadow text-xs ${isSelected ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-purple-500' : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50 hover:border-purple-400'}`}
                     >
                       {/* Only show time, not day */}
@@ -311,6 +321,7 @@ export default function StudentDashReal() {
     );
   }
 
+  // --- Book Now Section ---
   function BookNowSection() {
     if (selectedSlots.length === 0) return null;
     return (
@@ -329,18 +340,95 @@ export default function StudentDashReal() {
             Clear All
           </button>
           <button
-            onClick={() => alert('Booking not implemented yet!')}
+            onClick={() => {
+              setBookingSuccess(false);
+              setShowConfirm(true);
+            }}
             className="group px-8 py-3 sm:px-10 sm:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 active:scale-95 text-sm sm:text-base"
           >
             Book {selectedSlots.length === 1 ? 'Session' : 'Sessions'}
           </button>
         </div>
+        {/* Confirmation Modal */}
+        {showConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+              <h3 className="text-xl font-bold mb-4 text-purple-700">Confirm Booking</h3>
+              <p className="mb-4 text-gray-700">Are you sure you want to book the following sessions?</p>
+              <div className="flex flex-wrap gap-2 justify-center mb-6">
+                {selectedSlots.map(slotId => {
+                  const slot = availableSlots.find(s => s.id === slotId);
+                  return (
+                    <span key={slotId} className="px-3 py-1 bg-purple-100 rounded-full border border-purple-300 text-purple-800 text-xs font-semibold">
+                      {slot ? `${slot.date} ${slot.time}` : slotId}
+                    </span>
+                  );
+                })}
+              </div>
+              {bookingError && <div className="text-red-500 mb-2">{bookingError}</div>}
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+                  disabled={bookingInProgress}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBookConfirm}
+                  className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold hover:from-purple-700 hover:to-indigo-700 shadow-lg disabled:opacity-60"
+                  disabled={bookingInProgress}
+                >
+                  {bookingInProgress ? 'Booking...' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  // --- Booking Confirm Handler (local state only) ---
+  function handleBookConfirm() {
+    setBookingInProgress(true);
+    setBookingError(null);
+    // Simulate booking: move slots from availableSlots to bookings
+    const booked = availableSlots.filter(slot => selectedSlots.includes(slot.id));
+    setBookings(prev => [
+      ...prev,
+      ...booked.map(slot => ({
+        id: slot.id,
+        date: slot.date,
+        time: slot.time,
+        length: slot.length || 30,
+        status: 'booked',
+      }))
+    ]);
+    setAvailableSlots(prev => prev.filter(slot => !selectedSlots.includes(slot.id)));
+    setSelectedSlots([]);
+    setShowConfirm(false);
+    setBookingInProgress(false);
+    setBookingSuccess(true);
+  }
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
+      {/* Booking Success Modal (only after confirmation) */}
+      {bookingSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+            <h3 className="text-xl font-bold mb-4 text-green-700">Booking Confirmed!</h3>
+            <p className="mb-4 text-gray-700">Your sessions have been booked and will appear in your upcoming lessons.</p>
+            <button
+              onClick={() => setBookingSuccess(false)}
+              className="px-6 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 shadow-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       {/* Sidebar Navigation */}
       <nav className="hidden md:flex relative z-10 w-44 lg:w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-4 lg:p-6 flex-col space-y-3 shadow-2xl">
         <div className="mb-8 flex flex-col items-center gap-2">
@@ -358,6 +446,7 @@ export default function StudentDashReal() {
           >
             <div className="flex items-center space-x-3">
               <span className="text-lg">{getTabIcon(tab)}</span>
+              {/* eslint-disable-next-line react/jsx-no-undef */}
               <span className="hidden sm:inline">{tab}</span>
             </div>
             {activeTab === tab && (
@@ -559,142 +648,247 @@ export default function StudentDashReal() {
                       </button>
                       <input
                         type="number"
+                        min={1}
                         value={quantities[option.length]}
-                        onChange={(e) => setQuantities(prev => ({ ...prev, [option.length]: Math.max(1, Number(e.target.value)) }))}
-                        className="w-16 text-center text-indigo-700 font-bold text-lg border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                        min="1"
-                        aria-label={`Quantity for ${option.length} min lesson`}
+                        onChange={e => setQuantities(q => ({ ...q, [option.length]: Math.max(1, Number(e.target.value)) }))}
+                        className="w-16 px-2 py-1 border rounded-lg text-center text-base font-semibold text-indigo-700 border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        disabled={selectedOption !== option.length}
                       />
+                      <span className="text-xs text-slate-500">Qty</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* Cart Summary */}
-            <div className="mb-8">
-              <h3 className="text-xl sm:text-2xl font-bold mb-4 text-center text-gray-800">
-                Cart Summary
-              </h3>
-              {cart.length === 0 ? (
-                <p className="text-center text-gray-500 text-sm sm:text-base">
-                  Your cart is empty. Please select a lesson option to add to your cart.
-                </p>
-              ) : (
-                <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-gray-200">
-                  <div className="grid grid-cols-3 gap-4 text-gray-700 font-semibold text-sm sm:text-base mb-4">
-                    <span>Lesson Type</span>
-                    <span className="text-center">Quantity</span>
-                    <span className="text-right">Price</span>
-                  </div>
-                  {cart.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-3 gap-4 text-gray-800 text-sm sm:text-base py-2 border-t border-gray-200">
-                      <span>{item.length} min Lesson</span>
-                      <span className="text-center">{item.qty}</span>
-                      <span className="text-right">${item.price * item.qty}</span>
-                    </div>
-                  ))}
-                  <div className="mt-4 border-t border-gray-300 pt-4">
-                    <div className="flex justify-between text-gray-800 font-semibold text-sm sm:text-base">
-                      <span>Total</span>
-                      <span className="text-right">${cart.reduce((acc, item) => acc + item.price * item.qty, 0)}</span>
-                    </div>
-                  </div>
+            {/* Checkout Section (moved above footer) */}
+            <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+                  Your Booking Summary
+                </h3>
+                <div className="text-right mt-2 sm:mt-0">
+                  <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
+                  <span className="text-2xl font-bold text-indigo-700">
+                    ${quantities[30] * 30 + quantities[60] * 60 + quantities[90] * 90}
+                  </span>
                 </div>
-              )}
-            </div>
-
-            {/* Checkout Button */}
-            <div className="flex justify-center">
-              <button
-                onClick={() => {}}
-                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 transition-all duration-300 flex items-center justify-center gap-2"
-                disabled={cart.length === 0}
-                type="button"
-              >
-                {isAdding ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v16a8 8 0 01-8-8z"></path>
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <span>✔️</span>
-                    Proceed to Checkout
-                  </>
-                )}
-              </button>
+              </div>
+              <div className="space-y-4">
+                {Object.keys(quantities).map(length => {
+                  const qty = quantities[Number(length)];
+                  if (qty === 0) return null;
+                  const option = lessonOptions.find(opt => opt.length === Number(length));
+                  return (
+                    <div key={length} className="flex justify-between items-center text-sm sm:text-base p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{option?.icon}</span>
+                        <span className="font-semibold">{option?.length} min Lesson</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700">Qty: {qty}</span>
+                        <span className="text-indigo-700 font-bold">${option?.price}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
         {activeTab === "Upcoming" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-800">
-              Upcoming Events & Lessons
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-purple-700">Upcoming Lessons</h2>
             {bookings.length === 0 ? (
-              <p className="text-center text-gray-500 text-sm sm:text-base">
-                You have no upcoming events or lessons. Check back later!
-              </p>
+              <p className="text-center text-gray-500 py-10">No upcoming lessons found. Book some lessons now!</p>
             ) : (
               <div className="space-y-4">
-                {bookings.map((booking) => (
-                  <div key={booking.id} className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                          <h4 className="text-lg sm:text-xl font-bold text-gray-800">{booking.title}</h4>
-                          <span className="text-xs sm:text-sm text-gray-500">{booking.type}</span>
+                {bookings.map(booking => {
+                  const bookingDate = new Date(booking.date + ' ' + booking.time);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const isCancelable = bookingDate > today;
+                  return (
+                    <div key={booking.id} className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                            <h4 className="text-lg sm:text-xl font-bold text-gray-800">{`Lesson on ${bookingDate.toLocaleString()}`}</h4>
+                          </div>
+                          <p className="text-gray-700 text-sm sm:text-base mb-3 leading-relaxed">{`Length: ${booking.length || 30} minutes`}</p>
+                          <div className="flex flex-col sm:flex-row gap-2 text-xs sm:text-sm text-gray-600">
+                            <span><strong>Status:</strong> {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
+                          </div>
                         </div>
-                        <p className="text-gray-700 text-sm sm:text-base mb-3 leading-relaxed">{booking.description}</p>
-                        <div className="flex flex-col sm:flex-row gap-2 text-xs sm:text-sm text-gray-600">
-                          <span><strong>Date:</strong> {new Date(booking.date + ' ' + booking.time).toLocaleString()}</span>
-                          <span><strong>Duration:</strong> {booking.length} minutes</span>
-                        </div>
+                        {isCancelable && (
+                          <button
+                            className="mt-2 sm:mt-0 px-4 py-2 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 border border-red-200 transition-all"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setCancelModal({ open: true, booking });
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
+            {/* Cancel Confirmation Modal */}
+            {cancelModal.open && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+                  <h3 className="text-xl font-bold mb-4 text-red-700">Cancel Lesson?</h3>
+                  <p className="mb-4 text-gray-700">Are you sure you want to cancel your lesson on <span className='font-semibold'>{cancelModal.booking && new Date(cancelModal.booking.date + ' ' + cancelModal.booking.time).toLocaleString()}</span>?</p>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={() => setCancelModal({ open: false, booking: null })}
+                      className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+                    >
+                      No, Keep
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!cancelModal.booking) return;
+                        setBookings(prev => prev.filter(b => b.id !== cancelModal.booking.id));
+                        setAvailableSlots(prev => [...prev, {
+                          id: cancelModal.booking.id,
+                          date: cancelModal.booking.date,
+                          time: cancelModal.booking.time,
+                          length: cancelModal.booking.length,
+                          bookedStudentIds: [],
+                        }]);
+                        setCancelModal({ open: false, booking: null });
+                      }}
+                      className="px-6 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 shadow-lg"
+                    >
+                      Yes, Cancel
+                    </button>
                   </div>
-                ))}
+                </div>
               </div>
             )}
           </div>
         )}
         {activeTab === "Account" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-800">
-              Account Settings
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-purple-700">Account Settings</h2>
+            {/* Account details and settings form */}
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 sm:p-5 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300">
-                <div className="flex-1 mb-2 sm:mb-0">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Profile Information</h3>
-                  <p className="text-gray-600 text-sm sm:text-base">Manage your personal information</p>
+              <div className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Profile Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="firstName">First Name</label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      value={profile?.firstName || ''}
+                      onChange={e => setProfile(prev => ({ ...prev, firstName: e.target.value }))}
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="lastName">Last Name</label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      value={profile?.lastName || ''}
+                      onChange={e => setProfile(prev => ({ ...prev, lastName: e.target.value }))}
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
                 </div>
-                <button className="px-3 py-1 rounded-lg bg-indigo-600 text-white text-sm sm:text-base font-semibold shadow-md hover:bg-indigo-700 transition-all duration-300">
-                  Edit
-                </button>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 sm:p-5 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300">
-                <div className="flex-1 mb-2 sm:mb-0">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Change Password</h3>
-                  <p className="text-gray-600 text-sm sm:text-base">Update your account password</p>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="email">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={profile?.email || ''}
+                      onChange={e => setProfile(prev => ({ ...prev, email: e.target.value }))}
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      disabled
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="dob">Date of Birth</label>
+                    <input
+                      type="date"
+                      id="dob"
+                      value={profile?.dob || ''}
+                      onChange={e => setProfile(prev => ({ ...prev, dob: e.target.value }))}
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
                 </div>
-                <button className="px-3 py-1 rounded-lg bg-indigo-600 text-white text-sm sm:text-base font-semibold shadow-md hover:bg-indigo-700 transition-all duration-300">
-                  Change
-                </button>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 sm:p-5 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-indigo-50 transition-all duration-300">
-                <div className="flex-1 mb-2 sm:mb-0">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Notification Preferences</h3>
-                  <p className="text-gray-600 text-sm sm:text-base">Manage your notification settings</p>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="skillLevel">Skill Level</label>
+                    <select
+                      id="skillLevel"
+                      value={profile?.skillLevel || ''}
+                      onChange={e => setProfile(prev => ({ ...prev, skillLevel: e.target.value }))}
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    >
+                      <option value="">Select your skill level</option>
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="progress">Progress</label>
+                    <input
+                      type="number"
+                      id="progress"
+                      value={profile?.progress || 0}
+                      onChange={e => setProfile(prev => ({ ...prev, progress: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
                 </div>
-                <button className="px-3 py-1 rounded-lg bg-indigo-600 text-white text-sm sm:text-base font-semibold shadow-md hover:bg-indigo-700 transition-all duration-300">
-                  Update
-                </button>
               </div>
+              <div className="p-4 sm:p-5 rounded-xl border-l-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-500">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Change Password</h3>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="currentPassword">Current Password</label>
+                    <input
+                      type="password"
+                      id="currentPassword"
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="newPassword">New Password</label>
+                    <input
+                      type="password"
+                      id="newPassword"
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1" htmlFor="confirmPassword">Confirm New Password</label>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 sm:mt-8 flex justify-center">
+              <button
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+                onClick={() => { /* Save changes handler */ }}
+              >
+                <span>💾</span>
+                Save Changes
+              </button>
             </div>
           </div>
         )}
