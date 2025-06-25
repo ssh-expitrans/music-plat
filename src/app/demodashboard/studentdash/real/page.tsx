@@ -87,8 +87,9 @@ export default function StudentDashReal() {
   // --- Buy tab state ---
   const [selectedOption, setSelectedOption] = useState<number | null>(30);
   const [quantities, setQuantities] = useState<{ [length: number]: number }>({ 30: 1, 60: 1, 90: 1 });
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
+  const [cart] = useState<CartItem[]>([]);
+  // Remove setIsAdding if not used
+  const [isAdding] = useState(false);
   // --- Book Tab State ---
   const [availableSlots, setAvailableSlots] = useState<LessonSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
