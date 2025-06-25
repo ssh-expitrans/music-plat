@@ -16,6 +16,47 @@ import {
 import { useRouter } from "next/navigation";
 import { addDoc, deleteDoc, updateDoc } from "firebase/firestore";
 
+interface LessonSlot {
+  id?: string;
+  date: string;
+  time: string;
+  duration: number;
+  maxStudents: number;
+  teacherId: string;
+  bookedStudentIds: string[];
+  createdAt: Timestamp;
+}
+
+interface Note {
+  id: string;
+  text: string;
+  studentId: string;
+  teacherId: string;
+  createdAt: Date | null;
+}
+
+// Define Student interface for type safety
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dob?: string;
+  skillLevel?: string;
+  progress?: number;
+}
+
+// Define Homework interface for type safety
+interface Homework {
+  id: string;
+  title: string;
+  description: string;
+  assignedDate: string;
+  dueDate: string;
+  studentId: string;
+  teacherId: string;
+  done: boolean;
+}
+
 const tabs = [
   "Students",
   "Upcoming",
@@ -48,7 +89,7 @@ export default function TeacherDashReal() {
   const [activeTab, setActiveTab] = useState("Students");
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<DocumentData | null>(null);
-  const [students, setStudents] = useState<DocumentData[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [bookings, setBookings] = useState<DocumentData[]>([]);
   const [notes, setNotes] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +102,7 @@ export default function TeacherDashReal() {
     phone: "",
     address: "",
   });
-  const [lessonSlots, setLessonSlots] = useState<any[]>([]);
+  const [lessonSlots, setLessonSlots] = useState<LessonSlot[]>([]);
   const [slotForm, setSlotForm] = useState({
     startDate: "",
     endDate: "",
@@ -82,6 +123,23 @@ export default function TeacherDashReal() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const slotSuccessTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // Add state and sorting logic for session list (Calendar tab)
+  const [sessionSort, setSessionSort] = useState("date");
+  const sortedSessions = [...lessonSlots].sort((a: LessonSlot, b: LessonSlot) => {
+    if (sessionSort === "date") {
+      return (a.date + ' ' + a.time).localeCompare(b.date + ' ' + b.time);
+    } else if (sessionSort === "level") {
+      const aStudent = students.find((s: Student) => s.id === (a.bookedStudentIds?.[0] || ""));
+      const bStudent = students.find((s: Student) => s.id === (b.bookedStudentIds?.[0] || ""));
+      return (aStudent?.skillLevel || "").localeCompare(bStudent?.skillLevel || "");
+    } else if (sessionSort === "name") {
+      const aStudent = students.find((s: Student) => s.id === (a.bookedStudentIds?.[0] || ""));
+      const bStudent = students.find((s: Student) => s.id === (b.bookedStudentIds?.[0] || ""));
+      return ((aStudent?.firstName || "") + (aStudent?.lastName || "")).localeCompare((bStudent?.firstName || "") + (bStudent?.lastName || ""));
+    }
+    return 0;
+  });
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
@@ -97,8 +155,10 @@ export default function TeacherDashReal() {
         const studentsSnap = await getDocs(
           query(collection(db, "users"), where("role", "==", "student"))
         );
-        setStudents(studentsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-        // Fetch bookings for this teacher
+        setStudents(studentsSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Student, "id">)
+        })));
         const bookingsSnap = await getDocs(
           query(collection(db, "bookings"), where("teacherId", "==", firebaseUser.uid))
         );
@@ -112,8 +172,12 @@ export default function TeacherDashReal() {
         const slotsSnap = await getDocs(
           query(collection(db, "lessonSlots"), where("teacherId", "==", firebaseUser.uid))
         );
-        setLessonSlots(slotsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      } catch {
+setLessonSlots(
+  slotsSnap.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<LessonSlot, "id">)
+  }))
+);   } catch {
         setError("Failed to load dashboard data.");
       }
       setLoading(false);
@@ -195,6 +259,7 @@ export default function TeacherDashReal() {
 
   // Bulk slot creation handler
   async function handleAddSlot(e: React.FormEvent) {
+    const slotsToAdd: LessonSlot[] = [];
     e.preventDefault();
     if (!user) {
       setSlotError("You must be logged in as a teacher to add a slot.");
@@ -275,8 +340,12 @@ export default function TeacherDashReal() {
       const slotsSnap = await getDocs(
         query(collection(db, "lessonSlots"), where("teacherId", "==", user.uid))
       );
-      setLessonSlots(slotsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    } catch (e: any) {
+setLessonSlots(
+  slotsSnap.docs.map((doc) => ({
+    id: doc.id ?? "",
+    ...(doc.data() as Omit<LessonSlot, "id">)
+  }))
+);    } catch (e: any) {
       setSlotError(e.message || "Failed to add slot(s).");
     } finally {
       setSlotLoading(false);
@@ -302,8 +371,7 @@ export default function TeacherDashReal() {
     setDeleteError("");
     try {
       await Promise.all(selectedSessions.map(id => deleteDoc(doc(db, "lessonSlots", id))));
-      setLessonSlots((prev) => prev.filter((s) => !selectedSessions.includes(s.id)));
-      setSelectedSessions([]);
+      setLessonSlots((prev) => prev.filter((s) => s.id && !selectedSessions.includes(s.id)));      setSelectedSessions([]);
       setBulkDeleteConfirm(false);
     } catch (e: any) {
       setDeleteError(e.message || "Failed to delete sessions.");
@@ -323,6 +391,16 @@ export default function TeacherDashReal() {
     const dayNum = dateObj.getDate();
     const time = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
     return `${day}, ${month} ${dayNum}, ${time} (${slot.duration} min) • Max: ${slot.maxStudents} • Booked: ${slot.bookedStudentIds?.length || 0}`;
+  }
+
+  // Helper to get student info for a slot
+  function getStudentInfo(slot: any) {
+    if (!slot.bookedStudentIds || slot.bookedStudentIds.length === 0) return 'No students booked';
+    return slot.bookedStudentIds.map((id: string) => {
+      const s = students.find((stu: any) => stu.id === id);
+      if (!s) return 'Unknown';
+      return `${s.firstName} ${s.lastName} (${s.skillLevel || '-'})`;
+    }).join(', ');
   }
 
   // UI rendering (structure and styles adapted from demo dashboard)
@@ -434,10 +512,7 @@ export default function TeacherDashReal() {
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                   ⏰ Upcoming Lessons (Week View)
                 </h2>
-                <WeekViewCalendar
-                  lessonSlots={lessonSlots}
-                  students={students}
-                />
+                {/* Removed WeekViewCalendar component as it's no longer used */}
               </div>
             )}
             {/* Homework Tab */}
@@ -477,8 +552,9 @@ export default function TeacherDashReal() {
             {activeTab === "Calendar" && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  📅 Session Calendar
+                  ️📅 Session List
                 </h2>
+                {/* Add Session(s) Form */}
                 <div className="glass-effect p-6 rounded-2xl border border-white/20 mb-8">
                   <h3 className="text-xl font-bold text-white mb-4">Add Session(s)</h3>
                   <form onSubmit={handleAddSlot} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
@@ -529,141 +605,42 @@ export default function TeacherDashReal() {
                   {slotError && <div className="text-red-400 font-medium mt-2">{slotError}</div>}
                   {slotSuccess && <div className="text-green-400 font-medium mt-2">{slotSuccess}</div>}
                 </div>
+                {/* Sorting Controls */}
+                <div className="flex flex-wrap gap-4 items-center mb-4">
+                  <label className="text-purple-200 font-medium">Sort by:</label>
+                  <select
+                    value={sessionSort}
+                    onChange={e => setSessionSort(e.target.value)}
+                    className="p-2 rounded bg-slate-800 border border-white/20 text-white"
+                  >
+                    <option value="date">Date</option>
+                  </select>
+                </div>
+                {/* Session List */}
                 <div className="glass-effect p-6 rounded-2xl border border-white/20">
                   <h3 className="text-xl font-bold text-white mb-4">Sessions</h3>
                   {lessonSlots.length === 0 ? (
                     <p className="text-purple-200">No sessions yet.</p>
                   ) : (
-                    <>
-                      {selectedSessions.length > 0 && (
-                        <div className="mb-2 flex items-center gap-2">
-                          <button
-                            className="text-red-500 hover:text-red-700 text-2xl px-3 py-1 rounded-xl bg-white/10 border border-red-400 font-bold flex items-center gap-2"
-                            onClick={() => setBulkDeleteConfirm(true)}
-                            disabled={deleteLoading}
-                          >
-                            🗑️ Delete Selected ({selectedSessions.length})
-                          </button>
-                        </div>
-                      )}
-                      <ul className="space-y-2">
-                        {lessonSlots.map(slot => (
-                          <li key={slot.id} className={`flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group ${selectedSessions.includes(slot.id) ? 'ring-2 ring-red-400' : ''}`}>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={selectedSessions.includes(slot.id)}
-                                onChange={e => setSelectedSessions(sel => e.target.checked ? [...sel, slot.id] : sel.filter(id => id !== slot.id))}
-                                className="accent-purple-500 w-5 h-5"
-                              />
-                              <span>{formatSession(slot)}</span>
+                    <ul className="space-y-2">
+                      {sortedSessions.map(slot => (
+                        <li key={slot.id} className="flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group">
+                          <div>
+                            <div className="font-bold text-lg">{formatSession(slot)}</div>
+                            <div className="text-purple-200 text-sm">
+                              {getStudentInfo(slot)}
                             </div>
-                            <button
-                              className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors text-xl opacity-80 group-hover:opacity-100"
-                              title="Delete session"
-                              onClick={() => setSlotToDelete(slot.id)}
-                            >
-                              🗑️
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                      {/* Bulk delete confirmation dialog */}
-                      {bulkDeleteConfirm && (
-                        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full text-center">
-                            <h4 className="text-xl font-bold mb-4 text-slate-900">Are you sure you want to delete {selectedSessions.length} session(s)?</h4>
-                            <div className="flex justify-center gap-4 mt-4">
-                              <button
-                                className="px-4 py-2 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-700 transition"
-                                onClick={handleBulkDelete}
-                                disabled={deleteLoading}
-                              >
-                                {deleteLoading ? "Deleting..." : "Yes, Delete"}
-                              </button>
-                              <button
-                                className="px-4 py-2 rounded-xl bg-slate-200 text-slate-900 font-semibold hover:bg-slate-300 transition"
-                                onClick={() => setBulkDeleteConfirm(false)}
-                                disabled={deleteLoading}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                            {deleteError && <div className="text-red-500 mt-2">{deleteError}</div>}
                           </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {/* Delete confirmation dialog */}
-                  {slotToDelete && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                      <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full text-center">
-                        <h4 className="text-xl font-bold mb-4 text-slate-900">Are you sure you want to delete this session?</h4>
-                        <div className="flex justify-center gap-4 mt-4">
                           <button
-                            className="px-4 py-2 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-700 transition"
-                            onClick={() => handleDeleteSlot(slotToDelete)}
-                            disabled={deleteLoading}
-                          >
-                            {deleteLoading ? "Deleting..." : "Yes, Delete"}
+                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors text-xl opacity-80 group-hover:opacity-100"
+                            title="Delete session"
+                            onClick={() => setSlotToDelete(slot.id ?? null)}                          >
+                            🗑️
                           </button>
-                          <button
-                            className="px-4 py-2 rounded-xl bg-slate-200 text-slate-900 font-semibold hover:bg-slate-300 transition"
-                            onClick={() => setSlotToDelete(null)}
-                            disabled={deleteLoading}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                        {deleteError && <div className="text-red-500 mt-2">{deleteError}</div>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {/* Calendar grid showing only sessions */}
-                <div className="glass-effect p-6 rounded-2xl border border-white/20 mt-8">
-                  <div className="grid grid-cols-7 gap-2 text-center mb-4">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <div key={day} className="text-lg font-bold text-purple-300 p-2">
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-2">
-                    {Array(new Date(year, month, 1).getDay())
-                      .fill(null)
-                      .map((_, i) => (
-                        <div key={"empty" + i} />
+                        </li>
                       ))}
-                    {calendarDates.map((date) => {
-                      const dateStr = date.toISOString().split("T")[0];
-                      const localDate = parseLocalDate(dateStr);
-                      // Only show sessions visually, no block logic
-                      const isToday = dateStr === today.toISOString().split("T")[0];
-                      const isPast = localDate.getTime() < today.setHours(0,0,0,0);
-                      const sessionsOnDay = lessonSlots.filter(slot => slot.date === dateStr);
-                      return (
-                        <div
-                          key={dateStr}
-                          className={`p-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 relative min-h-[48px] flex flex-col items-center justify-start ${
-                            isToday ? "ring-2 ring-yellow-400 ring-offset-2 ring-offset-transparent" : ""
-                          } ${isPast ? "opacity-40" : ""}`}
-                        >
-                          <div className="text-white text-lg mb-1">{localDate.getDate()}</div>
-                          {sessionsOnDay.length > 0 && (
-                            <div className="flex flex-col gap-1 w-full">
-                              {sessionsOnDay.map(slot => (
-                                <div key={slot.id} className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white text-xs rounded px-1 py-0.5 shadow-md truncate" title={formatSession(slot)}>
-                                  {slot.time} ({slot.duration}m)
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                    </ul>
+                  )}
                 </div>
               </div>
             )}
@@ -754,27 +731,7 @@ export default function TeacherDashReal() {
   );
 }
 
-// Define Student interface for type safety
-interface Student {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dob?: string;
-  skillLevel?: string;
-  progress?: number;
-}
 
-// Define Homework interface for type safety
-interface Homework {
-  id: string;
-  title: string;
-  description: string;
-  assignedDate: string;
-  dueDate: string;
-  studentId: string;
-  teacherId: string;
-  done: boolean;
-}
 
 // Add TeacherHomeworkTab component at the bottom
 function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Student[]; teacherId: string; onAssign: () => void }) {
@@ -801,7 +758,7 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
             snap.docs.map(doc => {
               const data = doc.data();
               return {
-                id: doc.id,
+                id: doc.id ?? "", // Always a string
                 title: data.title || '',
                 description: data.description || '',
                 assignedDate: data.assignedDate || '',
@@ -809,7 +766,7 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
                 studentId: data.studentId || '',
                 teacherId: data.teacherId || '',
                 done: typeof data.done === 'boolean' ? data.done : false,
-              };
+              } as Homework;
             }).sort((a, b) => (b.assignedDate || '').localeCompare(a.assignedDate || ''))
           );
         }
@@ -957,7 +914,7 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
                     </span>
                     <button
                       className={`ml-2 px-3 py-1 rounded-xl text-xs font-bold transition-colors duration-200 ${hw.done ? 'bg-green-500 text-white' : 'bg-slate-700 text-white'}`}
-                      onClick={() => toggleDone(hw.id, hw.done)}
+                      onClick={() => toggleDone(hw.id!, hw.done)}
                       type="button"
                       title={hw.done ? 'Mark as not done' : 'Mark as done'}
                     >
@@ -982,14 +939,14 @@ function TeacherHomeworkTab({ students, teacherId, onAssign }: { students: Stude
   );
 }
 
-// Add TeacherNotesTab component at the bottom
+// --- TeacherNotesTab ---
 function TeacherNotesTab({ students, teacherId }: { students: Student[]; teacherId: string }) {
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [notesList, setNotesList] = useState<any[]>([]);
+  const [notesList, setNotesList] = useState<Note[]>([]);
   const [listLoading, setListLoading] = useState(true);
 
   // Fetch all notes for this teacher
@@ -1010,7 +967,7 @@ function TeacherNotesTab({ students, teacherId }: { students: Student[]; teacher
                 studentId: data.studentId || '',
                 teacherId: data.teacherId || '',
                 createdAt: data.createdAt ? data.createdAt.toDate?.() || new Date(data.createdAt) : null,
-              };
+              } as Note;
             }).sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0))
           );
         }
@@ -1125,80 +1082,6 @@ function TeacherNotesTab({ students, teacherId }: { students: Student[]; teacher
             ))}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function WeekViewCalendar({ lessonSlots, students }: { lessonSlots: any[]; students: any[] }) {
-  const [weekOffset, setWeekOffset] = useState(0);
-  const today = new Date();
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay() + weekOffset * 7);
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
-    return d;
-  });
-  // Group slots by date
-  const slotsByDate: { [date: string]: any[] } = {};
-  lessonSlots.forEach(slot => {
-    // Always use slot.date as key (YYYY-MM-DD)
-    if (!slotsByDate[slot.date]) slotsByDate[slot.date] = [];
-    slotsByDate[slot.date].push(slot);
-  });
-  // Helper to get student names for a slot
-  function getStudentNames(slot: any) {
-    if (!slot.bookedStudentIds || slot.bookedStudentIds.length === 0) return 'None';
-    return slot.bookedStudentIds.map((id: string) => {
-      const s = students.find((stu: any) => stu.id === id);
-      return s ? `${s.firstName} ${s.lastName}` : 'Unknown';
-    }).join(', ');
-  }
-  return (
-    <div className="">
-      <div className="flex justify-between items-center mb-4">
-        <button
-          className="px-3 py-1 rounded-xl bg-slate-700 text-white font-bold hover:bg-slate-600"
-          onClick={() => setWeekOffset(w => w - 1)}
-        >
-          ← Previous
-        </button>
-        <div className="text-xl font-bold text-white">
-          {days[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {days[6].toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-        </div>
-        <button
-          className="px-3 py-1 rounded-xl bg-slate-700 text-white font-bold hover:bg-slate-600"
-          onClick={() => setWeekOffset(w => w + 1)}
-        >
-          Next →
-        </button>
-      </div>
-      <div className="grid grid-cols-7 gap-4">
-        {days.map(day => {
-          const dateStr = day.toISOString().split('T')[0];
-          const slots = slotsByDate[dateStr] || [];
-          return (
-            <div key={dateStr} className="bg-white/10 rounded-2xl p-2 min-h-[120px] flex flex-col">
-              <div className="text-center text-purple-200 font-bold mb-2">
-                {day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-              </div>
-              {slots.length === 0 ? (
-                <div className="text-purple-300 text-xs text-center">No sessions</div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {slots.sort((a, b) => a.time.localeCompare(b.time)).map(slot => (
-                    <div key={slot.id} className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-2 text-white shadow-md">
-                      <div className="font-bold text-sm">{slot.time} ({slot.duration} min)</div>
-                      <div className="text-xs">Max: {slot.maxStudents} | Booked: {slot.bookedStudentIds?.length || 0}</div>
-                      <div className="text-xs">Students: {getStudentNames(slot)}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );
