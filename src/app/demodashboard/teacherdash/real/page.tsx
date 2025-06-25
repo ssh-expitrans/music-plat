@@ -359,8 +359,12 @@ setLessonSlots(
       await deleteDoc(doc(db, "lessonSlots", slotId));
       setLessonSlots((prev) => prev.filter((s) => s.id !== slotId));
       setSlotToDelete(null);
-    } catch (e: any) {
-      setDeleteError(e.message || "Failed to delete slot.");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setDeleteError(e.message || "Failed to delete slot.");
+      } else {
+        setDeleteError("Failed to delete slot.");
+      }
     } finally {
       setDeleteLoading(false);
     }
@@ -371,7 +375,8 @@ setLessonSlots(
     setDeleteError("");
     try {
       await Promise.all(selectedSessions.map(id => deleteDoc(doc(db, "lessonSlots", id))));
-      setLessonSlots((prev) => prev.filter((s) => s.id && !selectedSessions.includes(s.id)));      setSelectedSessions([]);
+      setLessonSlots((prev) => prev.filter((s) => s.id && !selectedSessions.includes(s.id)));
+      setSelectedSessions([]);
       setBulkDeleteConfirm(false);
     } catch (e: any) {
       setDeleteError(e.message || "Failed to delete sessions.");
@@ -381,7 +386,7 @@ setLessonSlots(
   }
 
   // Helper: format session display
-  function formatSession(slot: any) {
+  function formatSession(slot: LessonSlot) {
     const dateObj = parseLocalDate(slot.date);
     // Use local date for day/month
     const [hour, minute] = slot.time.split(":");
@@ -394,7 +399,7 @@ setLessonSlots(
   }
 
   // Helper to get student info for a slot
-  function getStudentInfo(slot: any) {
+  function getStudentInfo(slot: LessonSlot) {
     if (!slot.bookedStudentIds || slot.bookedStudentIds.length === 0) return 'No students booked';
     return slot.bookedStudentIds.map((id: string) => {
       const s = students.find((stu: any) => stu.id === id);

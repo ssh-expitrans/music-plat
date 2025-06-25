@@ -149,7 +149,7 @@ export default function StudentDashReal() {
           <h3 className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-800 mb-1">
             {formatWeekRange(currentWeekStart)}
           </h3>
-          {!isCurrentWeek(currentWeekStart) && (
+          {!isCurrentWeek && (
             <button
               onClick={() => setCurrentWeekStart(getCurrentWeekSunday())}
               className="text-xs sm:text-sm md:text-base text-purple-600 hover:text-purple-800 font-medium"
@@ -223,7 +223,7 @@ export default function StudentDashReal() {
             <div key={dayIndex} className="flex flex-col items-center p-4 bg-white rounded-2xl border border-purple-100 shadow">
               <span className={`font-bold mb-2 ${isToday ? 'text-purple-700' : 'text-gray-700'}`}>{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}{isToday && ' (Today)'}</span>
               <div className="flex flex-col gap-2 w-full">
-                {timeSlots.map((time) => (
+                {timeSlots.map((time: string) => (
                   <button
                     key={time}
                     onClick={() => handleSlotClick(day, time)}
@@ -449,16 +449,16 @@ export default function StudentDashReal() {
             </div>
 
             {/* Week Navigation */}
-            <BookWeekNav currentWeekStart={currentWeekStart} setCurrentWeekStart={setCurrentWeekStart} isCurrentWeek={isCurrentWeek(currentWeekStart)} />
+            {BookWeekNav()}
 
             {/* Selection Summary */}
-            <BookSelectionSummary selectedSlots={selectedSlots} />
+            {BookSelectionSummary()}
 
             {/* Desktop View - Grid Layout */}
-            <BookSlotGrid currentWeek={currentWeek} selectedSlots={selectedSlots} setSelectedSlots={setSelectedSlots} />
+            {BookSlotGrid()}
 
             {/* Book Now Section */}
-            <BookNowSection selectedSlots={selectedSlots} setSelectedSlots={setSelectedSlots} />
+            {BookNowSection()}
           </div>
         )}
         {activeTab === "Buy" && (
@@ -656,45 +656,28 @@ export default function StudentDashReal() {
 }
 
 // --- Book Tab Helper Components ---
-const timeSlots = [
-  "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"
-];
-
-function getCurrentWeekSunday() {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() - dayOfWeek);
-  sunday.setHours(0,0,0,0);
-  return sunday;
-}
-
-function getWeekDates(sundayDate: Date) {
-  const week = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sundayDate);
-    d.setDate(sundayDate.getDate() + i);
-    week.push(d);
-  }
-  return week;
-}
-
-function formatWeekRange(weekStart: Date) {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-  if (weekStart.getMonth() === weekEnd.getMonth()) {
-    return `${weekStart.toLocaleDateString(undefined, { month: 'long' })} ${weekStart.getDate()}-${weekEnd.getDate()}`;
-  } else {
-    return `${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
-  }
-}
-
-function isCurrentWeek(currentWeekStart: Date) {
-  const today = getCurrentWeekSunday();
-  return currentWeekStart.getTime() === today.getTime();
-}
+// import { formatWeekRange } from "./page"; // Remove this import; not needed
 
 function BookWeekNav({ currentWeekStart, setCurrentWeekStart, isCurrentWeek }: { currentWeekStart: Date, setCurrentWeekStart: (d: Date) => void, isCurrentWeek: boolean }) {
+  // Add formatWeekRange here for use in this component
+  function formatWeekRange(weekStart: Date) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    if (weekStart.getMonth() === weekEnd.getMonth()) {
+      return `${weekStart.toLocaleDateString(undefined, { month: 'long' })} ${weekStart.getDate()}-${weekEnd.getDate()}`;
+    } else {
+      return `${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+    }
+  }
+  // Define getCurrentWeekSunday locally
+  function getCurrentWeekSunday() {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - dayOfWeek);
+    sunday.setHours(0,0,0,0);
+    return sunday;
+  }
   return (
     <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-purple-200 shadow-lg space-y-4 sm:space-y-0 md:gap-8">
       <div className="flex space-x-2 sm:space-x-0 sm:block order-2 sm:order-1 md:space-x-4">
@@ -763,7 +746,11 @@ function BookSelectionSummary({ selectedSlots }: { selectedSlots: string[] }) {
   );
 }
 
-function BookSlotGrid({ currentWeek, selectedSlots, setSelectedSlots }: { currentWeek: Date[], selectedSlots: string[], setSelectedSlots: (s: string[]) => void }) {
+function BookSlotGrid({ currentWeek, selectedSlots, setSelectedSlots }: { currentWeek: Date[], selectedSlots: string[], setSelectedSlots: React.Dispatch<React.SetStateAction<string[]>> }) {
+  // Define timeSlots inside the component
+  const timeSlots = [
+    "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"
+  ];
   function handleSlotClick(day: Date, time: string) {
     const slotKey = `${day.toDateString()}-${time}`;
     setSelectedSlots(prev => prev.includes(slotKey) ? prev.filter(s => s !== slotKey) : [...prev, slotKey]);
@@ -789,7 +776,7 @@ function BookSlotGrid({ currentWeek, selectedSlots, setSelectedSlots }: { curren
           <div key={dayIndex} className="flex flex-col items-center p-4 bg-white rounded-2xl border border-purple-100 shadow">
             <span className={`font-bold mb-2 ${isToday ? 'text-purple-700' : 'text-gray-700'}`}>{day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}{isToday && ' (Today)'}</span>
             <div className="flex flex-col gap-2 w-full">
-              {timeSlots.map((time) => (
+              {timeSlots.map((time: string) => (
                 <button
                   key={time}
                   onClick={() => handleSlotClick(day, time)}
