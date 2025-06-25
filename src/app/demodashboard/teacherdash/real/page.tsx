@@ -109,8 +109,6 @@ export default function TeacherDashReal() {
     phone: "",
     address: "",
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [rate, setRate] = useState<number>(profile?.rate ?? 60);
   const [rateEdit, setRateEdit] = useState(false);
   const [rateInput, setRateInput] = useState<string>(String(profile?.rate ?? 60));
@@ -203,9 +201,9 @@ setLessonSlots(
     ...(doc.data() as Omit<LessonSlot, "id">)
   }))
 );   } catch {
-        setError("Failed to load dashboard data.");
+        setSlotError("Failed to load dashboard data.");
       }
-      setLoading(false);
+      setSlotLoading(false);
     });
     return () => unsubscribe();
   }, [router]);
@@ -438,7 +436,7 @@ setLessonSlots(
           </div>
           {/* Bottom Navigation Bar for Mobile/Tablet (md and below) */}
           <nav className="fixed left-0 bottom-0 w-full z-50 flex md:hidden bg-gradient-to-t from-slate-900/95 to-slate-900/80 border-t border-purple-900/40 shadow-2xl h-20 rounded-t-2xl m-0 p-0" style={{margin:0,padding:0}}>
-            {tabs.map((tab, idx) => (
+            {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -643,7 +641,6 @@ setLessonSlots(
                     progress: s.progress,
                   }))}
                   teacherId={user?.uid ?? ""}
-                  onAssign={() => { setActiveTab("Students"); setSelectedStudentId(""); }}
                   selectedStudentId={selectedStudentId}
                   clearSelectedStudentId={() => setSelectedStudentId("")}
                 />
@@ -914,7 +911,7 @@ setLessonSlots(
 
 
 // Add TeacherHomeworkTab component at the bottom
-function TeacherHomeworkTab({ students, teacherId, onAssign, selectedStudentId, clearSelectedStudentId }: { students: Student[]; teacherId: string; onAssign: () => void; selectedStudentId?: string; clearSelectedStudentId?: () => void }) {
+function TeacherHomeworkTab({ students, teacherId, selectedStudentId, clearSelectedStudentId }: { students: Student[]; teacherId: string; selectedStudentId?: string; clearSelectedStudentId?: () => void }) {
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -1005,8 +1002,7 @@ function TeacherHomeworkTab({ students, teacherId, onAssign, selectedStudentId, 
     return null;
   }
 
-  const handleAssign = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAssign = async () => {
     setLoading(true);
     setError("");
     setSuccess("");
@@ -1231,8 +1227,7 @@ function TeacherNotesTab({ students, teacherId, selectedStudentId, clearSelected
     return () => { ignore = true; };
   }, [teacherId, success]);
 
-  const handleSendNote = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendNote = async () => {
     setLoading(true);
     setError("");
     setSuccess("");

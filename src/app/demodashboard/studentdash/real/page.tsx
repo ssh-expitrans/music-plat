@@ -304,9 +304,6 @@ export default function StudentDashReal() {
   function removeFromCart(idx: number) {
     setCart(prev => prev.filter((_, i) => i !== idx));
   }
-  function clearCart() {
-    setCart([]);
-  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
