@@ -51,11 +51,33 @@ function isCurrentWeek(currentWeekStart: Date) {
   return currentWeekStart.getTime() === today.getTime();
 }
 
+// --- Types ---
+interface LessonSlot {
+  id: string;
+  date: string; // yyyy-mm-dd
+  time: string; // HH:mm or HH:mm:ss
+  bookedStudentIds?: string[];
+  [key: string]: unknown;
+}
+interface CartItem {
+  length: number;
+  price: number;
+  qty: number;
+}
+interface UserProfile extends DocumentData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  dob?: string;
+  skillLevel?: string;
+  progress?: number;
+}
+
 export default function StudentDashReal() {
   // --- All hooks at the top, in a fixed order ---
   const [activeTab, setActiveTab] = useState<"Home" | "Book" | "Buy" | "Upcoming" | "Account">("Home");
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<DocumentData | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [homework, setHomework] = useState<DocumentData[]>([]);
   const [bookings, setBookings] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,35 +85,28 @@ export default function StudentDashReal() {
   const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   // --- Buy tab state ---
-  const lessonOptions = [
-    { length: 30, price: 30, icon: '🎹', desc: 'Standard 30-minute private lesson.' },
-    { length: 60, price: 60, icon: '🎶', desc: 'Full 1-hour private lesson.' },
-    { length: 90, price: 90, icon: '🎼', desc: 'Extended 90-minute private lesson.' },
-  ];
   const [selectedOption, setSelectedOption] = useState<number | null>(30);
   const [quantities, setQuantities] = useState<{ [length: number]: number }>({ 30: 1, 60: 1, 90: 1 });
-  const [cart, setCart] = useState<{ length: number; price: number; qty: number }[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   // --- Book Tab State ---
-  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<LessonSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
-  // Helper: sort slots by soonest
-  const sortedAvailableSlots = useMemo(() => {
-    return [...availableSlots].sort((a, b) => {
-      const aDate = new Date(a.date + 'T' + a.time);
-      const bDate = new Date(b.date + 'T' + b.time);
-      return aDate.getTime() - bDate.getTime();
-    });
-  }, [availableSlots]);
-  // Helper: get slot display string
-  function getSlotDisplay(slot: any) {
-    const dateObj = new Date(slot.date + 'T' + slot.time);
-    return `${dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} @ ${dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  }
   // --- Memo and router ---
   const router = useRouter();
-  // --- Book Tab Memo hooks (MOVED UP) ---
   const weekDates = useMemo(() => getWeekDates(currentWeekStart), [currentWeekStart]);
+
+  // --- Helper: group slots by day for BookAvailableTimes ---
+  const slotsByDay = useMemo(() => {
+    const map: { [date: string]: LessonSlot[] } = {};
+    for (const slot of availableSlots) {
+      if (!map[slot.date]) map[slot.date] = [];
+      map[slot.date].push(slot);
+    }
+    // Sort slots for each day by time
+    Object.values(map).forEach(arr => arr.sort((a, b) => a.time.localeCompare(b.time)));
+    return map;
+  }, [availableSlots]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -117,7 +132,7 @@ export default function StudentDashReal() {
         // Fetch bookings
         const bookingSnap = await getDocs(query(collection(db, "bookings"), where("studentId", "==", firebaseUser.uid)));
         setBookings(bookingSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (e) {
+      } catch {
         setError("Failed to load dashboard data.");
       }
       setLoading(false);
@@ -132,16 +147,26 @@ export default function StudentDashReal() {
         const slotsSnap = await getDocs(query(collection(db, "lessonSlots")));
         setAvailableSlots(
           slotsSnap.docs
-            .map(doc => ({ id: doc.id, ...(doc.data() as { bookedStudentIds?: string[] }) }))
+            .map(doc => {
+              const data = doc.data() as LessonSlot;
+              return { ...data, id: doc.id };
+            })
             .filter(slot => Array.isArray(slot.bookedStudentIds) && slot.bookedStudentIds.length === 0)
         );
-      } catch (e) {
+      } catch {
         setAvailableSlots([]);
       }
       setSlotsLoading(false);
     };
     fetchSlots();
   }, []);
+
+  // --- Lesson Options (typed) ---
+  const lessonOptions: Array<{ length: number; price: number; icon: string; desc: string }> = [
+    { length: 30, price: 30, icon: '🎹', desc: 'Standard 30-minute private lesson.' },
+    { length: 60, price: 60, icon: '🎶', desc: 'Full 1-hour private lesson.' },
+    { length: 90, price: 90, icon: '🎼', desc: 'Extended 90-minute private lesson.' },
+  ];
 
   // Only after all hooks, do early returns:
   if (loading) return (
@@ -169,34 +194,12 @@ export default function StudentDashReal() {
     .filter(b => new Date(b.date + ' ' + b.time) > new Date())
     .sort((a, b) => new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime())[0];
 
-  // --- Book Tab Helper Functions ---
-  const timeSlots = [
-    "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"
-  ];
-  // Helper: format slot date/time
-  function formatSlotDisplay(slot: any) {
-    if (!slot?.date || !slot?.time) return slot?.id || '';
+  // Helper: format slot time only (no day)
+  function formatSlotTime(slot: LessonSlot | undefined) {
+    if (!slot?.time) return slot?.id || '';
     const dateObj = new Date(slot.date + 'T' + slot.time);
-    return `${dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} @ ${dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-
-  // Helper: get slots for current week, grouped by day
-  const slotsByDay = useMemo(() => {
-    // Sort slots by soonest
-    const sorted = [...availableSlots].sort((a, b) => {
-      const aDate = new Date(a.date + 'T' + a.time);
-      const bDate = new Date(b.date + 'T' + b.time);
-      return aDate.getTime() - bDate.getTime();
-    });
-    // Group by day string (yyyy-mm-dd)
-    const map: { [date: string]: any[] } = {};
-    for (const slot of sorted) {
-      if (!slot.date) continue;
-      if (!map[slot.date]) map[slot.date] = [];
-      map[slot.date].push(slot);
-    }
-    return map;
-  }, [availableSlots]);
 
   // --- Book Tab UI Components (scoped inside main component) ---
   function BookWeekNav() {
@@ -262,7 +265,8 @@ export default function StudentDashReal() {
             const slot = availableSlots.find(s => s.id === slotId);
             return (
               <span key={slotId} className="px-3 py-1 bg-white rounded-full border border-amber-300 text-amber-800 text-xs font-semibold">
-                {formatSlotDisplay(slot)}
+                {/* Only show time, not day */}
+                {formatSlotTime(slot)}
               </span>
             );
           })}
@@ -293,7 +297,8 @@ export default function StudentDashReal() {
                       onClick={() => setSelectedSlots(prev => isSelected ? prev.filter(s => s !== slot.id) : [...prev, slot.id])}
                       className={`w-full px-2 py-2 mb-2 rounded-xl font-semibold border-2 transition-all duration-200 shadow text-xs ${isSelected ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-purple-500' : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50 hover:border-purple-400'}`}
                     >
-                      {formatSlotDisplay(slot)}
+                      {/* Only show time, not day */}
+                      {formatSlotTime(slot)}
                     </button>
                   );
                 })
@@ -303,28 +308,6 @@ export default function StudentDashReal() {
         })}
       </div>
     );
-  }
-
-  // --- Buy Tab State & Handlers ---
-  function addToCart(length: number) {
-    setIsAdding(true);
-    setTimeout(() => {
-      setCart(prev => {
-        const qty = quantities[length] || 1;
-        // If already in cart, update quantity
-        const idx = prev.findIndex(i => i.length === length);
-        if (idx > -1) {
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], qty: updated[idx].qty + qty };
-          return updated;
-        }
-        return [...prev, { length, price: lessonOptions.find(o => o.length === length)?.price || 0, qty }];
-      });
-      setIsAdding(false);
-    }, 400);
-  }
-  function removeFromCart(idx: number) {
-    setCart(prev => prev.filter((_, i) => i !== idx));
   }
 
   function BookNowSection() {
@@ -538,11 +521,11 @@ export default function StudentDashReal() {
             {/* Week Navigation */}
             {BookWeekNav()}
 
-            {/* Selection Summary */}
-            {BookSelectionSummary()}
-
             {/* Week Calendar View of Available Times */}
             {BookAvailableTimes()}
+
+            {/* Selection Summary (moved below calendar) */}
+            {BookSelectionSummary()}
 
             {/* Book Now Section */}
             {BookNowSection()}
@@ -554,7 +537,7 @@ export default function StudentDashReal() {
             {/* Lesson Options */}
             <div className="mb-8">
               <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
-                {lessonOptions.map(option => (
+                {lessonOptions.map((option: { length: number; price: number; icon: string; desc: string }) => (
                   <div key={option.length} className={`flex flex-col items-start p-5 rounded-2xl border-2 ${selectedOption === option.length ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white'} shadow transition-all duration-200`}>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">{option.icon}</span>
