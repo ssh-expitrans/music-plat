@@ -980,7 +980,7 @@ function TeacherHomeworkTab({ students, teacherId, selectedStudentId, clearSelec
     try {
       await deleteDoc(doc(db, "homework", hwId));
       setHomeworkList(list => list.filter(hw => hw.id !== hwId));
-    } catch (e) {
+    } catch {
       // Optionally show error
     }
   }
@@ -1227,6 +1227,7 @@ function TeacherNotesTab({ students, teacherId, selectedStudentId, clearSelected
     return () => { ignore = true; };
   }, [teacherId, success]);
 
+  // Send note handler
   const handleSendNote = async () => {
     setLoading(true);
     setError("");
@@ -1241,9 +1242,8 @@ function TeacherNotesTab({ students, teacherId, selectedStudentId, clearSelected
       setSuccess("Note sent!");
       setNote("");
       setSelectedStudent("");
-    } catch (e: unknown) {
-      if (e instanceof Error) setError(e.message);
-      else setError("Failed to send note.");
+    } catch {
+      setError("Failed to send note.");
     } finally {
       setLoading(false);
     }
