@@ -59,11 +59,6 @@ interface LessonSlot {
   bookedStudentIds?: string[];
   [key: string]: unknown;
 }
-interface CartItem {
-  length: number;
-  price: number;
-  qty: number;
-}
 interface UserProfile extends DocumentData {
   firstName?: string;
   lastName?: string;
@@ -658,12 +653,7 @@ export default function StudentDashReal() {
             </div>
             {/* Checkout Section (moved above footer) */}
             {(() => {
-              // Calculate total price for Buy tab
-              const totalPrice = Object.keys(quantities).reduce((sum, length) => {
-                const qty = quantities[Number(length)];
-                const option = lessonOptions.find(opt => opt.length === Number(length));
-                return sum + (qty * (option?.price || 0));
-              }, 0);
+              // Calculate total price for Buy tab (do not assign to a variable, use inline)
               return (
                 <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
@@ -673,7 +663,11 @@ export default function StudentDashReal() {
                     <div className="text-right mt-2 sm:mt-0">
                       <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
                       <span className="text-2xl font-bold text-indigo-700">
-                        ${'{'}totalPrice.toFixed(2){'}'}
+                        ${Object.keys(quantities).reduce((sum, length) => {
+                          const qty = quantities[Number(length)];
+                          const option = lessonOptions.find(opt => opt.length === Number(length));
+                          return sum + (qty * (option?.price || 0));
+                        }, 0).toFixed(2)}
                       </span>
                     </div>
                   </div>
