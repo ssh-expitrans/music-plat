@@ -1056,7 +1056,7 @@ function TeacherHomeworkTab({ students, teacherId, selectedStudentId, clearSelec
       <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
         📚 Assign Homework
       </h2>
-      <form onSubmit={handleAssign} className="space-y-4 max-w-lg mx-auto glass-effect p-6 rounded-2xl border border-white/20">
+      <form onSubmit={e => { e.preventDefault(); handleAssign(); }} className="space-y-4 max-w-lg mx-auto glass-effect p-6 rounded-2xl border border-white/20">
         <div>
           <label className="block text-purple-200 mb-2 font-medium">Student</label>
           <select
@@ -1265,7 +1265,7 @@ function TeacherNotesTab({ students, teacherId, selectedStudentId, clearSelected
       <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
         📝 Send Lesson Note
       </h2>
-      <form onSubmit={handleSendNote} className="space-y-4 max-w-lg mx-auto glass-effect p-6 rounded-2xl border border-white/20">
+      <form onSubmit={e => { e.preventDefault(); handleSendNote(); }} className="space-y-4 max-w-lg mx-auto glass-effect p-6 rounded-2xl border border-white/20">
         <div>
           <label className="block text-purple-200 mb-2 font-medium">Student</label>
           <select
