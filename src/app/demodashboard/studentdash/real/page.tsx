@@ -20,6 +20,7 @@ const getTabIcon = (tab: string) => {
 };
 
 export default function StudentDashReal() {
+  // --- All hooks at the top, in a fixed order ---
   const [activeTab, setActiveTab] = useState("Home");
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<DocumentData | null>(null);
@@ -29,6 +30,17 @@ export default function StudentDashReal() {
   const [error, setError] = useState<string | null>(null);
   const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  // --- Buy tab state ---
+  const lessonOptions = [
+    { length: 30, price: 30, icon: '🎹', desc: 'Standard 30-minute private lesson.' },
+    { length: 60, price: 60, icon: '🎶', desc: 'Full 1-hour private lesson.' },
+    { length: 90, price: 90, icon: '🎼', desc: 'Extended 90-minute private lesson.' },
+  ];
+  const [selectedOption, setSelectedOption] = useState<number | null>(30);
+  const [quantities, setQuantities] = useState<{ [length: number]: number }>({ 30: 1, 60: 1, 90: 1 });
+  const [cart, setCart] = useState<{ length: number; price: number; qty: number }[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  // --- Memo and router ---
   const currentWeek = useMemo(() => getWeekDates(currentWeekStart), [currentWeekStart]);
   const router = useRouter();
 
@@ -135,12 +147,14 @@ export default function StudentDashReal() {
           <button
             onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000))}
             className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg"
+            type="button"
           >
             <span className="group-hover:animate-bounce inline-block mr-1 sm:mr-2 text-lg sm:text-xl md:text-2xl">⬅️</span>
           </button>
           <button
             onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000))}
             className="group flex items-center px-3 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 text-sm sm:text-base md:text-lg sm:hidden"
+            type="button"
           >
             <span className="group-hover:animate-bounce inline-block ml-1 text-lg md:text-2xl">➡️</span>
           </button>
@@ -166,6 +180,7 @@ export default function StudentDashReal() {
         <button
           onClick={() => setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000))}
           className="group flex items-center px-6 py-3 md:px-8 md:py-4 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-purple-200 hidden sm:flex order-3 text-base md:text-lg"
+          type="button"
         >
           <span className="group-hover:animate-bounce inline-block ml-2 text-xl md:text-2xl">➡️</span>
         </button>
@@ -266,6 +281,31 @@ export default function StudentDashReal() {
         </div>
       </div>
     );
+  }
+
+  // --- Buy Tab State & Handlers ---
+  function addToCart(length: number) {
+    setIsAdding(true);
+    setTimeout(() => {
+      setCart(prev => {
+        const qty = quantities[length] || 1;
+        // If already in cart, update quantity
+        const idx = prev.findIndex(i => i.length === length);
+        if (idx > -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], qty: updated[idx].qty + qty };
+          return updated;
+        }
+        return [...prev, { length, price: lessonOptions.find(o => o.length === length)?.price || 0, qty }];
+      });
+      setIsAdding(false);
+    }, 400);
+  }
+  function removeFromCart(idx: number) {
+    setCart(prev => prev.filter((_, i) => i !== idx));
+  }
+  function clearCart() {
+    setCart([]);
   }
 
   return (
@@ -462,94 +502,85 @@ export default function StudentDashReal() {
           </div>
         )}
         {activeTab === "Buy" && (
-          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn">
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl">Piano Lesson Packages</h2>
-              {/* Cart summary placeholder (UI only) */}
-              <div className="hidden sm:flex items-center gap-3 bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm">
-                <span>🛒</span>
-                <span>Cart: 0 items</span>
-                <span className="ml-2 font-bold">$0.00</span>
+          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-indigo-700">Book & Checkout</h2>
+            {/* Lesson Options */}
+            <div className="mb-8">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
+                {lessonOptions.map(option => (
+                  <div key={option.length} className={`flex flex-col items-start p-5 rounded-2xl border-2 ${selectedOption === option.length ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white'} shadow transition-all duration-200`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{option.icon}</span>
+                      <span className="font-bold text-lg">{option.length} min Lesson</span>
+                    </div>
+                    <div className="text-slate-600 text-sm mb-2">{option.desc}</div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-indigo-700 font-bold text-xl">${option.price}</span>
+                      <span className="text-xs text-slate-400">per lesson</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-auto w-full">
+                      <button
+                        className={`px-3 py-1 rounded-lg font-semibold text-sm border-2 ${selectedOption === option.length ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50'}`}
+                        onClick={() => setSelectedOption(selectedOption === option.length ? null : option.length)}
+                        type="button"
+                      >
+                        {selectedOption === option.length ? 'Selected' : 'Select'}
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={quantities[option.length] || 1}
+                        onChange={e => setQuantities(q => ({ ...q, [option.length]: Math.max(1, Math.min(10, Number(e.target.value))) }))}
+                        className="ml-3 w-16 px-2 py-1 border border-slate-300 rounded-lg text-center text-sm"
+                        disabled={selectedOption !== option.length}
+                      />
+                      <span className="text-xs text-slate-500">qty</span>
+                      <button
+                        className="ml-auto px-3 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                        onClick={() => addToCart(option.length)}
+                        disabled={selectedOption !== option.length || isAdding}
+                        type="button"
+                      >
+                        {isAdding && selectedOption === option.length ? 'Adding...' : 'Add to Cart'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Cart UI (not functional yet) */}
-            <div className="mb-8 bg-slate-50 rounded-xl p-6 border border-slate-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2 text-slate-700 font-semibold">
-                  <span>🛒</span>
-                  <span>Your Cart</span>
+            {/* Cart Receipt Section */}
+            <div className="mt-10 bg-slate-50 rounded-xl p-6 border border-slate-200">
+              <h3 className="font-bold text-lg mb-4 text-slate-700 flex items-center gap-2"><span>🧾</span>Receipt</h3>
+              {cart.length === 0 ? (
+                <p className="text-slate-500">Your cart is empty</p>
+              ) : (
+                <ul className="divide-y divide-slate-200 mb-4">
+                  {cart.map((item, idx) => (
+                    <li key={idx} className="flex items-center justify-between py-2">
+                      <span className="font-medium text-slate-700">{item.length} min x {item.qty}</span>
+                      <span className="text-indigo-700 font-bold">${item.price * item.qty}</span>
+                      <button
+                        className="ml-4 text-xs text-red-500 hover:underline"
+                        onClick={() => removeFromCart(idx)}
+                      >Remove</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {cart.length > 0 && (
+                <div className="flex items-center justify-between mt-2 font-bold text-lg border-t border-slate-200 pt-4">
+                  <span>Total:</span>
+                  <span className="text-indigo-700">${cart.reduce((sum, item) => sum + item.price * item.qty, 0)}</span>
                 </div>
-                <button className="text-xs text-indigo-600 font-bold hover:underline" disabled>Clear All</button>
-              </div>
-              <p className="text-slate-500">Your cart is empty</p>
-            </div>
-
-            {/* Individual Lessons */}
-            <div className="mb-8 sm:mb-12">
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Individual Lessons</h3>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="bg-white rounded-2xl shadow border border-slate-200 p-5 flex flex-col items-start">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">🎹</span>
-                      <span className="font-bold text-lg">30-min Lesson</span>
-                    </div>
-                    <div className="text-slate-600 text-sm mb-2">One-on-one piano lesson with a certified teacher.</div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-indigo-700 font-bold text-xl">$30</span>
-                      <span className="text-xs text-slate-400">per lesson</span>
-                    </div>
-                    <button className="mt-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200" disabled>Add to Cart</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Extended Lessons */}
-            <div className="mb-8 sm:mb-12">
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Extended Lessons</h3>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="bg-white rounded-2xl shadow border border-slate-200 p-5 flex flex-col items-start">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">🎶</span>
-                      <span className="font-bold text-lg">1-hour Lesson</span>
-                    </div>
-                    <div className="text-slate-600 text-sm mb-2">In-depth piano lesson covering advanced topics.</div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-indigo-700 font-bold text-xl">$50</span>
-                      <span className="text-xs text-slate-400">per lesson</span>
-                    </div>
-                    <button className="mt-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200" disabled>Add to Cart</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Packages Section (if applicable) */}
-            <div className="mb-8 sm:mb-12">
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-slate-700">Lesson Packages</h3>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {[1,2,3].map(i => (
-                  <div key={i} className="bg-white rounded-2xl shadow border border-slate-200 p-5 flex flex-col">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-2xl">📦</span>
-                        <span className="font-bold text-lg">Starter Package</span>
-                      </div>
-                      <div className="text-slate-600 text-sm mb-4">
-                        5 individual lessons + 2 free trial group classes.
-                      </div>
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="text-indigo-700 font-bold text-xl">$120</span>
-                        <span className="text-xs text-slate-400">one-time</span>
-                      </div>
-                    </div>
-                    <button className="mt-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200" disabled>Add to Cart</button>
-                  </div>
-                ))}
-              </div>
+              )}
+              <button
+                className="mt-6 w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold shadow hover:from-green-600 hover:to-emerald-600 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={cart.length === 0}
+                onClick={() => router.push('/checkout')}
+              >
+                Proceed to Checkout
+              </button>
             </div>
           </div>
         )}
