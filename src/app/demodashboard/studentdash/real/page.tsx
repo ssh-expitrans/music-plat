@@ -148,7 +148,6 @@ export default function StudentDashReal() {
   const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   // --- Buy tab state ---
-  const [selectedOption, setSelectedOption] = useState<number | null>(30);
   const [quantities, setQuantities] = useState<{ [length: number]: number }>({ 30: 1, 60: 1, 90: 1 });
   // --- Buy Tab Cart State and Handlers ---
   const [cart, setCart] = useState<CartItem[]>([]);
