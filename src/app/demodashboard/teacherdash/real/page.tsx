@@ -117,8 +117,8 @@ export default function TeacherDashReal() {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [deleteError, setDeleteError] = useState(""); // For student deletion errors
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
-  // --- Add state for selected session ---
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  // --- Add state for selected sessions (multi-select) ---
+  const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
   const slotSuccessTimeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
@@ -714,42 +714,67 @@ export default function TeacherDashReal() {
                     <option value="date">Date</option>
                   </select>
                 </div>
-                {/* Availability List with selection and delete */}
+                {/* Availability List with multi-select and bulk delete */}
                 <div className="glass-effect p-6 rounded-2xl border border-white/20">
                   <h3 className="text-xl font-bold text-white mb-4">Available Times</h3>
                   {lessonSlots.length === 0 ? (
                     <p className="text-purple-200">No available times yet.</p>
                   ) : (
-                    <ul className="space-y-2">
-                      {sortedSessions.map(slot => (
-                        <li key={slot.id} className={`flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group border-2 transition-all duration-200 ${selectedSessionId === slot.id ? 'border-pink-400' : 'border-transparent'}`}
-                            onClick={() => setSelectedSessionId(slot.id ?? null)}
-                            style={{ cursor: 'pointer' }}
+                    <>
+                      <div className="mb-4 flex flex-wrap gap-4 items-center">
+                        <button
+                          className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-2 rounded-xl font-medium shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-60"
+                          disabled={selectedSessionIds.length === 0}
+                          onClick={async () => {
+                            // Bulk delete selected slots
+                            await Promise.all(selectedSessionIds.map(async (id) => {
+                              await deleteDoc(doc(db, "lessonSlots", id));
+                            }));
+                            setLessonSlots(slots => slots.filter(s => !selectedSessionIds.includes(s.id ?? "")));
+                            setSelectedSessionIds([]);
+                          }}
+                          type="button"
                         >
-                          <div>
-                            <div className="font-bold text-lg">{formatAvailability(slot)}</div>
-                            <div className="text-purple-200 text-sm">
-                              {getStudentInfo(slot)}
+                          Delete Selected ({selectedSessionIds.length})
+                        </button>
+                        {selectedSessionIds.length > 0 && (
+                          <button
+                            className="ml-2 px-4 py-2 rounded-xl font-medium bg-slate-700 text-white hover:bg-slate-800 transition-all duration-200"
+                            onClick={() => setSelectedSessionIds([])}
+                            type="button"
+                          >
+                            Clear Selection
+                          </button>
+                        )}
+                      </div>
+                      <ul className="space-y-2">
+                        {sortedSessions.map(slot => (
+                          <li
+                            key={slot.id}
+                            className={`flex flex-col md:flex-row md:items-center justify-between bg-white/10 rounded-xl p-4 text-white relative group border-2 transition-all duration-200 ${selectedSessionIds.includes(slot.id ?? "") ? 'border-pink-400 bg-pink-900/20' : 'border-transparent'}`}
+                            onClick={() => {
+                              if (!slot.id) return;
+                              setSelectedSessionIds(ids =>
+                                ids.includes(slot.id!)
+                                  ? ids.filter(id => id !== slot.id)
+                                  : [...ids, slot.id!]
+                              );
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <div>
+                              <div className="font-bold text-lg">{formatAvailability(slot)}</div>
+                              <div className="text-purple-200 text-sm">
+                                {getStudentInfo(slot)}
+                              </div>
                             </div>
-                          </div>
-                          {selectedSessionId === slot.id && (
-                            <button
-                              className="ml-4 mt-4 md:mt-0 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:scale-105 transition-all duration-200"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (!slot.id) return;
-                                await deleteDoc(doc(db, "lessonSlots", slot.id));
-                                setLessonSlots(slots => slots.filter(s => s.id !== slot.id));
-                                setSelectedSessionId(null);
-                              }}
-                              type="button"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+                            {selectedSessionIds.includes(slot.id ?? "") && (
+                              <span className="ml-4 mt-4 md:mt-0 px-4 py-2 rounded-xl font-medium bg-pink-500 text-white shadow-lg">Selected</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   )}
                 </div>
               </div>
