@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, getDocs, query, where, DocumentData } from "firebase/firestore";
@@ -51,7 +51,6 @@ function isCurrentWeek(currentWeekStart: Date) {
   return currentWeekStart.getTime() === today.getTime();
 }
 
-// --- Types ---
 interface LessonSlot {
   id: string;
   date: string; // yyyy-mm-dd
@@ -68,6 +67,75 @@ interface UserProfile extends DocumentData {
   progress?: number;
 }
 
+// Cart item type for Buy tab
+interface CartItem { length: number; qty: number; }
+
+// --- Practice Streak Component ---
+function getTodayString() {
+  const today = new Date();
+  return today.toISOString().slice(0, 10);
+}
+function getYesterdayString() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday.toISOString().slice(0, 10);
+}
+function PracticeStreak() {
+  // For demo: store streak in localStorage (replace with Firestore for real app)
+  const [streak, setStreak] = useState<number>(0);
+  const [lastPractice, setLastPractice] = useState<string>("");
+  const [practicedToday, setPracticedToday] = useState<boolean>(false);
+  useEffect(() => {
+    const streakVal = Number(localStorage.getItem("practiceStreak") || "0");
+    const last = localStorage.getItem("lastPractice") || "";
+    setStreak(streakVal);
+    setLastPractice(last);
+    setPracticedToday(last === getTodayString());
+  }, []);
+  const handlePractice = useCallback(() => {
+    const today = getTodayString();
+    let newStreak = streak;
+    if (lastPractice === getYesterdayString()) {
+      newStreak = streak + 1;
+    } else if (lastPractice !== today) {
+      newStreak = 1;
+    }
+    setStreak(newStreak);
+    setLastPractice(today);
+    setPracticedToday(true);
+    localStorage.setItem("practiceStreak", String(newStreak));
+    localStorage.setItem("lastPractice", today);
+  }, [streak, lastPractice]);
+  return (
+    <div className="group bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 mb-8">
+      <div className="flex items-center mb-4 sm:mb-6">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
+          🔥
+        </div>
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
+          Practice Streak
+        </h3>
+      </div>
+      <div className="flex flex-col items-center mb-4">
+        <span className="text-5xl font-bold text-orange-500 mb-2">{streak}</span>
+        <span className="text-gray-700 font-semibold text-lg">Day Streak</span>
+      </div>
+      <div className="flex flex-col items-center">
+        {practicedToday ? (
+          <span className="text-green-600 font-semibold">You practiced today! Keep it up! 🎶</span>
+        ) : (
+          <button
+            onClick={handlePractice}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold hover:from-yellow-500 hover:to-orange-500 shadow-lg mt-2"
+          >
+            Mark as Practiced Today
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function StudentDashReal() {
   // --- All hooks at the top, in a fixed order ---
   const [activeTab, setActiveTab] = useState<"Home" | "Book" | "Buy" | "Upcoming" | "Account">("Home");
@@ -82,6 +150,34 @@ export default function StudentDashReal() {
   // --- Buy tab state ---
   const [selectedOption, setSelectedOption] = useState<number | null>(30);
   const [quantities, setQuantities] = useState<{ [length: number]: number }>({ 30: 1, 60: 1, 90: 1 });
+  // --- Buy Tab Cart State and Handlers ---
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCheckout, setShowCheckout] = useState(false);
+
+  const handleAddToCart = (length: number) => {
+    setCart(prev => {
+      const qty = quantities[length];
+      if (qty < 1) return prev;
+      const existing = prev.find(item => item.length === length);
+      if (existing) {
+        return prev.map(item => item.length === length ? { ...item, qty: item.qty + qty } : item);
+      } else {
+        return [...prev, { length, qty }];
+      }
+    });
+  };
+
+  const handleRemoveFromCart = (length: number) => {
+    setCart(prev => prev.filter(item => item.length !== length));
+  };
+
+  const handleConfirmCheckout = () => {
+    // Here you would handle the actual purchase logic (API call, etc)
+    setShowCheckout(false);
+    setCart([]);
+    // Optionally show a success message/modal
+    alert('Purchase successful!');
+  };
   // --- Book Tab State ---
   const [availableSlots, setAvailableSlots] = useState<LessonSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
@@ -439,11 +535,6 @@ export default function StudentDashReal() {
               <span className="text-lg">{getTabIcon(tab)}</span>
               <span className="hidden sm:inline">{tab}</span>
             </div>
-            {activeTab === tab && (
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              </div>
-            )}
           </button>
         ))}
       </nav>
@@ -522,35 +613,11 @@ export default function StudentDashReal() {
                   })()}
                 </div>
               </div>
-              {/* Progress (if available) */}
-              <div className="group bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                <div className="flex items-center mb-4 sm:mb-6">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
-                    📈
-                  </div>
-                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
-                    Progress
-                  </h3>
-                </div>
-                <div className="relative">
-                  <div className="w-full bg-gray-200 rounded-full h-4 sm:h-6 mb-3 sm:mb-4 overflow-hidden">
-                    <div className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 h-4 sm:h-6 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden" style={{ width: `${profile?.progress || 0}%` }}>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-                    </div>
-                  </div>
-                  <p className="text-right text-base sm:text-lg font-bold text-gray-700 mb-3 sm:mb-4">
-                    {profile?.progress || 0}% Complete
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <p className="text-center text-sm sm:text-base text-gray-600 bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-xl">
-                    🌟 Great progress! Keep practicing to reach the next level.
-                  </p>
-                </div>
-              </div>
+              {/* Streak (Practice Tracker) */}
+              <PracticeStreak />
             </div>
             {/* Homework Section */}
-            <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20">
+            <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 mb-8 sm:mb-10 lg:mb-12">
               <div className="flex items-center mb-4 sm:mb-6">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl mr-3 sm:mr-4 flex-shrink-0">
                   📚
@@ -613,12 +680,12 @@ export default function StudentDashReal() {
         )}
         {activeTab === "Buy" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-2xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-indigo-700">Book & Checkout</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-indigo-700">Buy Lessons</h2>
             {/* Lesson Options */}
             <div className="mb-8">
               <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                 {lessonOptions.map((option: { length: number; price: number; icon: string; desc: string }) => (
-                  <div key={option.length} className={`flex flex-col items-start p-5 rounded-2xl border-2 ${selectedOption === option.length ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white'} shadow transition-all duration-200`}>
+                  <div key={option.length} className="flex flex-col items-start p-5 rounded-2xl border-2 border-slate-200 bg-white shadow transition-all duration-200">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">{option.icon}</span>
                       <span className="font-bold text-lg">{option.length} min Lesson</span>
@@ -629,69 +696,122 @@ export default function StudentDashReal() {
                       <span className="text-xs text-slate-400">per lesson</span>
                     </div>
                     <div className="flex items-center gap-2 mt-auto w-full">
-                      <button
-                        className={`px-3 py-1 rounded-lg font-semibold text-sm border-2 ${selectedOption === option.length ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50'}`}
-                        onClick={() => setSelectedOption(selectedOption === option.length ? null : option.length)}
-                        type="button"
-                      >
-                        {selectedOption === option.length ? 'Selected' : 'Select'}
-                      </button>
                       <input
                         type="number"
                         min={1}
                         value={quantities[option.length]}
                         onChange={e => setQuantities(q => ({ ...q, [option.length]: Math.max(1, Number(e.target.value)) }))}
                         className="w-16 px-2 py-1 border rounded-lg text-center text-base font-semibold text-indigo-700 border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        disabled={selectedOption !== option.length}
                       />
                       <span className="text-xs text-slate-500">Qty</span>
+                      <button
+                        className="ml-auto px-3 py-1 rounded-lg font-semibold text-sm border-2 bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 transition"
+                        onClick={() => handleAddToCart(option.length)}
+                        type="button"
+                      >
+                        Add to Cart
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            {/* Checkout Section (moved above footer) */}
-            {(() => {
-              // Calculate total price for Buy tab (do not assign to a variable, use inline)
-              return (
-                <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
-                      Your Booking Summary
-                    </h3>
-                    <div className="text-right mt-2 sm:mt-0">
-                      <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
-                      <span className="text-2xl font-bold text-indigo-700">
-                        ${Object.keys(quantities).reduce((sum, length) => {
-                          const qty = quantities[Number(length)];
-                          const option = lessonOptions.find(opt => opt.length === Number(length));
-                          return sum + (qty * (option?.price || 0));
-                        }, 0).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    {Object.keys(quantities).map(length => {
-                      const qty = quantities[Number(length)];
-                      if (qty === 0) return null;
-                      const option = lessonOptions.find(opt => opt.length === Number(length));
+            {/* Cart Section */}
+            <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+                  Your Cart
+                </h3>
+                <div className="text-right mt-2 sm:mt-0">
+                  <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
+                  <span className="text-2xl font-bold text-indigo-700">
+                    ${cart.reduce((sum, item) => {
+                      const option = lessonOptions.find(opt => opt.length === item.length);
+                      return sum + (item.qty * (option?.price || 0));
+                    }, 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {cart.length === 0 ? (
+                  <p className="text-gray-500">Your cart is empty.</p>
+                ) : (
+                  cart.map(item => {
+                    const option = lessonOptions.find(opt => opt.length === item.length);
+                    return (
+                      <div key={item.length} className="flex justify-between items-center text-sm sm:text-base p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{option?.icon}</span>
+                          <span className="font-semibold">{option?.length} min Lesson</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Qty: {item.qty}</span>
+                          <span className="text-indigo-700 font-bold">${option?.price}</span>
+                          <button
+                            className="ml-2 px-2 py-1 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600"
+                            onClick={() => handleRemoveFromCart(item.length)}
+                            type="button"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {cart.length > 0 && (
+                <div className="flex justify-end mt-6">
+                  <button
+                    className="px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                    onClick={() => setShowCheckout(true)}
+                  >
+                    Checkout
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* Checkout Modal */}
+            {showCheckout && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+                  <h3 className="text-xl font-bold mb-4 text-indigo-700">Checkout</h3>
+                  <p className="mb-4 text-gray-700">Review your order and confirm your purchase.</p>
+                  <div className="space-y-2 mb-6">
+                    {cart.map(item => {
+                      const option = lessonOptions.find(opt => opt.length === item.length);
                       return (
-                        <div key={length} className="flex justify-between items-center text-sm sm:text-base p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">{option?.icon}</span>
-                            <span className="font-semibold">{option?.length} min Lesson</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-700">Qty: {qty}</span>
-                            <span className="text-indigo-700 font-bold">${option?.price}</span>
-                          </div>
+                        <div key={item.length} className="flex justify-between items-center text-sm p-2 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
+                          <span>{option?.icon} {option?.length} min Lesson</span>
+                          <span>Qty: {item.qty}</span>
+                          <span>${option?.price}</span>
                         </div>
                       );
                     })}
                   </div>
+                  <div className="font-bold text-lg mb-6">
+                    Total: ${cart.reduce((sum, item) => {
+                      const option = lessonOptions.find(opt => opt.length === item.length);
+                      return sum + (item.qty * (option?.price || 0));
+                    }, 0).toFixed(2)}
+                  </div>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={() => setShowCheckout(false)}
+                      className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleConfirmCheckout}
+                      className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                    >
+                      Confirm Purchase
+                    </button>
+                  </div>
                 </div>
-              );
-            })()}
+              </div>
+            )}
           </div>
         )}
         {activeTab === "Upcoming" && (
