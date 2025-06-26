@@ -199,9 +199,7 @@ export default function StudentDashReal() {
   const [availableSlots, setAvailableSlots] = useState<LessonSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
   // --- Booking Modal State (restored) ---
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [bookingInProgress, setBookingInProgress] = useState(false);
-  const [bookingError, setBookingError] = useState<string | null>(null);
+  // Removed unused: showConfirm, bookingInProgress, bookingError
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   // --- Memo and router ---
@@ -561,28 +559,7 @@ export default function StudentDashReal() {
     );
   }
 
-  // --- Booking Confirm Handler (local state only) ---
-  function handleBookConfirm() {
-    setBookingInProgress(true);
-    setBookingError(null);
-    // Simulate booking: move slots from availableSlots to bookings
-    const booked = availableSlots.filter(slot => selectedSlots.includes(slot.id));
-    setBookings(prev => [
-      ...prev,
-      ...booked.map(slot => ({
-        id: slot.id,
-        date: slot.date,
-        time: slot.time,
-        length: slot.length || 30,
-        status: 'booked',
-      }))
-    ]);
-    setAvailableSlots(prev => prev.filter(slot => !selectedSlots.includes(slot.id)));
-    setSelectedSlots([]);
-    setShowConfirm(false);
-    setBookingInProgress(false);
-    setBookingSuccess(true);
-  }
+  // Removed unused: handleBookConfirm
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100">
