@@ -399,22 +399,80 @@ export default function TeacherDashReal() {
               </p>
             </div>
           </div>
-          {/* Navigation Tabs (Top, hidden on md and below) */}
-          <div className="hidden md:flex flex-wrap justify-center gap-4 animate-fadeIn text-lg">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`group relative px-6 py-3 rounded-2xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                  activeTab === tab
-                    ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-purple-500/25"
-                    : "glass-effect text-white hover:bg-white/20"
-                }`}
-              >
-                <span className="text-xl mr-2">{getTabIcon(tab)}</span>
-                {tab}
-              </button>
-            ))}
+          {/* Sidebar Navigation (replaces top tabs) */}
+          <div className="flex w-full">
+            <aside className="hidden md:flex flex-col gap-2 pr-6 min-w-[170px] pt-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-lg transition-all duration-200 text-left ${
+                    activeTab === tab
+                      ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-purple-500/25"
+                      : "glass-effect text-white hover:bg-white/20"
+                  }`}
+                  style={{ width: '100%' }}
+                >
+                  <span className="text-2xl">{getTabIcon(tab)}</span>
+                  <span>{tab}</span>
+                </button>
+              ))}
+            </aside>
+            <div className="flex-1">
+              {/* Bottom Navigation Bar for Mobile/Tablet (md and below) */}
+              <nav className="fixed left-0 bottom-0 w-full z-50 flex md:hidden bg-gradient-to-t from-slate-900/95 to-slate-900/80 border-t border-purple-900/40 shadow-2xl h-20 rounded-t-2xl m-0 p-0" style={{margin:0,padding:0}}>
+                {tabs.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 flex flex-col items-center justify-center py-3 text-2xl transition-all duration-200 relative ${activeTab === tab ? "text-indigo-400" : "text-purple-200 hover:text-indigo-300"}`}
+                    aria-label={tab}
+                    style={{ minWidth: 0 }}
+                  >
+                    <span className={`mb-1 flex items-center justify-center w-16 h-16 ${activeTab === tab ? "bg-gradient-to-t from-indigo-900/60 to-slate-900/80 rounded-3xl shadow-lg" : ""}`}>{getTabIcon(tab)}</span>
+                  </button>
+                ))}
+              </nav>
+              {/* Tab Content */}
+              <div className="glass-effect p-2 sm:p-6 md:p-10 rounded-3xl shadow-2xl min-h-[500px] animate-fadeIn pb-28 md:pb-10 overflow-y-auto w-full max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto flex flex-col items-center">
+                {/* Students Tab */}
+                {activeTab === "Students" && (
+                  <>{/* Students Tab Content */}
+                  {/* ...existing code for Students tab... */}
+                  </>
+                )}
+                {/* Upcoming Tab */}
+                {activeTab === "Upcoming" && (
+                  <>{/* Upcoming Tab Content */}
+                  {/* ...existing code for Upcoming tab... */}
+                  </>
+                )}
+                {/* Homework Tab */}
+                {activeTab === "Homework" && (
+                  <>{/* Homework Tab Content */}
+                  {/* ...existing code for Homework tab... */}
+                  </>
+                )}
+                {/* Notes Tab */}
+                {activeTab === "Notes" && (
+                  <>{/* Notes Tab Content */}
+                  {/* ...existing code for Notes tab... */}
+                  </>
+                )}
+                {/* Calendar Tab */}
+                {activeTab === "Calendar" && (
+                  <>{/* Calendar Tab Content */}
+                  {/* ...existing code for Calendar tab... */}
+                  </>
+                )}
+                {/* Settings Tab */}
+                {activeTab === "Settings" && (
+                  <>{/* Settings Tab Content */}
+                  {/* ...existing code for Settings tab... */}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
           {/* Bottom Navigation Bar for Mobile/Tablet (md and below) */}
           <nav className="fixed left-0 bottom-0 w-full z-50 flex md:hidden bg-gradient-to-t from-slate-900/95 to-slate-900/80 border-t border-purple-900/40 shadow-2xl h-20 rounded-t-2xl m-0 p-0" style={{margin:0,padding:0}}>
