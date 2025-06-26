@@ -406,11 +406,27 @@ export default function StudentDashReal() {
     return (
       <div className="mt-8 sm:mt-10 text-center animate-slideInUp">
         <p className="mb-4 sm:mb-6 text-gray-700 font-semibold text-lg sm:text-xl">
-          {selectedSlots.length === 1 
+          {selectedSlots.length === 1
             ? `🎯 You have selected 1 session`
-            : `🎯 You have selected ${selectedSlots.length} sessions`
-          }
+            : `🎯 You have selected ${selectedSlots.length} sessions`}
         </p>
+        {/* List selected slots with date and time */}
+        <div className="mb-4 flex flex-col items-center gap-2">
+          {selectedSlots.map((slotId) => {
+            const slot = availableSlots.find(s => s.id === slotId);
+            if (!slot) return null;
+            const dateObj = new Date(slot.date + 'T' + slot.time);
+            return (
+              <div key={slotId} className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-purple-200 shadow text-purple-800 text-sm font-semibold">
+                <span className="text-lg">{lessonOption.icon}</span>
+                <span>{dateObj.toLocaleDateString()} at {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mb-4 text-xl font-bold text-indigo-700">
+          Total: ${ (selectedSlots.length * lessonOption.price).toFixed(2) }
+        </div>
         <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-6">
           <button
             onClick={() => setSelectedSlots([])}
@@ -435,20 +451,21 @@ export default function StudentDashReal() {
             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
               <h3 className="text-xl font-bold mb-4 text-indigo-700">Buy & Book</h3>
               <p className="mb-4 text-gray-700">You are booking <b>{bookingToBuy.length}</b> session{bookingToBuy.length !== 1 ? 's' : ''}.</p>
-              <div className="mb-6 flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{lessonOption.icon}</span>
-                  <span className="font-bold text-lg">{lessonOption.length} min Lesson</span>
-                </div>
-                <div className="text-slate-600 text-sm mb-2">{lessonOption.desc}</div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-gray-700 font-semibold">Qty:</span>
-                  <span className="text-indigo-700 font-bold text-lg">{bookingToBuy.length}</span>
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-gray-700 font-semibold">Total:</span>
-                  <span className="text-indigo-700 font-bold text-2xl">${(bookingToBuy.length * lessonOption.price).toFixed(2)}</span>
-                </div>
+              <div className="mb-6 flex flex-col items-center gap-2">
+                {bookingToBuy.map((slotId) => {
+                  const slot = availableSlots.find(s => s.id === slotId);
+                  if (!slot) return null;
+                  const dateObj = new Date(slot.date + 'T' + slot.time);
+                  return (
+                    <div key={slotId} className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-purple-200 shadow text-purple-800 text-sm font-semibold">
+                      <span className="text-lg">{lessonOption.icon}</span>
+                      <span>{dateObj.toLocaleDateString()} at {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mb-4 text-xl font-bold text-indigo-700">
+                Total: ${ (bookingToBuy.length * lessonOption.price).toFixed(2) }
               </div>
               <div className="flex justify-end mt-6">
                 <button
