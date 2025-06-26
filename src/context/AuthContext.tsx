@@ -116,8 +116,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Debug: log userData and userProfile
     console.log('signUp userData:', userData);
 
-    // Only include teacherId if it is defined (Firestore does not allow undefined)
-    const userProfile: any = {
+
+    // Build userProfile object without using 'any' type
+    const userProfileBase = {
       uid: result.user.uid,
       email: result.user.email!,
       role: userData.role || 'student',
@@ -127,9 +128,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       skillLevel: userData.skillLevel || '',
       createdAt: new Date(),
     };
-    if (userData.teacherId !== undefined) {
-      userProfile.teacherId = userData.teacherId;
-    }
+    // Conditionally add teacherId if defined
+    const userProfile: UserProfile & { dob?: string; skillLevel?: string } =
+      userData.teacherId !== undefined
+        ? { ...userProfileBase, teacherId: userData.teacherId }
+        : userProfileBase;
 
     console.log('signUp userProfile:', userProfile);
 
