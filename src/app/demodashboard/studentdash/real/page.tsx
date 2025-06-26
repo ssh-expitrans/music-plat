@@ -517,7 +517,7 @@ export default function StudentDashReal() {
         </div>
       )}
       {/* Sidebar Navigation */}
-      <nav className="hidden md:flex relative z-10 w-44 lg:w-64 backdrop-blur-lg bg-white/80 border-r border-white/20 p-4 lg:p-6 flex-col space-y-3 shadow-2xl">
+      <nav className="hidden md:flex relative z-10 w-56 lg:w-72 backdrop-blur-lg bg-white/80 border-r border-white/20 p-4 lg:p-6 flex-col space-y-3 shadow-2xl">
         <div className="mb-8 flex flex-col items-center gap-2">
           <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full text-2xl text-white shadow-lg">
             🎵
@@ -528,12 +528,12 @@ export default function StudentDashReal() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`group relative py-4 px-5 rounded-xl text-left font-semibold transition-all duration-300 transform hover:scale-105 ${activeTab === tab ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25" : "text-gray-700 hover:bg-white/60 hover:text-purple-600 hover:shadow-lg"}`}
+            className={`group relative py-4 px-7 rounded-xl text-left font-semibold transition-all duration-300 transform hover:scale-105 w-full ${activeTab === tab ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25" : "text-gray-700 hover:bg-white/60 hover:text-purple-600 hover:shadow-lg"}`}
             style={{ animationDelay: `${index * 100}ms` }}
           >
-            <div className="flex items-center space-x-3">
-              <span className="text-lg">{getTabIcon(tab)}</span>
-              <span className="hidden sm:inline">{tab}</span>
+            <div className="flex items-center justify-between gap-4 w-full">
+              <span className="text-lg flex-shrink-0">{getTabIcon(tab)}</span>
+              <span className="ml-2 text-base truncate text-left w-full">{tab}</span>
             </div>
           </button>
         ))}
@@ -843,12 +843,27 @@ export default function StudentDashReal() {
           </div>
         )}
         {activeTab === "Account" && (
-          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-2xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-purple-700">Account Settings</h2>
-            {/* Account details and settings form can go here */}
-            <p className="text-center text-gray-500 py-10">
-              Account settings feature is not yet implemented.
-            </p>
+          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-2xl mx-auto flex flex-col items-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-purple-700">Account</h2>
+            <div className="flex flex-col gap-6 w-full max-w-xs">
+              <button
+                className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold shadow-lg hover:from-blue-600 hover:to-indigo-600 transition mb-2"
+                onClick={() => window.location.href = '/'}
+                type="button"
+              >
+                Go to Home Site
+              </button>
+              <button
+                className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold shadow-lg hover:from-red-600 hover:to-pink-600 transition"
+                onClick={async () => {
+                  await auth.signOut();
+                  router.push('/login');
+                }}
+                type="button"
+              >
+                Log Out
+              </button>
+            </div>
           </div>
         )}
       </main>
