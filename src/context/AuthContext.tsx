@@ -113,6 +113,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
+    // Debug: log userData and userProfile
+    console.log('signUp userData:', userData);
+
     // Create user profile in Firestore (with correct role)
     const userProfile = {
       uid: result.user.uid,
@@ -126,8 +129,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       teacherId: userData.teacherId || undefined,
     };
 
+    console.log('signUp userProfile:', userProfile);
+
     try {
       await setDoc(doc(db, 'users', result.user.uid), userProfile);
+      console.log('setDoc success');
       setUserProfile(userProfile as UserProfile);
     } catch (e) {
       console.error("Error writing user profile to Firestore:", e);

@@ -36,19 +36,6 @@ function TeacherLoginInner() {
           lastName,
           role: 'teacher',
         });
-        // Confirm role after sign up (debug, before redirect)
-        try {
-          const { db } = await import('@/lib/firebase');
-          const { doc, getDoc } = await import('firebase/firestore');
-          const user = await import('firebase/auth').then(m => m.getAuth().currentUser);
-          if (user) {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-              const data = userDoc.data();
-              alert('Signed up as role: ' + data.role);
-            }
-          }
-        } catch {}
         router.push('/demodashboard/teacherdash/real');
       } else {
         await signIn(email, password);
