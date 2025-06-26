@@ -66,8 +66,7 @@ interface UserProfile extends DocumentData {
   progress?: number;
 }
 
-// Cart item type for Buy tab
-interface CartItem { length: number; qty: number; }
+// (CartItem type removed, no longer used)
 
 // --- Practice Streak Component ---
 function getTodayString() {
