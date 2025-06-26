@@ -99,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, userData: Partial<UserProfile> & { dob?: string; skillLevel?: string }) => {
-    // Only allow student sign up
+    // Allow both student and teacher sign up (role comes from userData, default to 'student')
     const result = await createUserWithEmailAndPassword(auth, email, password);
 
     // Optionally set displayName in Firebase Auth
@@ -113,16 +113,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // Create user profile in Firestore (student only, with DOB and skillLevel)
+    // Create user profile in Firestore (with correct role)
     const userProfile = {
       uid: result.user.uid,
       email: result.user.email!,
-      role: 'student',
+      role: userData.role || 'student',
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
       dob: userData.dob || '',
       skillLevel: userData.skillLevel || '',
       createdAt: new Date(),
+      teacherId: userData.teacherId || undefined,
     };
 
     try {
