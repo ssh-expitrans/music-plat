@@ -381,147 +381,91 @@ export default function TeacherDashReal() {
 
   // UI rendering (structure and styles adapted from demo dashboard)
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* ...Header and Tabs... */}
-      <div className="relative z-10 px-2 sm:px-4 py-8 flex-1 flex flex-col w-full max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-        <div className="w-full max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto space-y-8 flex-1 flex flex-col">
-          {/* Header */}
-          <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-3 sm:p-5 md:p-6 rounded-2xl shadow-2xl text-white overflow-hidden animate-fadeIn">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
-            <div className="relative z-10 text-center">
-              <h1 className="text-xl font-bold mb-1 animate-slideInLeft">
-                🎵 Teacher Dashboard
-              </h1>
-              <p className="text-base text-purple-100 animate-slideInLeft">
-                Welcome, {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : user?.email ?? ""}
-              </p>
-            </div>
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 max-w-screen overflow-x-hidden">
+      {/* Sidebar Navigation - responsive */}
+      <aside className="hidden md:flex flex-col gap-2 pl-1 pr-0 py-4 min-w-[60px] max-w-[220px] h-full sticky top-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex items-center gap-2 px-2 py-2 rounded-xl font-semibold text-sm lg:text-base transition-all duration-200 text-left shadow-md ${
+              activeTab === tab
+                ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-purple-500/25"
+                : "glass-effect text-white hover:bg-white/20"
+            }`}
+            style={{ width: '100%' }}
+          >
+            <span className="text-xl lg:text-2xl">{getTabIcon(tab)}</span>
+            <span className="hidden sm:inline">{tab}</span>
+          </button>
+        ))}
+      </aside>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col w-full min-w-0 max-w-screen overflow-x-hidden">
+        {/* Header (now inside main content area) */}
+        <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-2 xs:p-3 sm:p-5 md:p-6 rounded-2xl shadow-2xl text-white overflow-hidden animate-fadeIn m-1 sm:m-4 mb-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-indigo-600/90"></div>
+          <div className="absolute top-0 right-0 w-12 h-12 sm:w-24 sm:h-24 bg-white/10 rounded-full -translate-y-4 sm:-translate-y-12 translate-x-4 sm:translate-x-12"></div>
+          <div className="absolute bottom-0 left-0 w-8 h-8 sm:w-16 sm:h-16 bg-white/5 rounded-full translate-y-3 sm:translate-y-8 -translate-x-3 sm:-translate-x-8"></div>
+          <div className="relative z-10 text-center">
+            <h1 className="text-base sm:text-xl font-bold mb-1 animate-slideInLeft">
+              🎵 Teacher Dashboard
+            </h1>
+            <p className="text-xs sm:text-base text-purple-100 animate-slideInLeft">
+              Welcome, {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : user?.email ?? ""}
+            </p>
           </div>
-          {/* Sidebar Navigation (replaces top tabs) */}
-          <div className="flex w-full">
-            <aside className="hidden md:flex flex-col gap-2 pr-6 min-w-[170px] pt-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-lg transition-all duration-200 text-left ${
-                    activeTab === tab
-                      ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-purple-500/25"
-                      : "glass-effect text-white hover:bg-white/20"
-                  }`}
-                  style={{ width: '100%' }}
-                >
-                  <span className="text-2xl">{getTabIcon(tab)}</span>
-                  <span>{tab}</span>
-                </button>
-              ))}
-            </aside>
-            <div className="flex-1">
-              {/* Bottom Navigation Bar for Mobile/Tablet (md and below) */}
-              <nav className="fixed left-0 bottom-0 w-full z-50 flex md:hidden bg-gradient-to-t from-slate-900/95 to-slate-900/80 border-t border-purple-900/40 shadow-2xl h-20 rounded-t-2xl m-0 p-0" style={{margin:0,padding:0}}>
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex-1 flex flex-col items-center justify-center py-3 text-2xl transition-all duration-200 relative ${activeTab === tab ? "text-indigo-400" : "text-purple-200 hover:text-indigo-300"}`}
-                    aria-label={tab}
-                    style={{ minWidth: 0 }}
-                  >
-                    <span className={`mb-1 flex items-center justify-center w-16 h-16 ${activeTab === tab ? "bg-gradient-to-t from-indigo-900/60 to-slate-900/80 rounded-3xl shadow-lg" : ""}`}>{getTabIcon(tab)}</span>
-                  </button>
-                ))}
-              </nav>
-              {/* Tab Content */}
-              <div className="glass-effect p-2 sm:p-6 md:p-10 rounded-3xl shadow-2xl min-h-[500px] animate-fadeIn pb-28 md:pb-10 overflow-y-auto w-full max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto flex flex-col items-center">
-                {/* Students Tab */}
-                {activeTab === "Students" && (
-                  <>{/* Students Tab Content */}
-                  {/* ...existing code for Students tab... */}
-                  </>
-                )}
-                {/* Upcoming Tab */}
-                {activeTab === "Upcoming" && (
-                  <>{/* Upcoming Tab Content */}
-                  {/* ...existing code for Upcoming tab... */}
-                  </>
-                )}
-                {/* Homework Tab */}
-                {activeTab === "Homework" && (
-                  <>{/* Homework Tab Content */}
-                  {/* ...existing code for Homework tab... */}
-                  </>
-                )}
-                {/* Notes Tab */}
-                {activeTab === "Notes" && (
-                  <>{/* Notes Tab Content */}
-                  {/* ...existing code for Notes tab... */}
-                  </>
-                )}
-                {/* Calendar Tab */}
-                {activeTab === "Calendar" && (
-                  <>{/* Calendar Tab Content */}
-                  {/* ...existing code for Calendar tab... */}
-                  </>
-                )}
-                {/* Settings Tab */}
-                {activeTab === "Settings" && (
-                  <>{/* Settings Tab Content */}
-                  {/* ...existing code for Settings tab... */}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+        </div>
+        {/* Main Content (Tab Content) */}
+        <div className="flex-1 flex flex-col w-full p-1 xs:p-2 sm:p-4 md:p-8 min-w-0 max-w-screen overflow-x-hidden">
           {/* Bottom Navigation Bar for Mobile/Tablet (md and below) */}
-          <nav className="fixed left-0 bottom-0 w-full z-50 flex md:hidden bg-gradient-to-t from-slate-900/95 to-slate-900/80 border-t border-purple-900/40 shadow-2xl h-20 rounded-t-2xl m-0 p-0" style={{margin:0,padding:0}}>
+          <nav className="fixed left-0 bottom-0 w-full z-50 flex md:hidden bg-gradient-to-t from-slate-900/95 to-slate-900/80 border-t border-purple-900/40 shadow-2xl h-14 xs:h-16 rounded-t-2xl m-0 p-0" style={{margin:0,padding:0}}>
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 flex flex-col items-center justify-center py-3 text-2xl transition-all duration-200 relative ${activeTab === tab ? "text-indigo-400" : "text-purple-200 hover:text-indigo-300"}`}
+                className={`flex-1 flex flex-col items-center justify-center py-1 xs:py-2 text-lg xs:text-xl transition-all duration-200 relative ${activeTab === tab ? "text-indigo-400" : "text-purple-200 hover:text-indigo-300"}`}
                 aria-label={tab}
                 style={{ minWidth: 0 }}
               >
-                <span className={`mb-1 flex items-center justify-center w-16 h-16 ${activeTab === tab ? "bg-gradient-to-t from-indigo-900/60 to-slate-900/80 rounded-3xl shadow-lg" : ""}`}>{getTabIcon(tab)}</span>
-                {/* No text label on mobile nav */}
+                <span className={`mb-0.5 flex items-center justify-center w-8 h-8 xs:w-10 xs:h-10 ${activeTab === tab ? "bg-gradient-to-t from-indigo-900/60 to-slate-900/80 rounded-2xl shadow-lg" : ""}`}>{getTabIcon(tab)}</span>
+                <span className="text-[10px] xs:text-xs mt-0.5">{tab}</span>
               </button>
             ))}
           </nav>
           {/* Tab Content */}
-          <div className="glass-effect p-2 sm:p-6 md:p-10 rounded-3xl shadow-2xl min-h-[500px] animate-fadeIn pb-28 md:pb-10 overflow-y-auto w-full max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto flex flex-col items-center">
+          <div className="glass-effect p-1 xs:p-2 sm:p-4 md:p-8 rounded-2xl shadow-2xl min-h-[300px] xs:min-h-[400px] sm:min-h-[500px] animate-fadeIn pb-20 xs:pb-24 md:pb-10 overflow-y-auto w-full flex flex-col items-center max-w-screen overflow-x-hidden">
             {/* Students Tab */}
             {activeTab === "Students" && (
-              <div className="space-y-6 text-center">
+              <div className="space-y-3 xs:space-y-4 sm:space-y-6 text-center w-full max-w-full">
                 {/* Smaller header */}
-                <div className="flex flex-col items-center gap-2 mb-2">
-                  <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-0">
+                <div className="flex flex-col items-center gap-1 xs:gap-2 mb-1 xs:mb-2">
+                  <h2 className="text-lg xs:text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-0">
                     👥 Students
                   </h2>
                 </div>
-                {/* Card/List View Toggle and Sorting Controls */}
-                <div className="flex flex-col items-center gap-2 mb-2 w-full">
-                  <div className="flex gap-2 justify-center items-center w-full">
+                {/* Card/List View Toggle and Sorting Controls - INLINE ON DESKTOP */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 xs:gap-2 mb-2 w-full">
+                  <div className="flex gap-1 xs:gap-2 justify-center items-center w-full md:w-auto">
                     <button
-                      className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors duration-200 ${studentView === 'card' ? 'bg-purple-500 text-white' : 'bg-slate-800 text-purple-200 border border-white/20'}`}
+                      className={`px-2 xs:px-3 py-1 rounded-lg text-xs xs:text-sm font-semibold transition-colors duration-200 ${studentView === 'card' ? 'bg-purple-500 text-white' : 'bg-slate-800 text-purple-200 border border-white/20'}`}
                       onClick={() => setStudentView('card')}
                     >
                       🗂️ Card View
                     </button>
                     <button
-                      className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors duration-200 ${studentView === 'list' ? 'bg-purple-500 text-white' : 'bg-slate-800 text-purple-200 border border-white/20'}`}
+                      className={`px-2 xs:px-3 py-1 rounded-lg text-xs xs:text-sm font-semibold transition-colors duration-200 ${studentView === 'list' ? 'bg-purple-500 text-white' : 'bg-slate-800 text-purple-200 border border-white/20'}`}
                       onClick={() => setStudentView('list')}
                     >
                       📋 List View
                     </button>
                   </div>
-                  <div className="flex gap-2 justify-center items-center w-full mt-3">
-                    <label className="text-purple-200 font-medium">Sort by:</label>
+                  <div className="flex gap-1 xs:gap-2 justify-center items-center w-full md:w-auto mt-1 md:mt-0">
+                    <label className="text-purple-200 font-medium text-xs xs:text-sm">Sort by:</label>
                     <select
                       value={studentSort}
                       onChange={e => setStudentSort(e.target.value)}
-                      className="p-2 rounded bg-slate-800 border border-white/20 text-white"
+                      className="p-1 xs:p-2 rounded bg-slate-800 border border-white/20 text-white text-xs xs:text-sm"
                     >
                       <option value="az">A-Z</option>
                       <option value="progress">Progress</option>
@@ -530,52 +474,52 @@ export default function TeacherDashReal() {
                     </select>
                   </div>
                 </div>
-                {deleteError && <div className="text-red-400 font-medium mb-2">{deleteError}</div>}
+                {deleteError && <div className="text-red-400 font-medium mb-2 text-xs xs:text-sm">{deleteError}</div>}
                 {sortedStudents.length === 0 ? (
-                  <p className="text-purple-200">No students found.</p>
+                  <p className="text-purple-200 text-xs xs:text-sm">No students found.</p>
                 ) : (
                   studentView === 'card' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 gap-2 xs:gap-4 sm:gap-6 w-full">
                       {sortedStudents.map((student) => (
-                        <div key={student.id} className="glass-effect rounded-2xl p-6 border border-white/20 w-full max-w-full flex flex-col justify-center">
-                          <div className="flex flex-col items-center gap-4 md:flex-row md:items-center">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-2xl text-white font-bold">
+                        <div key={student.id} className="glass-effect rounded-2xl p-2 xs:p-4 sm:p-6 border border-white/20 w-full max-w-full flex flex-col justify-center">
+                          <div className="flex flex-col items-center gap-1 xs:gap-2 sm:gap-4 md:flex-row md:items-center">
+                            <div className="w-10 h-10 xs:w-16 xs:h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-base xs:text-xl sm:text-2xl text-white font-bold">
                               {student.firstName?.[0]}{student.lastName?.[0]}
                             </div>
-                            <div className="flex-1 w-full">
-                              <h3 className="text-xl font-bold text-white mb-1 text-center md:text-left">{student.firstName} {student.lastName}</h3>
-                              <div className="flex flex-wrap gap-2 justify-center md:justify-start text-purple-200 text-sm mb-3">
+                            <div className="flex-1 w-full min-w-0">
+                              <h3 className="text-base xs:text-lg sm:text-xl font-bold text-white mb-1 text-center md:text-left">{student.firstName} {student.lastName}</h3>
+                              <div className="flex flex-wrap gap-1 xs:gap-2 justify-center md:justify-start text-purple-200 text-xs xs:text-sm mb-2 xs:mb-3">
                                 <span>🎯 {student.skillLevel || '-'}</span>
                                 <span>🎂 {student.dob ? getAge(student.dob) + ' yrs' : '-'}</span>
                                 <span>📈 {student.progress ?? 0}%</span>
                               </div>
-                              <div className="mb-4">
-                                <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
+                              <div className="mb-2 xs:mb-4">
+                                <div className="w-full bg-white/20 rounded-full h-1 xs:h-2 sm:h-3 overflow-hidden">
                                   <div
                                     className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full transition-all duration-500 shadow-lg"
                                     style={{ width: `${student.progress || 0}%` }}
                                   />
                                 </div>
                               </div>
-                              <div className="flex flex-col gap-2 md:flex-row">
+                              <div className="flex flex-col gap-1 xs:gap-2 md:flex-row">
                                 <button
-                                  className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-lg"
+                                  className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-1 xs:px-2 sm:px-3 py-1 rounded-xl text-xs xs:text-sm font-medium shadow-lg"
                                   onClick={() => { setActiveTab("Homework"); setSelectedStudentId(student.id); }}
                                 >
-                                  📚 Assign Homework
+                                  📚 <span className="hidden xs:inline">Assign Homework</span>
                                 </button>
                                 <button
-                                  className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-lg"
+                                  className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 text-white px-1 xs:px-2 sm:px-3 py-1 rounded-xl text-xs xs:text-sm font-medium shadow-lg"
                                   onClick={() => { setActiveTab("Notes"); setSelectedStudentId(student.id); }}
                                 >
-                                  📝 Add Note
+                                  📝 <span className="hidden xs:inline">Add Note</span>
                                 </button>
                                 <button
-                                  className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-lg"
+                                  className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white px-1 xs:px-2 sm:px-3 py-1 rounded-xl text-xs xs:text-sm font-medium shadow-lg"
                                   onClick={() => handleDeleteStudentClick(student)}
                                   type="button"
                                 >
-                                  🗑️ Delete
+                                  🗑️ <span className="hidden xs:inline">Delete</span>
                                 </button>
                               </div>
                             </div>
@@ -584,41 +528,41 @@ export default function TeacherDashReal() {
                       ))}
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-3 w-full">
+                    <div className="flex flex-col gap-1 xs:gap-2 sm:gap-3 w-full">
                       {sortedStudents.map(student => (
-                        <div key={student.id} className="glass-effect rounded-2xl border border-white/20 px-4 py-3 flex items-center gap-4 w-full max-w-2xl mx-auto">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-lg text-white font-bold">
+                        <div key={student.id} className="glass-effect rounded-2xl border border-white/20 px-1 xs:px-2 sm:px-4 py-1 xs:py-2 sm:py-3 flex items-center gap-1 xs:gap-2 sm:gap-4 w-full max-w-2xl mx-auto">
+                          <div className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-xs xs:text-base sm:text-lg text-white font-bold">
                             {student.firstName?.[0]}{student.lastName?.[0]}
                           </div>
                           <div className="flex-1 min-w-0 text-left">
-                            <div className="font-bold text-white text-base truncate">{student.firstName} {student.lastName}</div>
-                            <div className="flex flex-wrap gap-2 text-purple-200 text-xs mt-1">
+                            <div className="font-bold text-white text-xs xs:text-sm sm:text-base truncate">{student.firstName} {student.lastName}</div>
+                            <div className="flex flex-wrap gap-1 xs:gap-2 text-purple-200 text-[10px] xs:text-xs mt-1">
                               <span>🎯 {student.skillLevel || '-'}</span>
                               <span>🎂 {student.dob ? getAge(student.dob) + ' yrs' : '-'}</span>
                               <span>📈 {student.progress ?? 0}%</span>
                             </div>
-                            <div className="w-full bg-white/20 rounded-full h-2 mt-2">
+                            <div className="w-full bg-white/20 rounded-full h-0.5 xs:h-1 sm:h-2 mt-1 xs:mt-2">
                               <div
                                 className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full transition-all duration-500 shadow-lg"
                                 style={{ width: `${student.progress || 0}%` }}
                               />
                             </div>
                           </div>
-                          <div className="flex flex-col gap-1 min-w-[110px]">
+                          <div className="flex flex-col gap-0.5 xs:gap-1 min-w-[60px] xs:min-w-[80px] sm:min-w-[110px]">
                             <button
-                              className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-2 py-1 rounded-xl text-xs font-medium shadow-lg"
+                              className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-0.5 xs:px-1 sm:px-2 py-0.5 xs:py-1 rounded-xl text-[10px] xs:text-xs font-medium shadow-lg"
                               onClick={() => { setActiveTab("Homework"); setSelectedStudentId(student.id); }}
                             >
                               📚
                             </button>
                             <button
-                              className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-2 py-1 rounded-xl text-xs font-medium shadow-lg"
+                              className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-0.5 xs:px-1 sm:px-2 py-0.5 xs:py-1 rounded-xl text-[10px] xs:text-xs font-medium shadow-lg"
                               onClick={() => { setActiveTab("Notes"); setSelectedStudentId(student.id); }}
                             >
                               📝
                             </button>
                             <button
-                              className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-xl text-xs font-medium shadow-lg"
+                              className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-0.5 xs:px-1 sm:px-2 py-0.5 xs:py-1 rounded-xl text-[10px] xs:text-xs font-medium shadow-lg"
                               onClick={() => handleDeleteStudentClick(student)}
                               type="button"
                             >
@@ -670,7 +614,7 @@ export default function TeacherDashReal() {
             )}
             {/* Homework Tab */}
             {activeTab === "Homework" && (
-              <div className="space-y-6">
+              <div className="space-y-3 xs:space-y-4 sm:space-y-6 overflow-visible w-full max-w-full">
                 <TeacherHomeworkTab
                   students={sortedStudents.map(s => ({
                     id: s.id,
