@@ -95,10 +95,12 @@ export default function TeacherDashReal() {
   const [slotError, setSlotError] = useState("");
   const [slotSuccess, setSlotSuccess] = useState("");
   const [lessonSlots, setLessonSlots] = useState<LessonSlot[]>([]);
+  // Enhanced slot form: support time range
   const [slotForm, setSlotForm] = useState({
     startDate: "",
     endDate: "",
-    time: "",
+    startTime: "",
+    endTime: "",
     daysOfWeek: [] as number[],
   });
   const [contactInfo, setContactInfo] = useState({
@@ -299,7 +301,19 @@ export default function TeacherDashReal() {
     setContactInfo((prev) => ({ ...prev, [name]: value }));
   }
 
-  // --- Bulk slot creation handler (simplified for individual classes, no duration/max students) ---
+  // Enhanced: Add slots for a time range (auto-generate 60-min slots)
+  function getTimeInMinutes(t: string) {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  }
+  function padTime(n: number) {
+    return n.toString().padStart(2, "0");
+  }
+  function minutesToTimeStr(mins: number) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${padTime(h)}:${padTime(m)}`;
+  }
   async function handleAddSlot(e: React.FormEvent) {
     e.preventDefault();
     if (!user) {
@@ -310,68 +324,44 @@ export default function TeacherDashReal() {
     setSlotError("");
     setSlotSuccess("");
     try {
-      const { startDate, endDate, time, daysOfWeek } = slotForm;
-      if (!startDate || !time || daysOfWeek.length === 0) {
+      const { startDate, endDate, startTime, endTime, daysOfWeek } = slotForm;
+      if (!startDate || !startTime || !endTime || daysOfWeek.length === 0) {
         setSlotError("Please fill all fields and select at least one day.");
         setSlotLoading(false);
         return;
       }
       const slotsToAdd: LessonSlot[] = [];
-      // If endDate is empty, treat as single-slot creation
-      if (!endDate) {
-        const singleDate = parseLocalDate(startDate);
-        if (daysOfWeek.includes(singleDate.getDay())) {
-          const overlap = lessonSlots.some(slot => slot.date === startDate && slot.time === time);
-          if (overlap) {
-            setSlotError(`Overlap detected: You already have a slot on ${singleDate.toLocaleDateString()} at ${time}.`);
-            setSlotLoading(false);
-            return;
-          }
-          slotsToAdd.push({
-            date: startDate,
-            time,
-            teacherId: user.uid,
-            bookedStudentIds: [],
-            createdAt: Timestamp.now(),
-          } as LessonSlot);
-        } else {
-          setSlotError("Selected weekday does not match the chosen date.");
-          setSlotLoading(false);
-          return;
-        }
-      } else {
-        // Bulk creation between start and end date
-        const start = parseLocalDate(startDate);
-        const end = parseLocalDate(endDate);
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const dayCopy = new Date(d);
-          if (daysOfWeek.includes(dayCopy.getDay())) {
-            const dateStr = dayCopy.toISOString().split("T")[0];
-            const overlap = lessonSlots.some(slot => slot.date === dateStr && slot.time === time);
-            if (overlap) {
-              setSlotError(`Overlap detected: You already have a slot on ${dayCopy.toLocaleDateString()} at ${time}.`);
-              setSlotLoading(false);
-              return;
-            }
+      const start = parseLocalDate(startDate);
+      const end = endDate ? parseLocalDate(endDate) : start;
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dayCopy = new Date(d);
+        if (!daysOfWeek.includes(dayCopy.getDay())) continue;
+        const dateStr = dayCopy.toISOString().split("T")[0];
+        let tMin = getTimeInMinutes(startTime);
+        const tMax = getTimeInMinutes(endTime);
+        while (tMin + 60 <= tMax) {
+          const slotTime = minutesToTimeStr(tMin);
+          const overlap = lessonSlots.some(slot => slot.date === dateStr && slot.time === slotTime);
+          if (!overlap) {
             slotsToAdd.push({
               date: dateStr,
-              time,
+              time: slotTime,
               teacherId: user.uid,
               bookedStudentIds: [],
               createdAt: Timestamp.now(),
             } as LessonSlot);
           }
+          tMin += 60;
         }
       }
       if (slotsToAdd.length === 0) {
-        setSlotError("No valid slots to add (possible overlap or no days selected).");
+        setSlotError("No valid slots to add (possible overlap, no days selected, or time range too short).");
         setSlotLoading(false);
         return;
       }
-      // Add all slots in parallel (no student profile update)
       await Promise.all(slotsToAdd.map(slot => addDoc(collection(db, "lessonSlots"), slot)));
       setSlotSuccess(`${slotsToAdd.length} slot(s) added!`);
-      setSlotForm({ startDate: "", endDate: "", time: "", daysOfWeek: [] });
+      setSlotForm({ startDate: "", endDate: "", startTime: "", endTime: "", daysOfWeek: [] });
       // Refresh slots list
       const slotsSnap = await getDocs(
         query(collection(db, "lessonSlots"), where("teacherId", "==", user.uid))
@@ -665,7 +655,7 @@ export default function TeacherDashReal() {
                 {/* Add Availability Form */}
                 <div className="glass-effect p-6 rounded-2xl border border-white/20 mb-8">
                   <h3 className="text-xl font-bold text-white mb-4">Add Availability</h3>
-                  <form onSubmit={handleAddSlot} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                  <form onSubmit={handleAddSlot} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                     <div>
                       <label className="block text-purple-200 mb-1 font-medium">Start Date</label>
                       <input type="date" value={slotForm.startDate} min={today.toISOString().split('T')[0]} onChange={e => setSlotForm(f => ({ ...f, startDate: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required />
@@ -690,13 +680,20 @@ export default function TeacherDashReal() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-purple-200 mb-1 font-medium">Time</label>
-                      <select value={slotForm.time} onChange={e => setSlotForm(f => ({ ...f, time: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required>
-                        <option value="">Select time</option>
+                      <label className="block text-purple-200 mb-1 font-medium">Start Time</label>
+                      <select value={slotForm.startTime} onChange={e => setSlotForm(f => ({ ...f, startTime: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required>
+                        <option value="">Start time</option>
                         {timeOptions.map((t: string) => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
-                    <button type="submit" disabled={slotLoading} className="md:col-span-5 mt-2 py-2 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition disabled:opacity-60">
+                    <div>
+                      <label className="block text-purple-200 mb-1 font-medium">End Time</label>
+                      <select value={slotForm.endTime} onChange={e => setSlotForm(f => ({ ...f, endTime: e.target.value }))} className="w-full p-2 rounded bg-slate-800 border border-white/20 text-white" required>
+                        <option value="">End time</option>
+                        {timeOptions.map((t: string) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <button type="submit" disabled={slotLoading} className="md:col-span-6 mt-2 py-2 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:bg-indigo-700 transition disabled:opacity-60">
                       {slotLoading ? "Adding..." : "Add Availability"}
                     </button>
                   </form>
