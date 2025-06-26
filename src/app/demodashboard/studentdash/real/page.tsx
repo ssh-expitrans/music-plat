@@ -6,13 +6,12 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, getDocs, query, where, DocumentData } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
-const tabs = ["Home", "Book", "Buy", "Upcoming", "Account"] as const;
+const tabs = ["Home", "Book", "Upcoming", "Account"] as const;
 
 const getTabIcon = (tab: string) => {
   switch (tab) {
     case "Home": return "🏠";
     case "Book": return "📅";
-    case "Buy": return "💳";
     case "Upcoming": return "⏰";
     case "Account": return "👤";
     default: return "";
@@ -147,12 +146,13 @@ export default function StudentDashReal() {
   const [error, setError] = useState<string | null>(null);
   const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekSunday());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
-  // --- Buy tab state ---
+  // --- Buy as you book state ---
   const [quantities, setQuantities] = useState<{ [length: number]: number }>({ 30: 1, 60: 1, 90: 1 });
-  // --- Buy Tab Cart State and Handlers ---
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [showCheckout, setShowCheckout] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]); // Used for booking modal only now
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [bookingToBuy, setBookingToBuy] = useState<string[]>([]); // slot ids being booked
 
+  // Buy as you book handlers
   const handleAddToCart = (length: number) => {
     setCart(prev => {
       const qty = quantities[length];
@@ -165,17 +165,35 @@ export default function StudentDashReal() {
       }
     });
   };
-
   const handleRemoveFromCart = (length: number) => {
     setCart(prev => prev.filter(item => item.length !== length));
   };
-
-  const handleConfirmCheckout = () => {
-    // Here you would handle the actual purchase logic (API call, etc)
-    setShowCheckout(false);
+  const handleConfirmBuyAndBook = () => {
+    // Simulate purchase and booking
+    setShowBuyModal(false);
     setCart([]);
-    // Optionally show a success message/modal
-    alert('Purchase successful!');
+    // Actually book the slots
+    setBookings(prev => [
+      ...prev,
+      ...bookingToBuy
+        .map(slotId => {
+          const slot = availableSlots.find(s => s.id === slotId);
+          if (!slot) return null;
+          return {
+            id: slot.id,
+            date: slot.date,
+            time: slot.time,
+            length: slot.length || 30,
+            status: 'booked',
+          };
+        })
+        .filter((b): b is Exclude<typeof b, null> => b !== null)
+    ]);
+    setAvailableSlots(prev => prev.filter(slot => !bookingToBuy.includes(slot.id)));
+    setSelectedSlots([]);
+    setBookingToBuy([]);
+    setBookingSuccess(true);
+    alert('Purchase and booking successful!');
   };
   // --- Book Tab State ---
   const [availableSlots, setAvailableSlots] = useState<LessonSlot[]>([]);
@@ -428,44 +446,112 @@ export default function StudentDashReal() {
           <button
             onClick={() => {
               setBookingSuccess(false);
-              setShowConfirm(true);
+              setBookingToBuy(selectedSlots);
+              setShowBuyModal(true);
             }}
             className="group px-8 py-3 sm:px-10 sm:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 active:scale-95 text-sm sm:text-base"
           >
-            Book {selectedSlots.length === 1 ? 'Session' : 'Sessions'}
+            Buy & Book {selectedSlots.length === 1 ? 'Session' : 'Sessions'}
           </button>
         </div>
-        {/* Confirmation Modal */}
-        {showConfirm && (
+        {/* Buy Modal (replaces confirmation modal) */}
+        {showBuyModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-              <h3 className="text-xl font-bold mb-4 text-purple-700">Confirm Booking</h3>
-              <p className="mb-4 text-gray-700">Are you sure you want to book the following sessions?</p>
-              <div className="flex flex-wrap gap-2 justify-center mb-6">
-                {selectedSlots.map(slotId => {
-                  const slot = availableSlots.find(s => s.id === slotId);
-                  return (
-                    <span key={slotId} className="px-3 py-1 bg-purple-100 rounded-full border border-purple-300 text-purple-800 text-xs font-semibold">
-                      {slot ? `${slot.date} ${slot.time}` : slotId}
-                    </span>
-                  );
-                })}
+              <h3 className="text-xl font-bold mb-4 text-indigo-700">Buy & Book</h3>
+              <p className="mb-4 text-gray-700">Select lesson type and quantity for your booking.</p>
+              {/* Lesson Options (from Buy tab) */}
+              <div className="mb-6">
+                <div className="grid gap-4 grid-cols-1">
+                  {lessonOptions.map((option) => (
+                    <div key={option.length} className="flex flex-col items-start p-4 rounded-xl border-2 border-slate-200 bg-white shadow transition-all duration-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">{option.icon}</span>
+                        <span className="font-bold text-lg">{option.length} min Lesson</span>
+                      </div>
+                      <div className="text-slate-600 text-sm mb-2">{option.desc}</div>
+                      <div className="flex items-center gap-2 mt-auto w-full">
+                        <input
+                          type="number"
+                          min={1}
+                          value={quantities[option.length]}
+                          onChange={e => setQuantities(q => ({ ...q, [option.length]: Math.max(1, Number(e.target.value)) }))}
+                          className="w-16 px-2 py-1 border rounded-lg text-center text-base font-semibold text-indigo-700 border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        />
+                        <span className="text-xs text-slate-500">Qty</span>
+                        <button
+                          className="ml-auto px-3 py-1 rounded-lg font-semibold text-sm border-2 bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 transition"
+                          onClick={() => handleAddToCart(option.length)}
+                          type="button"
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              {bookingError && <div className="text-red-500 mb-2">{bookingError}</div>}
+              {/* Cart Section */}
+              <div className="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-white/20 mb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                    Your Cart
+                  </h3>
+                  <div className="text-right mt-2 sm:mt-0">
+                    <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
+                    <span className="text-2xl font-bold text-indigo-700">
+                      ${cart.reduce((sum, item) => {
+                        const option = lessonOptions.find(opt => opt.length === item.length);
+                        return sum + (item.qty * (option?.price || 0));
+                      }, 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {cart.length === 0 ? (
+                    <p className="text-gray-500">Your cart is empty.</p>
+                  ) : (
+                    cart.map(item => {
+                      const option = lessonOptions.find(opt => opt.length === item.length);
+                      return (
+                        <div key={item.length} className="flex justify-between items-center text-sm p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{option?.icon}</span>
+                            <span className="font-semibold">{option?.length} min Lesson</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Qty: {item.qty}</span>
+                            <span className="text-indigo-700 font-bold">${option?.price}</span>
+                            <button
+                              className="ml-2 px-2 py-1 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600"
+                              onClick={() => handleRemoveFromCart(item.length)}
+                              type="button"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                {cart.length > 0 && (
+                  <div className="flex justify-end mt-6">
+                    <button
+                      className="px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                      onClick={handleConfirmBuyAndBook}
+                    >
+                      Confirm & Book
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-center gap-4">
                 <button
-                  onClick={() => setShowConfirm(false)}
+                  onClick={() => { setShowBuyModal(false); setCart([]); setBookingToBuy([]); }}
                   className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
-                  disabled={bookingInProgress}
                 >
                   Cancel
-                </button>
-                <button
-                  onClick={handleBookConfirm}
-                  className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold hover:from-purple-700 hover:to-indigo-700 shadow-lg disabled:opacity-60"
-                  disabled={bookingInProgress}
-                >
-                  {bookingInProgress ? 'Booking...' : 'Confirm'}
                 </button>
               </div>
             </div>
@@ -677,142 +763,7 @@ export default function StudentDashReal() {
             {BookNowSection()}
           </div>
         )}
-        {activeTab === "Buy" && (
-          <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-2xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-indigo-700">Buy Lessons</h2>
-            {/* Lesson Options */}
-            <div className="mb-8">
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
-                {lessonOptions.map((option: { length: number; price: number; icon: string; desc: string }) => (
-                  <div key={option.length} className="flex flex-col items-start p-5 rounded-2xl border-2 border-slate-200 bg-white shadow transition-all duration-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">{option.icon}</span>
-                      <span className="font-bold text-lg">{option.length} min Lesson</span>
-                    </div>
-                    <div className="text-slate-600 text-sm mb-2">{option.desc}</div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-indigo-700 font-bold text-xl">${option.price}</span>
-                      <span className="text-xs text-slate-400">per lesson</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-auto w-full">
-                      <input
-                        type="number"
-                        min={1}
-                        value={quantities[option.length]}
-                        onChange={e => setQuantities(q => ({ ...q, [option.length]: Math.max(1, Number(e.target.value)) }))}
-                        className="w-16 px-2 py-1 border rounded-lg text-center text-base font-semibold text-indigo-700 border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      />
-                      <span className="text-xs text-slate-500">Qty</span>
-                      <button
-                        className="ml-auto px-3 py-1 rounded-lg font-semibold text-sm border-2 bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 transition"
-                        onClick={() => handleAddToCart(option.length)}
-                        type="button"
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Cart Section */}
-            <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 mb-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
-                  Your Cart
-                </h3>
-                <div className="text-right mt-2 sm:mt-0">
-                  <span className="text-sm sm:text-base text-gray-500 mr-2">Total:</span>
-                  <span className="text-2xl font-bold text-indigo-700">
-                    ${cart.reduce((sum, item) => {
-                      const option = lessonOptions.find(opt => opt.length === item.length);
-                      return sum + (item.qty * (option?.price || 0));
-                    }, 0).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {cart.length === 0 ? (
-                  <p className="text-gray-500">Your cart is empty.</p>
-                ) : (
-                  cart.map(item => {
-                    const option = lessonOptions.find(opt => opt.length === item.length);
-                    return (
-                      <div key={item.length} className="flex justify-between items-center text-sm sm:text-base p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{option?.icon}</span>
-                          <span className="font-semibold">{option?.length} min Lesson</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Qty: {item.qty}</span>
-                          <span className="text-indigo-700 font-bold">${option?.price}</span>
-                          <button
-                            className="ml-2 px-2 py-1 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600"
-                            onClick={() => handleRemoveFromCart(item.length)}
-                            type="button"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              {cart.length > 0 && (
-                <div className="flex justify-end mt-6">
-                  <button
-                    className="px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-700 hover:to-purple-700 shadow-lg"
-                    onClick={() => setShowCheckout(true)}
-                  >
-                    Checkout
-                  </button>
-                </div>
-              )}
-            </div>
-            {/* Checkout Modal */}
-            {showCheckout && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-                  <h3 className="text-xl font-bold mb-4 text-indigo-700">Checkout</h3>
-                  <p className="mb-4 text-gray-700">Review your order and confirm your purchase.</p>
-                  <div className="space-y-2 mb-6">
-                    {cart.map(item => {
-                      const option = lessonOptions.find(opt => opt.length === item.length);
-                      return (
-                        <div key={item.length} className="flex justify-between items-center text-sm p-2 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200">
-                          <span>{option?.icon} {option?.length} min Lesson</span>
-                          <span>Qty: {item.qty}</span>
-                          <span>${option?.price}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="font-bold text-lg mb-6">
-                    Total: ${cart.reduce((sum, item) => {
-                      const option = lessonOptions.find(opt => opt.length === item.length);
-                      return sum + (item.qty * (option?.price || 0));
-                    }, 0).toFixed(2)}
-                  </div>
-                  <div className="flex justify-center gap-4">
-                    <button
-                      onClick={() => setShowCheckout(false)}
-                      className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleConfirmCheckout}
-                      className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-700 hover:to-purple-700 shadow-lg"
-                    >
-                      Confirm Purchase
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Buy tab removed for buy-as-you-book flow */}
         {activeTab === "Upcoming" && (
           <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl border border-white/30 animate-fadeIn max-w-3xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-purple-700">Upcoming Lessons</h2>
