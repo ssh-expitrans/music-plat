@@ -16,6 +16,7 @@ function TeacherLoginInner() {
   const [lastName, setLastName] = useState('');
 
   const { signIn, signUp } = useAuth();
+  console.log('useAuth signUp:', signUp);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -26,6 +27,7 @@ function TeacherLoginInner() {
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('TeacherLoginInner handleSubmit called');
     e.preventDefault();
     setIsLoading(true);
     setError('');
