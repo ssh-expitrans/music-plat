@@ -43,6 +43,7 @@ interface Student {
   dob?: string;
   skillLevel?: string;
   progress?: number;
+  deleted?: boolean; // <-- allow soft delete
 }
 
 // Define Homework interface for type safety
@@ -171,24 +172,33 @@ export default function TeacherDashReal() {
         // Fetch teacher profile
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         setProfile(userDoc.exists() ? userDoc.data() : null);
-        // Fetch all students (no teacherId filter)
-        const studentsSnap = await getDocs(
-          query(collection(db, "users"), where("role", "==", "student"))
+        // Fetch all students (no teacherId filter, only non-deleted)
+        // Firestore: only return students where deleted is false or not set
+        const studentsQuery = query(
+          collection(db, "users"),
+          where("role", "==", "student"),
+          // Firestore does not support !=, so use in [false, null]
+          where("deleted", "in", [false, null])
         );
-        setStudents(studentsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Student, "id">)
-        })));
+        const studentsSnap = await getDocs(studentsQuery);
+        setStudents(
+          studentsSnap.docs
+            .map((doc) => ({
+              id: doc.id,
+              ...(doc.data() as Omit<Student, "id">)
+            }))
+        );
         // Fetch lesson slots for this teacher
         const slotsSnap = await getDocs(
           query(collection(db, "lessonSlots"), where("teacherId", "==", firebaseUser.uid))
         );
-setLessonSlots(
-  slotsSnap.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as Omit<LessonSlot, "id">)
-  }))
-);   } catch {
+        setLessonSlots(
+          slotsSnap.docs.map((doc) => ({
+            id: doc.id,
+            ...(doc.data() as Omit<LessonSlot, "id">)
+          }))
+        );
+      } catch {
         setSlotError("Failed to load dashboard data.");
       }
       setSlotLoading(false);
@@ -237,8 +247,8 @@ setLessonSlots(
     setDeleteError("");
     setDeletingStudentId(studentToDelete.id);
     try {
-      await updateDoc(doc(db, "users", studentToDelete.id), { deleted: true }); // Soft delete
-      setStudents(students => students.filter(s => s.id !== studentToDelete.id));
+      await updateDoc(doc(db, "users", studentToDelete.id), { deleted: true }); // Soft delete in DB
+      setStudents(students => students.filter(s => s.id !== studentToDelete.id)); // Remove from local state
       setShowDeleteModal(false);
       setStudentToDelete(null);
     } catch (e: unknown) {
