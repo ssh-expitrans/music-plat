@@ -116,8 +116,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Debug: log userData and userProfile
     console.log('signUp userData:', userData);
 
-    // Create user profile in Firestore (with correct role)
-    const userProfile = {
+    // Only include teacherId if it is defined (Firestore does not allow undefined)
+    const userProfile: any = {
       uid: result.user.uid,
       email: result.user.email!,
       role: userData.role || 'student',
@@ -126,8 +126,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dob: userData.dob || '',
       skillLevel: userData.skillLevel || '',
       createdAt: new Date(),
-      teacherId: userData.teacherId || undefined,
     };
+    if (userData.teacherId !== undefined) {
+      userProfile.teacherId = userData.teacherId;
+    }
 
     console.log('signUp userProfile:', userProfile);
 
